@@ -1,0 +1,2497 @@
+2021200|Sakula/Mivast RAT CnC Beacon 2
+2008512|Suspicious User-Agent (C slash)
+2017128|Expiro Trojan Check-in
+2018425|Vawtrak/NeverQuest - Post Data Form 01
+2003636|Sality Virus User Agent Detected (KUKU)
+2018228|Possible PlugX Common Header Struct
+2018169|Gulpix/PlugX Client Request
+2810752|Tempedreve Checkin
+2017365|SUSPICIOUS UA (iexplore)
+2804009|Backdoor.Win32/Hanove.A User-Agent (SIMPLE)
+2006380|Outgoing Basic Auth Base64 HTTP Password detected unencrypted
+2001569|Behavioral Unusual Port 445 traffic Potential Scan or Infection
+2019416|SSLv3 outbound connection from client vulnerable to POODLE attack
+2812028|Python Requests Suspicious User Agent
+2804981|Citrix/GotoMyPC Jedi Remote Control Session 2 Off-Port
+2019401|Vulnerable Java Version 1.8.x Detected
+2013933|HTTP traffic on port 443 (CONNECT)
+2210016|
+5000007|
+2200037|
+2210035|
+100000942|
+2210000|
+2001579|Behavioral Unusual Port 139 traffic Potential Scan or Infection
+2001581|Behavioral Unusual Port 135 traffic Potential Scan or Infection
+7033|
+7034|
+2015898|Suspicious Windows NT version 1 User-Agent
+2003068|Potential SSH Scan OUTBOUND
+2008974|User-Agent (Mozilla/4.0 (compatible))
+2210010|
+2230003|
+2014726|Outdated Flash Version M1
+2210032|
+2210038|
+2000000000|
+2100628|nmap TCP
+2230004|
+2210044|
+2230007|
+2024379|Outdated Flash Version M2
+2012079|Windows-Based OpenSSL Tunnel Connection Outbound 2
+10000017|
+2210030|
+2015561|PDF Using CCITTFax Filter
+2011507|PDF With Embedded File
+2019405|SUSPICIOUS PPT Download with Embedded OLE Object
+2210021|
+2000419|PE EXE or DLL Windows file download Non-HTTP
+2014520|EXE - Served Attached HTTP
+2000538|NMAP -sA (1)
+2000540|NMAP -sA (2)
+2100629|nmap fingerprint attempt
+2013926|HTTP traffic on port 443 (POST)
+2801281|NetSupport Manager Client Buffer Overflow Relative
+2230009|
+2011540|OpenSSL Demo CA - Internet Widgits Pty (O)
+24|
+1|
+22|
+402|
+408|
+2020240|PUP.Win32.BoBrowser User-Agent (BoBrowser)
+2016074|Backdoor.Win32.Skill.gk User-Agent
+2016879|Unsupported/Fake Windows NT Version 5.0
+2003384|SpamBlockerUtility Fake Anti-Spyware User-Agent (SpamBlockerUtility x.x.x)
+2008064|Nginx Server with no version string - Often Hostile Traffic
+2012086|Possible Call with No Offset TCP Shellcode
+2012088|Possible Call with No Offset TCP Shellcode
+2016360|JAVA - ClassID
+2018302|Possible Phish - Mirrored Website Comment Observed
+2022729|PhishMe.com Phishing Exercise - Client Plugins
+25|
+2210046|
+2021384|WildTangent User-Agent (WT Games App)
+21|
+5000006|
+2210012|
+2925|
+2016877|Unsupported/Fake FireFox Version 2.
+2016876|Unsupported/Fake FireFox Version 1.
+2230005|
+2015969|WORM_VOBFUS Requesting exe
+2200074|
+2011694|Windows 3.1 User-Agent Detected - Possible Malware or Non-Updated System
+2210005|
+5749|
+2009020|Internal Host Retrieving External IP via ipchicken.com - Possible Infection
+2008066|Blank User-Agent (descriptor but no string)
+2210039|
+2007994|Suspicious User-Agent (1 space)
+2016897|Possible Win32/Gapz MSIE 9 on Windows NT 5
+2809960|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2012059|Hex Obfuscation of document.write % Encoding
+2008052|User-Agent (Internet Explorer)
+2012695|suspicious User Agent (Lotto)
+2016715|Possible Backslash Escaped UTF-16 0c0c Heap Spray
+2010527|Possible HTTP 503 XSS Attempt (External Source)
+2102123|Microsoft cmd.exe banner
+2021886|Hola VPN Activity - X-Hola-* Headers
+2010645|User-Agent (Launcher)
+2210045|
+2221020|
+1000000|
+2022913|WinHttp AutoProxy Request wpad.dat Possible BadTunnel
+2014297|Vulnerable Java Version 1.7.x Detected
+2015744|EXE IsDebuggerPresent (Used in Malware Anti-Debugging)
+2016016|DNS Amplification Attack Inbound
+2023054|DNS Amplification Attack Possible Outbound Windows Non-Recursive Root Hint Reserved Port
+2024585|Potential CLDAP Amplification Reflection
+2018959|PE EXE or DLL Windows file download HTTP
+2018383|Possible OpenSSL HeartBleed Large HeartBeat Response from Common SSL Port (Outbound from Client)
+2210042|
+2230010|
+2002878|iTunes User Agent
+2013505|GNU/Linux YUM User-Agent Outbound likely related to package management
+17494|
+2012252|Common 0a0a0a0a Heap Spray String
+2016847|Possible Chrome Plugin install
+2016102|DNS Reply Sinkhole - Microsoft - 199.2.137.0/24
+2014374|Possible Zeus .info CnC Domain Generation Algorithm (DGA) Lookup NXDOMAIN Response
+2014375|Possible Zeus .biz CnC Domain Generation Algorithm (DGA) Lookup NXDOMAIN Response
+2014372|Possible Kelihos .eu CnC Domain Generation Algorithm (DGA) Lookup NXDOMAIN Response
+2014373|Possible Zeus .ru CnC Domain Generation Algorithm (DGA) Lookup NXDOMAIN Response
+21965|
+2014371|Possible Kelihos .eu CnC Domain Generation Algorithm (DGA) Lookup Detected
+1000000000|
+19474|
+2012903|DNS Query for a Suspicious *.qc.cx domain
+2013208|Mobile Device Posting Phone Number
+2012694|request to .xxx TLD
+2100480|PING speedera
+2100384|PING
+2803027|Microsoft Excel Malformed Selection (type 0x1D) BIFF record
+3679|
+2221021|
+2014727|Outdated Mac Flash Version
+2015822|Suspicious Windows NT version 9 User-Agent
+2230002|
+10000030|
+2000418|Executable and linking format (ELF) file download
+2820913|Win32/Obfuscated.NGJ PUA/Adware Checkin Activity M4
+2013414|Executable served from Amazon S3
+2210033|
+10003017|
+2210015|
+2271003|
+2016692|SUSPICIOUS UA starting with Mozilla/7
+2210022|
+2013457|BitCoin User-Agent Likely Bitcoin Miner
+2210037|
+2014095|Kindle Fire Browser User-Agent Outbound
+2017125|Probable FlimKit Redirect July 10 2013
+2210020|
+2020634|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2011504|String Replace in PDF File, Likely Hostile
+2012887|Http Client Body contains pass= in cleartext
+2021702|MINECRAFT Server response outbound
+2815563|Base64 Javascript URL Refresh - Common Phish Landing Obfuscation Dec 31
+2020822|HTTP POST to WP Theme Directory Without Referer
+2013222|Excessive Use of HeapLib Objects Likely Malicious Heap Spray Attempt
+2008070|Windows 98 User-Agent Detected - Possible Malware or Non-Updated System (Win98)
+2805355|POST to a gif file
+2820940|Win32/Unknown Reporting Clickfraud
+2016538|Executable Retrieved With Minimal HTTP Headers - Potential Second Stage Download
+10003018|
+2001562|Suspected PUP/PUA User-Agent (OSSProxy)
+2200036|
+2200034|
+2001046|UPX compressed file download possible malware
+2014753|probable malicious Glazunov Javascript injection
+1000022|
+2012843|Cleartext WordPress Login
+2011227|User-Agent (NSIS_Inetc (Mozilla)) - Sometimes used by hostile installers
+2018231|SUSPICIOUS .scr file download
+2016898|Suspicious MSIE 10 on Windows NT 5
+2019290|Possible CVE-2014-6271 Attempt Against SIP Proxy
+2003658|qq.com related Spyware User-Agent (QQGame)
+2016870|Unsupported/Fake Internet Explorer Version MSIE 5.
+2024833|Observed IP Lookup Domain (l2 .io in TLS SNI)
+2260001|
+15362|
+2821702|Successful Phish OWA Credentials Aug 16 2016
+2016880|Suspicious Windows NT version 0 User-Agent
+3|
+2200073|
+2821424|Win32/Daserf CnC Beacon 1
+2018372|Malformed HeartBeat Request
+2015820|Suspicious Windows NT version 7 User-Agent
+2008120|Outbound TFTP Read Request
+1003016|
+2007695|Windows 98 User-Agent Detected - Possible Malware or Non-Updated System
+2200038|
+2200076|
+2210003|
+2822102|Possible Microsoft Internet Explorer and Edge Information Disclosure Vulnerability (CVE-2016-3351)
+2015743|Revoked Adobe Code Signing Certificate Seen
+2009208|Possible Downadup/Conficker-C P2P encrypted traffic UDP Ping Packet (bit value 16)
+2221013|
+2221002|
+2002749|Unallocated IP Space Traffic - Bogon Nets
+2012889|Http Client Body contains pw= in cleartext
+2013930|HTTP traffic on port 443 (PUT)
+5102342|
+2210002|
+2210004|
+11192|
+16313|
+2014380|HTTP POST invalid method case outbound
+2018087|Control Panel Applet File Download
+2810139|Win32/BrowseFox.AF Checkin
+2015708|- Applet Tag In Edwards Packed JavaScript
+2807284|Suspicious User-Agent (Safari)
+23621|
+2017037|Javadoc API Redirect CVE-2013-1571
+2102925|web bug 0x0 gif attempt
+4000387|Locky Downloader Checkin
+2101228|nmap XMAS
+2002911|Potential VNC Scan 5900-5920
+2403340|
+2403347|
+2403346|
+2403344|
+2403408|
+2001219|Potential SSH Scan
+2010939|Suspicious inbound to PostgreSQL port 5432
+1054|
+2210027|
+2221004|
+2221001|
+19|
+2017919|Possible NTP DDoS Inbound Frequent Un-Authed MON_LIST Requests IMPL 0x03
+2014819|Packed Executable Download
+2014471|DRIVEBY Generic - EXE Download by Java
+2210017|
+2007868|User-Agent (Firefox) - Possible Trojan Downloader
+2200035|
+2103134|PNG large colour depth download attempt
+2013145|Possible %41%41%41%41 Heap Spray Attempt
+2802106|MOBILE iPhone iTunes User-Agent Detected
+2012090|Possible Call with No Offset TCP Shellcode
+2012923|Possible TDSS Base64 Encoded Command 3
+2102314|x86 0x90 NOOP unicode
+2012251|Google Android Device HTTP Request
+2017921|Possible NTP DDoS Multiple MON_LIST Seq 0 Response Spanning Multiple Packets IMPL 0x03
+4000060|Possible Black Nurse attack from Internal Source
+2012510|UTF-8/16 Encoded Shellcode
+2012888|Http Client Body contains pwd= in cleartext
+2827579|.moe Domain in TLS SNI
+2014472|JAVA - Java Archive Download
+2013031|Python-urllib/ Suspicious User Agent
+2210024|
+2100651|x86 stealth NOOP
+2101390|x86 inc ebx NOOP
+2013235|Golden FTP Server PASS Command Remote Buffer Overflow Attempt
+2002750|Reserved IP Space Traffic - Bogon Nets 2
+2011582|Vulnerable Java Version 1.6.x Detected
+2017910|suspicious - gzipped file via JAVA - could be pack200-ed JAR
+2210023|
+2012078|Windows-Based OpenSSL Tunnel Outbound
+2010066|Data POST to an image file (gif)
+2003578|Baidu.com Spyware Bar Pulling Data
+2200075|
+2012119|Possible Hex Obfuscation Usage On Webpage
+2828823|Observed Possible Malicious SSL Cert (Powershell Empire)
+2210040|
+2805815|Internal Host Retrieving External IP via whatismyipaddress.com - Possible Infection
+2016922|Backdoor family PCRat/Gh0st CnC traffic
+2008549|Systemdoctor.com/Antivir2008 related Fake Anti-Virus User-Agent (AntivirXP)
+2013929|HTTP traffic on port 443 (OPTIONS)
+2821014|suspicious .CAB containing single executable file inbound (observed in maldoc campaign)
+2013030|libwww-perl User-Agent
+2014734|BitTorrent - Torrent File Downloaded
+2016875|Unsupported/Fake FireFox Version 0.
+2012087|Possible Call with No Offset UDP Shellcode
+2003365|Hotbar Zango Toolbar Spyware User Agent (ZangoToolbar )
+2012141|Protocol 41 IPv6 encapsulation potential 6in4 IPv6 tunnel active
+2809959|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2809957|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2809958|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2812086|Nuclear EK Landing URI Struct Jul 21 M1
+2020022|Possible VirLock Connectivity Check
+2020635|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2014718|Nintendo Wii User-Agent
+2803567|Suspicious User-Agent (LuaSocket)
+2024364|Possible Nmap User-Agent Observed
+2014473|JAVA - Java Archive Download By Vulnerable Client
+2824933|Possible Adobe Flash MP4 parsing OOB Memory Access M1 (CVE-2017-2984)
+2100649|x86 setgid 0
+10000001|
+2013936|SSH banner detected on TCP 443 likely proxy evasion
+2815568|Terse HTTP 1.0 Request Possible Nivdort
+2018172|SUSPICIOUS Java Lang Runtime in Response
+2804911|Microsoft Excel corrupted/hostile file invalid MergeCells.rgref.ref8.colLast value
+882|
+1344|
+2022868|ABUSE.CH SSL Blacklist Malicious SSL certificate detected (Quakbot CnC)
+2824993|Win32/Unknown Fake SSL CnC Beacon 4 (ec_point_formats)
+2012092|Possible Call with No Offset TCP Shellcode
+2008986|Internal Host Retrieving External IP via whatismyip.com - Possible Infection
+2011349|DRIVEBY SEO Exploit Kit request for Java exploit
+2803783|Rockwell RNA Message Large Header Length - 8Kb
+2021129|Blue Bot DDoS Blog Request
+7572|
+2823007|Successful Office 365 Phish Oct 31 2016
+2013535|HTTP Request to a *.tc domain
+2809267|W32/TinyZBot Fake Resume Upload GET Request (Operation Cleaver)
+2810654|Possibly Suspicious example.com SSL Cert
+2018481|Trojan.Win32.Webprefix checkin
+5000004|
+2018220|DYNAMIC_DNS HTTP Request to a *.ddns.info Domain
+2009880|Casalemedia Spyware Reporting URL Visited 3
+2013267|Possible Hex Obfuscated JavaScript Heap Spray 0a0a0a0a
+2020661|FREAK Weak Export Suite From Server (CVE-2015-0204)
+2021058|Xenu Link Sleuth Scanner Outbound
+5800328|
+2017781|Possible Android InMobi SDK SideDoor Access sendMail
+2013224|Suspicious User-Agent Containing .exe
+2210011|
+10001029|
+2002024|IRC NICK command
+2022486|Possible Phishing Landing via GetGoPhish Phishing Tool
+2820918|Win32/Obfuscated.NGJ PUA/Adware Checkin Activity M9
+90000012|
+2018219|DYNAMIC_DNS HTTP Request to a *.sytes.net Domain
+2016921|Suspicious Mozilla UA with no Space after colon
+2809427|IE 10 on Windows 3.1
+2011346|Possible Unescape %u Shellcode/Heap Spray
+2230008|
+2018052|Zbot Generic URI/Header Struct .bin
+2010100|Palevo/BFBot/Mariposa client join attempt
+2024649|Fake Adobe Flash Update Landing - Title over non SSL
+38381|
+2101201|403 Forbidden
+2814979|SSL Certificate With Directory Traversal
+10000003|
+2017085|WebShell - GODSpy - Cookie
+2019326|Likely Bot Nick in IRC (Country Code ISO 3166-1 alpha-2
+2221018|
+2011866|Suspicious Embedded Shockwave Flash In PDF
+2022466|Possible Keitaro TDS Redirect
+2102180|BitTorrent announce request
+2023668|Unconfigured nginx Access
+2221010|
+2814961|Possible Dyre SSL Cert Nov 17 2015
+2002910|Potential VNC Scan 5800-5820
+2009582|NMAP -sS window 1024
+2010935|Suspicious inbound to MSSQL port 1433
+2010936|Suspicious inbound to Oracle SQL port 1521
+2002994|Rapid IMAP Connections - Possible Brute Force Attack
+2009545|User-Agent (_TEST_)
+2010677|Suspicious User-Agent (My Session)
+16435|
+2018899|Win32/BrowseFox.H Checkin 2
+2002400|Suspicious User Agent (Microsoft Internet Explorer)
+2009867|Suspicious User-Agent (Mozilla/3.0 (compatible))
+2019323|Possible OpenVPN CVE-2014-6271 attempt
+2013490|NetBIOS nbtstat Type Query Outbound
+2017639|JAR Size Under 30K Size - Potentially Hostile
+1340|
+2013659|Self Signed SSL Certificate (SomeOrganizationalUnit)
+2007854|User-Agent (Mozilla) - Possible Spyware Related
+5000016|
+10000023|
+2803851|Microsoft Internet Explorer remote code execution via option element
+100000122|
+10000021|
+2018334|Possible Phish - Saved Website Comment Observed
+2821683|DNP3 Cold Restart
+2011347|Possible String.FromCharCode Javascript Obfuscation Attempt
+2019102|Possible SSDP Amplification Scan in Progress
+2014519|EXE - Served Inline HTTP
+2016871|Unsupported/Fake Internet Explorer Version MSIE 4.
+2018856|Windows executable base64 encoded
+100086|
+2017966|Likely NTP DDoS In Progress MON_LIST Response to Non-Ephemeral Port IMPL 0x03
+621|
+4000061|Possible Black Nurse attack from External Source
+2016149|Session Traversal Utilities for NAT (STUN Binding Request)
+2400012|
+2400013|
+2015707|JAVA - document.createElement applet
+2022218|Lets Encrypt Free SSL Cert Observed
+2015821|Suspicious Windows NT version 8 User-Agent
+1301|
+5800390|
+1147|
+2020636|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2010516|Possible HTTP 403 XSS Attempt (External Source)
+2006408|HTTP Request on Unusual Port Possibly Hostile
+2816032|OSX/Potential Vulnerable Application using Sparkle Updater
+1101023|
+2008015|User-Agent (Win95)
+2009486|APT1 WEBC2-UGX Related Pingbed/Downbot User-Agent (Windows+NT+5.x)
+2101411|public access udp
+2001449|Proxy Connection detected
+895|
+977|
+2012228|Suspicious Russian Content-Language Ru Which May Be Malware Related
+2012886|Http Client Body contains passwd= in cleartext
+2021701|MINECRAFT Server response inbound
+100090|
+2003626|Double User-Agent (User-Agent User-Agent)
+33831|
+2017968|Suspicious Possible Process Dump in POST body
+2011341|Suspicious POST With Reference to WINDOWS Folder Possible Malware Infection
+2210029|
+2101280|portmap listing UDP 111
+2024897|Go HTTP Client User-Agent
+2805912|Socks version 5 NO AUTHENTICATION REQUIRED
+2805913|Socks version 5 CONNECT Address type IPv4
+2210031|
+2811338|Suspicious User-Agent VB Project
+24105|
+2003579|Findwhat.com Spyware (clickthrough)
+2011865|Embedded Executable File in PDF - This Program Cannot Be Run in DOS Mode
+2003479|Radmin Remote Control Session Setup Initiate
+2826045|PUP Win32/ELEX Checkin 3
+2210026|
+2022271|SUSPICIOUS Possible Evil Download wsf Double Ext No Referer
+2012810|HTTP Request to a *.tk domain
+2802991|Microsoft Excel corrupted SerAuxTrend BIFF Record
+2804792|WinVerifyTrust Signature Validation Bypass Attempt Filetype ZIPSFX
+2014516|EXE - OSX Executable Download - Intel Arch
+4000545|Suspicious User-Agent Request (Generic Ransomware)
+2016777|HTTP Request to a *.pw domain
+2013037|Java EXE Download
+2815485|PUP/ASMalwNS.A Checkin
+2815169|Win32/Kapahyku.A Activity 1
+2023239|Microsoft Tech Support Scam M3 Sept 15 2016
+2827505|Locky Payload DL 2017-08-11
+2271002|
+2003492|Suspicious Mozilla User-Agent - Likely Fake (Mozilla/4.0)
+2806818|Microsoft Internet Explorer Use-After-Free CVE-2013-3187
+2100876|Google Talk Version Check
+5800000|
+2003657|Suspicious User-Agent (MSIE)
+2014703|Non-DNS or Non-Compliant DNS traffic on DNS port Reserved Bit Set
+2014702|Non-DNS or Non-Compliant DNS traffic on DNS port Opcode 8 through 15 set
+11|
+486|
+10002002|
+2001034|Fun Web Products Adware Agent Traffic
+2017399|WebShell Generic eval of base64_decode
+2100498|id check returned root
+2019240|Executable and linking format (ELF) file download Over HTTP
+2001353|BDSM
+5000999|
+2801271|Microsoft Windows Kodak Image Viewer Code Execution
+6000001|
+2015665|NeoSploit - TDS
+2009768|NBTStat Query Response to External Destination, Possible Windows Network Enumeration
+5800167|
+2210036|
+16642|
+2016878|Unsupported/Fake Windows NT Version 4.
+2000427|PE EXE Install Windows file download
+2821158|Android.Trojan.HiddenApp.HW Checkin
+2009024|Downadup/Conficker A or B Worm reporting
+5800119|
+5800420|
+5800421|
+5800422|
+5800423|
+5800112|
+5800419|
+5800418|
+2024350|SUSPICIOUS Request for Grey Advertising Often Leading to EK
+2021025|Possible ThousandEyes User-Agent Outbound
+2016846|Possible Firefox Plugin install
+2821367|Adware.QkSee/WinSaber Checkin 2
+2400008|
+2022738|Windows Quicktime User-Agent EOL With Known Bugs
+2020605|WindowBase64.atob Function In Edwards Packed JavaScript - Possible iFrame Injection Detected
+2012998|PHP Possible https Local File Inclusion Attempt
+2008054|Nginx Server in use - Often Hostile Traffic
+2010889|Win32.Tdss User Agent Detected (Mozzila)
+2017608|PHP WebShell Embedded In JPG (INBOUND)
+2022815|Possible SQLi Attempt in User Agent (Outbound)
+2016671|SQL Errors in HTTP 500 Response (SqlException)
+2015686|Signed TLS Certificate with md5WithRSAEncryption
+100000160|
+2022012|Fake Virus Phone Scam Audio Oct 30
+2012173|eval String.fromCharCode String Which May Be Malicious
+2007616|klm123.com Spyware User Agent
+2024033|Android Fake AV Download Landing Mar 06 2017
+1350|
+2010514|Possible HTTP 401 XSS Attempt (External Source)
+2814978|SSL Certificate With Directory Traversal
+2012257|Common %0c%0c%0c%0c Heap Spray String
+2013927|HTTP traffic on port 443 (HEAD)
+2021381|Zberp receiving config via image file - SET
+2016503|Java Serialized Data
+2016502|Java Serialized Data via vulnerable client
+2011037|Possible Attempt to Get SQL Server Version in URI using SELECT VERSION
+2007799|Azureus P2P Client User-Agent
+2013028|curl User-Agent Outbound
+2816284|Successful Mailbox Update Phish Feb 17 M1
+2012390|Libtorrent User-Agent
+2404169|
+2007880|User-Agent (single dash)
+2200070|
+2800490|Mozilla Network Security Services Regexp Heap Overflow
+2021922|StartPage Userclass HTTP Request
+2823937|Successful Generic Phish (302) Dec 16 2016
+2013931|HTTP traffic on port 443 (DELETE)
+2804116|User-Agent (MRSPUTNIK)
+10|
+2807241|Adobe PDF file corrupted download (CVE-2013-3351) 3
+1101022|
+2011581|Vulnerable Java Version 1.5.x Detected
+2017657|SUSPICIOUS JS Multiple Debug Math.atan2 calls with CollectGarbage
+2828892|External IP Address Lookup (via httpbin .org)
+2022493|Evil Redirector Leading to EK Feb 05 2016
+6|
+2014518|EXE - OSX Disk Image Download
+2816367|Suspicious 404 OK Response
+2019729|Malware Connectivity Check to Google
+2016853|Possible Neutrino EK Posting Plugin-Detect Data May 15 2013
+2003494|AskSearch Toolbar Spyware User-Agent (AskTBar)
+2823158|Microsoft Excel corrupted incorrect COLINFO record download (CVE-2016-7228)
+2804794|WinVerifyTrust Signature Validation Bypass Attempt Filetype Lharc SFX
+5800159|
+2012056|Flash Player Flash6.ocx AllowScriptAccess Denial of Service
+2804449|Win32/DownloadAdmin.A.Gen Install
+2002758|WMF Escape Record Exploit - Version 1
+2008350|Autoit Windows Automation tool User-Agent in HTTP Request - Possibly Hostile
+17150|
+2012205|Possible Malicious String.fromCharCode with charCodeAt String
+22110520|
+22110387|
+2017127|JJEncode Encoded Script
+2018340|Win32.Sality-GR Checkin
+2820350|Suspicious Redirect - Possible Phishing May 25 2016
+2022246|Backdoor User-Agent (InstallCapital)
+2021170|Possible Sentinal LM  Application attack in progress Outbound (Response)
+2021172|Possible Sentinal LM Amplification attack (Request) Inbound
+2821686|DNP3 Stop Application
+2018146|Generic HeapSpray Construct
+2009970|eMule Kademlia Hello Request
+2003310|Edonkey Publicize File
+2020027|Win32/Spy.Agent.OHT - AnunakAPT HTTP Checkin 1
+2018284|Self-Signed Cert Observed in Various Zbot Strains
+2013479|Behavioral Unusually fast Terminal Server Traffic Potential Scan or Infection (Outbound)
+2021618|DealPly Adware CnC Beacon
+2019511|Adware.InstallCore.B Checkin
+2812780|Win32/InstallCore.ABD Variant Checkin
+4019928|
+25358|
+2012801|Spoofed MSIE 7 User-Agent Likely Ponmocup
+2813026|Likely PUP Download Referer
+20121208|
+5000001|
+2814905|SkullSecurity Encrypted Shell Possible Tunnel 3
+2811544|Possible Tinba DGA NXDOMAIN Responses (com)
+28283|
+2019230|Possible Tinba DGA NXDOMAIN Responses
+28058|
+30826|
+28059|
+30059|
+20121209|
+20121205|
+2025005|Possible Successful Generic Phish Jan 14 2016
+29867|
+30839|
+20|
+2329|
+2013075|Large DNS Query possible covert channel
+30842|
+2102329|probe response overflow attempt
+2814906|SkullSecurity Encrypted Shell Possible Tunnel 4
+27938|
+4000555|Observed DNS Query to Suspicious Domain (noobminer[.]newblackage[.]com)
+4000554|Observed DNS Query to Suspicious Domain (hellothere[.]publicvm[.]com)
+4000557|Observed DNS Query to Suspicious Domain (adz2you[.]com)
+4000556|Observed DNS Query to Suspicious Domain (ab890e964c34[.]com)
+4000553|Observed DNS Query to Suspicious Domain (onesystemupdate[.]com)
+4000715|Observed DNS Query to Suspicious Domain (servelatmiru[.]com)
+4000659|Observed DNS Query to Suspicious Domain (dz47[.]servehttp[.]com)
+4000656|Observed DNS Query to Suspicious Domain (mzab47[.]myq-see[.]com)
+4000657|Observed DNS Query to Suspicious Domain (mr-wolf[.]linkpc[.]net)
+4000658|Observed DNS Query to Suspicious Domain (dz47[.]myq-see[.]com)
+30832|
+2017645|DNS Query Domain .bit
+2015633|DYNAMIC_DNS Query to Abused Domain *.mooo.com
+2012327|All Numerical .cn Domain Likely Malware Related
+2014169|Query for .su TLD (Soviet Union) Often Malware Related
+2012171|DYNAMIC_DNS Query to 3322.org Domain
+2804380|DYNAMIC_DNS Query to a *.changeip.org Domain
+2014510|DYNAMIC_DNS Query to a *.suroot.com Domain
+2804633|DYNAMIC_DNS Query to a *.sytes.net Domain
+29119|
+1099120011|
+4000655|Observed DNS Query to Suspicious Domain (mr-wolf[.]myq-see[.]com)
+27932|
+4000552|Observed DNS Query to Suspicious Domain (merithertret[.]com)
+2018666|Possible Zeus P2P Variant DGA NXDOMAIN Responses July 11 2014
+2003195|Unusual number of DNS No Such Name Responses
+2814577|SkullSecurity Encrypted Shell Possible Tunnel 1
+2014488|DYNAMIC_DNS Query to a *.darktech.org Domain
+31705|
+15260|
+2810142|Win32/Vobfus.EK C&C DNS request
+1000024|
+4000650|Observed DNS Query to Suspicious Domain (down[.]smykttum[.]com)
+2812067|SOGU DNS CnC Channel TXT Lookup
+2014376|Possible Zeus .ru CnC Domain Generation Algorithm (DGA) Lookup Detected
+31655|
+2011409|DNS Query for Suspicious .co.cc Domain
+2012328|All Numerical .ru Domain Lookup Likely Malware Related
+2017319|SUSPICIOUS IRC - NICK and 3 Letter Country Code
+30833|
+2019402|Possible CVE-2014-6271 malicious DNS response
+2020110|DNS Query to .onion proxy Domain (browsetor.com)
+26919|
+2018876| DNS Query to .onion proxy Domain (onion.cab)
+29122|
+2015576|DNS Query to .onion proxy Domain (tor2web)
+2014779|DYNAMIC_DNS Query to 3322.net Domain *.2288.org
+4000716|Observed DNS Query to Suspicious Domain (wertstumbahn[.]ru)
+4000719|Observed DNS Query to Suspicious Domain (vesnarusural[.]ru)
+4000717|Observed DNS Query to Suspicious Domain (restavratormira[.]ru)
+4000651|Observed DNS Query to Suspicious Domain (down[.]zigyfdeb[.]com)
+2025105|DNS Query for Suspicious .ga Domain
+2025107|DNS Query for Suspicious .cf Domain
+2025106|DNS Query for Suspicious .ml Domain
+14777|
+4000718|Observed DNS Query to Suspicious Domain (petronasconn[.]ru)
+2800705|Microsoft Outlook iCal Meeting Request Malformed VEVENT Record Dereference Memory Corruption
+16443|
+2025104|DNS Query for Suspicious .gq Domain
+2016104|DNS Reply for unallocated address space - Potentially Malicious 1.1.1.0/24
+2000378|MS-SQL DOS attempt (08)
+10000002|
+4000647|Observed DNS Query to Suspicious Domain (ultimate-discounter[.]org)
+2022918|DYNAMIC_DNS Query to *.duckdns. Domain
+2018316|Zeus GameOver Possible DGA NXDOMAIN Responses
+4000639|Observed DNS Query to Suspicious Domain (hdr-group[.]org)
+2002945|Java Url Lib User Agent Web Crawl
+2018389|Possible TLS HeartBleed Unencrypted Request Method 3 (Inbound to Common SSL Port)
+16693|
+31934|
+1099120004|
+100000928|
+2012758|DYNAMIC_DNS Query to *.dyndns. Domain
+2015813|DNS Query Sinkhole Domain Various Families (Possible Infected Host)
+2800534|Multiple Vendors NTP Mode 7 Denial of Service
+2800554|Microsoft Windows SMTP Service MX Record Denial Of Service
+1000020|
+1000021|
+1000023|
+2271015|
+2017926|External IP Lookup / Tor Checker Domain (check.torproject .org in DNS lookup)
+4000535|Observed DNS Query to Browser Coinminer (ppoi[.]org)
+2100366|PING *NIX
+29262|
+2809495|MS RADIUS DoS Vulnerability CVE-2015-0015
+1500007|
+4000559|Observed DNS Query to Suspicious Domain (aifomtomyam69[.]org)
+2800021|Squid WCCP Message Receive Buffer Overflow
+2200026|
+2220019|
+2220004|
+2220008|
+2018336|Asprox Fake Ximian Evolution X-Mailer Header (XimianEvolution1.4.6)
+2220018|
+2020675|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2006402|Incoming Basic Auth Base64 HTTP Password detected unencrypted
+2010908|Mozilla User-Agent (Mozilla/5.0) Inbound Likely Fake
+2008470|Excessive NXDOMAIN responses - Possible DNS Backscatter or Domain Generation Algorithm Lookups
+396|
+2025098|DNS Query for Suspicious .gdn Domain
+2012522|DNS Query For XXX Adult Site Top Level Domain
+24094|
+6700|
+26554|
+2014701|Non-DNS or Non-Compliant DNS traffic on DNS port Opcode 6 or 7 set
+2823117|DNS TXT Response Contains URL
+5000011|
+4000677|Observed DNS Query to Suspicious Domain (atomictrivia[.]ru)
+4000753|Query to checkip.dyndns. Domain
+4000754|DYNAMIC_DNS Query to *.dyndns. Domain
+2012325|Obfuscated Javascript // ptth
+2020381|DDoS.XOR Checkin
+2006443|Possible SQL Injection Attempt DELETE FROM
+4000664|Observed DNS Query to Suspicious Domain (tracksummer[.]com)
+2025096|DNS Query to .onion proxy Domain (onion .casa in DNS Lookup)
+2403301|
+2101948|zone transfer UDP
+2014997|Pandora Usage
+12633|
+20540|
+17276|
+1394|
+2809030|Possibly Malicious DNS TXT Response Contains URL
+5100032|
+2803400|Microsoft DNS Server NAPTR Record Sign Extension Memory Corruption 6
+2014384|Microsoft Remote Desktop (RDP) Syn then Reset 30 Second DoS Attempt
+2100208|MISC Tunneling IP over DNS with NSTX
+2403305|
+2016150|Session Traversal Utilities for NAT (STUN Binding Response)
+2024003|Possible Phishing Verified by Visa title over non SSL Feb 17 2017
+2017166|Sibhost Zip as Applet Archive July 08 2013
+2012811|Query to a .tk domain - Likely Hostile
+2002087|Inbound Frequent Emails - Possible Spambot Inbound
+2013138|XML Style POST Of IMEI International Mobile Equipment Identity
+2025146|Query for Suspicious .gr.com Domain (gr .com in DNS Lookup)
+2008446|Excessive DNS Responses with 1 or more RR's (100+ in 10 seconds) - possible Cache Poisoning Attempt
+2021338|Possible Evil Redirector Leading to EK June 10 2015
+2814687|Possible Nuclear EK Landing URI struct Oct 30 2015
+2019837|SUSPICIOUS Possible Office Doc with Embedded VBA Project (Wide)
+5000010|
+2001377|Credit Card Number Detected in Clear (16 digit)
+2|
+2019203|Backdoor.Win32.PcClient.bal CnC (OUTBOUND) 3
+2808226|Trojan/Win32.Zbot Covert Channel port 53
+2403359|
+2100368|PING BSDtype
+2001375|Credit Card Number Detected in Clear (16 digit spaced)
+2002822|Wget User Agent
+2006447|Possible SQL Injection Attempt UPDATE SET
+2006446|Possible SQL Injection Attempt UNION SELECT
+2009295|Suspicious Mozilla User-Agent Likely Fake (Mozilla/5.0)
+2024042|Fake Virus Phone Scam Landing Mar 09 2017
+2023889|Tech Support Phone Scam Landing Feb 09 2017
+2024764|Suspicious Darkwave Popads Pop Under Redirect
+2000328|Outbound Multiple Non-SMTP Server Emails
+2024527|External IP Lookup Domain (ipapi .co in DNS lookup)
+2019410|SUSPICIOUS SMTP Attachment Inbound PPT attachment with Embedded OLE Object M5
+2019411|SUSPICIOUS SMTP Attachment Inbound PPT attachment with Embedded OLE Object M6
+2800833|IBM Lotus Domino nrouter.exe iCalendar MAILTO Stack Buffer Overflow
+2017887|SUSPICIOUS SMTP EXE - ZIP file with .com filename inside
+2023205|Windows dir Microsoft Windows DOS prompt command exit OUTBOUND
+2023207|Windows Microsoft Windows DOS prompt command Error not recognized
+2000562|OUTBOUND Suspicious Email Attachment
+2017609|PHP WebShell Embedded In PNG (INBOUND)
+2813007|Possible Win32/CMSBrute Traffic
+2016302|UPnP Discovery Search Response vulnerable UPnP device 1
+2011585|Avzhan DDOS Bot Outbound Hardcoded Malformed GET Request Denial Of Service Attack Detected
+2019176|Possible Astrum EK URI Struct
+2013256|Majestic12 User-Agent Request Outbound
+2016101|DNS Reply Sinkhole - Microsoft - 131.253.18.11-12
+2013170|HTTP Request to a *.cu.cc domain
+2013666|Likely Blackhole Exploit Kit Driveby ?page Download Secondary Request
+2023882|HTTP Request to a *.top domain
+2220006|
+2017885|SUSPICIOUS SMTP EXE - RAR file with .exe filename inside
+2017884|SUSPICIOUS SMTP EXE - ZIP file with .exe filename inside (Inbound)
+2017886|SUSPICIOUS SMTP EXE - EXE SMTP Attachment
+2021135|Suspicious X-mailer Synapse Inbound to SMTP Server
+2012983|Spamcop.net Block Message
+2001376|Credit Card Number Detected in Clear (16 digit dashed)
+2014828|UPS Spam Inbound
+2018308|Possible CVE-2014-1761 Inbound SMTP 2
+2012985|Sorbs.net Block Message
+2828233|Commonly Abused File Sharing Site Domain Observed (a .pomf .cat in DNS Lookup)
+399|
+2025100|HTTP POST Request to Suspicious *.gq domain
+2812282|Possible Successful Generic Phish Jul 29 2015
+2019403|Possible CVE-2014-6271 exploit attempt via malicious DNS
+2024888|OSX/Proton.C/D Domain (eltima .in in DNS Lookup)
+2017889|SUSPICIOUS SMTP EXE - ZIP file with .scr filename inside
+100000936|
+2010148|DHL Spam Inbound
+2019409|SUSPICIOUS SMTP Attachment Inbound PPT attachment with Embedded OLE Object M4
+2828523|Ovidiy/Reborn Stealer CnC Domain (rebornstealer .info in DNS Query)
+4000615|Observed DNS Query to Suspicious Domain (down[.]mysking[.]info)
+4000674|Observed DNS Query to Suspicious Domain (jqueryapi[.]info)
+4000579|Observed DNS Query to Suspicious Domain (dynainfo[.]info)
+4000578|Observed DNS Query to Suspicious Domain (drivsnfosproduits[.]info)
+30831|
+2012982|Abuseat.org Block Message
+2013995|PDF With Embedded U3D
+2012263|Hex Obfuscation of Script Tag % Encoding
+2010937|Suspicious inbound to mySQL port 3306
+2813008|Win32/CMSBrute/Pifagor Attempted Bruteforcing
+2024831|Observed IP Lookup Domain (l2 .io in DNS Lookup)
+2100402|Destination Unreachable Port Unreachable
+2801321|MHTML Attempted Script Execution
+2803657|Microsoft Excel SHRFMLA Biff Record Vulnerability Attempt
+2001583|Behavioral Unusual Port 1433 traffic Potential Scan or Infection
+2021966|Fake Virus Phone Scam Landing Oct 19 M4
+2021965|Fake Virus Phone Scam Landing Oct 19 M3
+2021288|Fake AV Phone Scam Landing June 16 2015 M4
+2024398|Possible Yahoo Phishing Landing - Title over non SSL
+2022603|Generic Fake Support Phone Scam Mar 8
+2814207|Successful Yahoo Credential Phish Oct 02 2015 
+2807101|Microsoft Internet Explorer Use-After-Free CVE-2013-3874
+2811577|Possible Virut DGA NXDOMAIN Responses (com)
+2016807|Eval With Base64.decode seen in DOL Watering Hole Attack 05/01/13
+2014926|PDF embedded in XDP file (Possibly Malicious)
+2021575|Possible BIND9 DoS CVE-2015-5477 M4
+2013172|DNS Query for a Suspicious *.cu.cc domain
+2815172|Successful Apple Phish M1 Dec 2 2015
+4000001|password detected in cleartext
+2271004|
+4000306|Kasperagent C2 Beacon 1
+2017607|PHP WebShell Embedded In GIF (INBOUND)
+2010525|Possible HTTP 500 XSS Attempt (External Source)
+5100040|
+2018904|Session Traversal Utilities for NAT (STUN Binding Request obsolete rfc 3489 CHANGE-REQUEST attribute change IP flag false change port flag false)
+2013029|Java User Agent
+2015807|Backdoor.Win32.Pushdo.s Checkin
+2809849|Cobalt Strike Covert DNS CnC Channel TXT Response (tcp)
+4000577|Observed DNS Query to Suspicious Domain (drivsinfosproduits[.]info)
+4000576|Observed DNS Query to Suspicious Domain (drivinfosproduits[.]info)
+2013360|Wordpress possible Malicious DNS-Requests - photobucket.com.* 
+2013357|Wordpress possible Malicious DNS-Requests - wordpress.com.* 
+2017233|Obfuscated Split String (Double Q) 1
+10004000|
+2022547|Possible CVE-2015-7547 Large Response to A/AAAA query
+2001582|Behavioral Unusual Port 1434 traffic Potential Scan or Infection
+2025102|HTTP POST Request to Suspicious *.ml Domain
+28928|
+2016112|Sweet Orange Java obfuscated binary (1)
+20121207|
+31825|
+4000613|Observed DNS Query to Suspicious Domain (linturefa[.]ru)
+4000665|Observed DNS Query to Suspicious Domain (differentia[.]ru)
+2403307|
+30825|
+30840|
+31938|
+2021021|Kaspersky Sinkhole DNS Reply
+30829|
+384|
+366|
+30838|
+30197|
+270|
+2014492|DYNAMIC_DNS Query to a *.dtdns.net Domain
+2014573|DNS Query for a known malware domain (sektori.org)
+2828890|SmartMiner Reporting Via GoogleAnalytics
+2824939|Flash Player Heap Overflow (CVE-2017-2992)
+2009701|DNS BIND 9 Dynamic Update DoS attempt
+2022642|DNS Query to a *.ngrok domain (ngrok.io)
+2022641|DNS Query to a *.ngrok domain (ngrok.com)
+2022332|DNS Query to .onion proxy Domain (onion.link)
+2023883|Query to a *.top domain - Likely Hostile
+2829422|Mirai Variant DNS Lookup M16
+2828522|Ovidiy/Reborn Stealer CnC Domain (rebornstealer .ru in DNS Query)
+4000611|Observed DNS Query to Suspicious Domain (weksrubaz[.]ru)
+30899|
+2025141|Injected WP Keylogger/Coinminer Domain Detected (cloudflare .solutions in DNS Lookup)
+2024938|Downeks/Quasar DNS Lookup (topsite .life)
+2008420|HTTP GET Request on port 53 - Very Likely Hostile
+2016619|DNS Query Sykipot Domain vatdex.com
+19471|
+2013856|Query for Suspicious .cz.tf Domain
+2021020|Team Cymru Sinkhole DNS Reply
+2019822|WinHttpRequest Downloading EXE
+15935|
+27247|
+2023518|Android Adups Firmware DNS Query 4
+2016873|Unsupported/Fake Internet Explorer Version MSIE 2.
+2221000|
+4000699|Observed DNS Query to Suspicious Domain (taosha[.]cc)
+2012956|DNS Query for a Suspicious *.co.tv domain
+2024892|OSX/Proton.C/D Domain (handbrake .cc in DNS Lookup)
+2018359|GENERIC SUSPICIOUS POST to Dotted Quad with Fake Browser 2
+22115|
+2829336|Commonly Abused File Sharing Site Domain Observed (mixtape .moe in DNS Lookup)
+2016872|Unsupported/Fake Internet Explorer Version MSIE 3.
+2020565|Dropbox DNS Lookup - Possible Offsite File Backup in Use
+1701017021|
+2012936|ZmEu Scanner User-Agent Inbound
+2010794|DFind w00tw00t GET-Requests
+2828818|Cyberbit/PSS Staging Server Domain (eastafro .net in DNS Lookup)
+6969700|
+2009767|Multiple NBTStat Query Responses to External Destination, Possible Automated Windows Network Enumeration
+2821824|Possible Office 365 Phishing Landing Aug 24 2016
+20136370|
+20121179|
+2013504|GNU/Linux APT User-Agent Outbound likely related to package management
+1321|
+2003595|exe download via HTTP - Informational
+2024828|Observed DNS Query to Browser Coinminer (crypto-loot[.]com)
+2828746|Sigma Ransomware Decryptor/Payment Domain (ypg7rfjvfywj7jhp in DNS Lookup)
+5800268|
+2003387|dialno Dialer User-Agent (dialno)
+2014474|JAVA - Java Class Download
+2800836|CA Products UDP Discovery Service Remote Buffer Overflow 2
+2014906|.exe File requested over FTP
+2200040|
+2009130|Overtoolbar.net Backdoor ICMP Checkin Request
+2024018|Common Paypal Phishing URI Feb 24 2017
+2022618|Possible Paypal Phishing Domain Mar 14 2016
+2023065|Possible Square Enix Phishing Domain Aug 15 2016
+2019158|Possible Malicious Invoice EXE
+2013743|DYNAMIC_DNS Query to a Suspicious no-ip Domain
+27812|
+17484|
+2016778|Query to a *.pw domain - Likely Hostile
+31977|
+4000620|Observed DNS Query to Suspicious Domain (land[.]pckeeper[.]software)
+15|
+2022607|Generic Fake Support Phone Scam Mar 9 M3
+2017777|Possible Android InMobi SDK SideDoor Access takeCameraPicture
+2803105|ISC BIND RRSIG RRsets Denial of Service UDP 1
+20000000|
+2016413|Reply Sinkhole - sinkhole.cert.pl 148.81.111.111
+2828445|External IP Address Lookup (howtofindmyipaddress .com)
+2700013|
+5800004|
+2013058|Outbound PHP User-Agent
+1099120241|
+1099126370|
+2403348|
+2016766|PDF - Acrobat Enumeration - var PDFObject
+2016765|PDF - Acrobat Enumeration - pdfobject.js
+2403484|
+2000381|EXPLOIT MS-SQL DOS bouncing packets
+2806024|Android/Plankton.I Checkin
+4000643|Observed DNS Query to Suspicious Domain (safesurfing[.]me)
+4000645|Observed DNS Query to Suspicious Domain (teddysave[.]me)
+2018275|Linux/Onimiki DNS trojan activity long format (Outbound)
+2015955|PDF /FlateDecode and PDF version 1.1 (seen in pamdql EK)
+2018936|Suspicious X-mailer Synapse
+13364|
+2010067|Data POST to an image file (jpg)
+2824134|Successful Generic Phish (Meta HTTP-Equiv Refresh) Dec 29 2016
+2022239|EXE Download Request To Wordpress Folder Likely Malicious
+2824324|Possible Adobe Reader Memory Corruption Attempt (CVE-2017-2964)
+2829216|APT32 DNS Tunneling Domain 2
+2003635|Generic Password Stealer User Agent Detected (RookIE)
+2800445|IBM DB2 Database Server Invalid Data Stream Denial of Service (Published Exploit)
+26918|
+2015675|SimpleTDS go.php (sid)
+100000864|WEB-CLIENT tsuserex.dll COM Object Instantiation Vulnerability
+4000619|Observed DNS Query to Suspicious Domain (kometa-stat[.]ru)
+4000610|Observed DNS Query to Suspicious Domain (tabidzuwek[.]ru)
+28404|
+2017197|JNLP embedded file
+4000612|Observed DNS Query to Suspicious Domain (mifastubiv[.]ru)
+2821349|Adware.QkSee/WinSaber Checkin
+2802104|MOBILE iPhone securityd User-Agent Detected
+5755918|
+2657|
+2016587|Redkit Landing Page URL March 03 2013
+2022628|Evil Redirect Leading to EK Mar 18 2016
+2024035|WS/JS Downloader Mar 07 2017 M1
+2821881|Suspicious Dropbox Page - Possible Phishing Landing
+2024396|Possible OWA Mail Phishing Landing - Title over non SSL
+2829073|External IP Lookup Domain (iplogger .ru in DNS lookup)
+2003012|TLS/SSL Server Certificate Exchange on Unusual Port
+624|
+2022053|Likely Evil EXE download from MSXMLHTTP non-exe extension M2
+2025183|Python Monero Miner CnC DNS Query
+2402001|
+2402000|
+2010967|SHOW TABLES SQL Injection Attempt in URI
+22063|
+39320|
+32414|
+2024646|Fake Adobe Flash Update Landing - Title over non SSL
+2003410|FTP Login Successful
+1019|
+20110039|
+4000722|Observed DNS Query to Browser Coinminer (coinblind[.]com)
+2021022|Wapack Labs Sinkhole DNS Reply
+2018455|DNS Reply Sinkhole - Anubis - 195.22.26.192/26
+2016775|Generic HTTP EXE Upload Outbound
+2002027|IRC PING command
+4000654|Observed DNS Query to Suspicious Domain (t[.]pkqqsl[.]com)
+26915|
+2000545|NMAP -f -sV
+2000537|NMAP -sS window 2048
+2015856|Attempt to retrieve Cisco Config via TFTP (CISCO-CONFIG-COPY)
+2809444|Possible Asus WRT LAN Backdoor Command Execution
+2017918|Possible NTP DDoS Inbound Frequent Un-Authed MON_LIST Requests IMPL 0x02
+2801364|Suspicious user agent GTB
+19642|
+28951|
+5800077|
+2014545|TDS Sutra - page redirecting to a SutraTDS
+2011518|Outbound AlphaServer User-Agent (Powered By 64-Bit Alpha Processor)
+2009131|Overtoolbar.net Backdoor ICMP Checkin Response
+10000019|
+2020305|MC-SQLR Response Outbound Possible DDoS Participation
+2018406|Possible Grams DarkMarket Search DNS Domain Lookup
+15306|
+2014363|Lookup of Algorithm Generated Zeus CnC Domain (DGA)
+2022894|SUSPICIOUS Firesale gTLD IE Flash request to set non-standard filename (some overlap with 2021752)
+4000539|Observed DNS Query to Browser Coinminer (coin-have[.]com)
+567|
+2829024|APT28 XAgent Domain (fsportal .net in DNS Lookup)
+271104034|
+4000618|Observed DNS Query to Suspicious Domain (ftp[.]oo000oo[.]me)
+2025138|localtunnel Reverse Proxy Domain (localtunnel .me in DNS Lookup)
+4000622|Observed DNS Query to Suspicious Domain (e[.]googlex[.]me)
+2809636|Android/Locker.Q Checkin
+2001608|Likely Porn
+2001352|ejaculation
+2001351|masturbation
+4000566|Observed DNS Query to Suspicious Domain (stopspam[.]io)
+2018918|possible Xiaomi phone data leakage DNS
+2505|
+2010517|Possible HTTP 404 XSS Attempt (Local Source)
+4000676|Observed DNS Query to Suspicious Domain (smkijgdnkso3d[.]net)
+4000630|Observed DNS Query to Suspicious Domain (76jdd2ir2embyv47[.]onion)
+4000631|Observed DNS Query to Suspicious Domain (cwwnhwhlz52maqm7[.]onion)
+4000632|Observed DNS Query to Suspicious Domain (gx7ekbenv2riucmf[.]onion)
+4000633|Observed DNS Query to Suspicious Domain (xxlvbrloxvriy2c5[.]onion)
+2001972|Behavioral Unusually fast Terminal Server Traffic Potential Scan or Infection (Inbound)
+1512009266|
+2829239|Qarallex RAT Onion Domain
+2021749|Possible Upatre/Dyre/Kegotip SSL Cert Sept 8 2015
+4000720|Observed DNS Query to Suspicious Domain (serfilefnom[.]ru)
+5800551|
+4000641|Observed DNS Query to Suspicious Domain (icloudsrv[.]info)
+4000640|Observed DNS Query to Suspicious Domain (icloudsrv[.]com)
+2101781|dildo
+30515|
+2017783|Possible Android InMobi SDK SideDoor Access registerMicListener
+20120685|
+2828268|Malicious Domain CStrike C2 (blockbitcoin .com in DNS Lookup)
+5000015|
+4000686|Observed DNS Query to Suspicious Domain (m[.]aedxdrcb[.]com)
+4000688|Observed DNS Query to Suspicious Domain (sys[.]aedxdrcb[.]com)
+4000685|Observed DNS Query to Suspicious Domain (sys[.]hdyfhpoi[.]com)
+2828937|PowerRatankba DNS Lookup 17
+2015529|Googlebot User-Agent Outbound (likely malicious)
+2809493|MS RADIUS DoS Vulnerability CVE-2015-0015
+2012398|Hex Obfuscation of replace Javascript Function % Encoding
+2012266|Hex Obfuscation of unescape % Encoding
+2012607|Lowercase User-Agent header purporting to be MSIE
+2011891|Possible Microsoft Internet Explorer CSS Tags Remote Code Execution Attempt
+2011892|Microsoft IE CSS Clip Attribute Memory Corruption (POC SPECIFIC)
+2003614|WinUpack Modified PE Header Inbound
+1367|
+2013355|Wordpress possible Malicious DNS-Requests - blogger.com.* 
+2018826|DYNAMIC_DNS Query to *findhere.org Domain (Sitelutions)
+2016670|SQL Errors in HTTP 200 Response (SqlException)
+2023517|Android Adups Firmware DNS Query 3
+2100566|PCAnywhere server response
+2018310|Possible CVE-2014-1761 Inbound SMTP 4
+1141|
+2016067|Possible BitCoin Miner User-Agent (miner)
+2020786|Backdoor family PCRat/Gh0st CnC traffic (OUTBOUND) 85
+2019235|Pushdo v3 Checkin
+2019692|Possible Emotet DGA NXDOMAIN Responses
+2828656|Microsoft Live Account Verification Phishing Landing Nov 20 2017
+2210050|
+2010140|Vuze BT UDP Connection
+2821684|DNP3 Warm Restart
+2230000|
+2015634|DYNAMIC_DNS HTTP Request to Abused Domain *.mooo.com
+10000005|
+2210008|
+2404075|
+2404040|
+2404038|
+2404039|
+2404077|
+2404073|
+2404081|
+2011039|Possible INSERT VALUES SQL Injection Attempt
+4000614|Observed DNS Query to Suspicious Domain (qarallax[.]com)
+4000571|Observed DNS Query to Suspicious Domain (coneptor[.]qarallax[.]com)
+1701010996|
+2403315|
+2024281|Known Hostile Domain ant.trenz .pl Lookup
+26400|
+2002948|External Windows Update in Progress
+2002949|Windows Update in Progress
+13974|
+2024645|Fake Adobe Flash Update Landing - Title over non SSL
+2021978|NetWire / Ozone / Darktrack Alien RAT - Client KeepAlive
+10002001|
+2023756|Possible Chrome WebEx Extension RCE Attempt
+4000667|Observed DNS Query to Suspicious Domain (apis[.]groupteamapi[.]com)
+2808709|suspicious X-Mailer (Blat v2)
+15147|
+2804853|User-Agent (MyIE2)
+2010678|Win32.OnLineGames User-Agent (BigFoot)
+469|
+2012149|MS10-090 IE CSS Exploit Metasploit POC Specific Unicoded
+2019613|Office Document Download Containing AutoOpen Macro
+2210034|
+2011732|Possible VNC ClientCutText Message Denial of Service/Memory Corruption Attempt
+2018170|Application Crash Report Sent to Microsoft
+5000002|
+2100230|Jabber/Google Talk Outgoing Traffic
+32612|
+2221016|
+2406794|
+2019835|SUSPICIOUS Possible Office Doc with Embedded VBA Project
+1500005|
+4000681|Observed DNS Query to Suspicious Domain (gt[.]rogsob[.]com)
+2200025|
+2820762|Possible Amazon Phishing Domain Jun 20 2016
+2019714|Terse alphanumeric executable downloader high likelihood of being hostile
+4000652|Observed DNS Query to Suspicious Domain (gp[.]miaoxia123[.]com)
+4000696|Observed DNS Query to Suspicious Domain (tongji[.]xyzs[.]com)
+4000683|Observed DNS Query to Suspicious Domain (qj[.]hoyebs[.]com)
+4000694|Observed DNS Query to Suspicious Domain (software[.]xyzs[.]com)
+9000006|
+2018342|DRIVEBY Goon/Infinity EK Landing Mar 31 2014
+2010595|User-Agent (???)
+6699|
+30918|
+2020809|Volatile Cedar Win32.Explosive CnC Beacon 3
+2019284|Output of id command from HTTP server
+2025095|.onion proxy Domain (onion .plus in DNS Lookup)
+24097|
+2528|
+2220000|
+2012112|Possible Encoded %90 NOP SLED
+4000007|nesxlh POST
+4000006|Suspicious User-Agent (Backdoor.Win32.Rusrushel.A)
+2804419|Riskware.Win32.SoftonicDownloader.AMN!A2 Install
+6000009|
+2403353|
+2814992|fake .jpg encrypted binary download by VBA macro
+2210007|
+2017162|SipCLI VOIP Scan
+2100162|SIP 401 Unauthorized Flood
+2009700|Multiple Unauthorized SIP Responses UDP
+2017364|SUSPCIOUS Non-standard base64 charset used for encoding
+2403306|
+1101004|
+4000690|Observed DNS Query to Suspicious Domain (profetest[.]ru)
+2012730|Known Hostile Domain ilo.brenz .pl Lookup
+26399|
+4000678|Observed DNS Query to Suspicious Domain (17tahun[.]com)
+4000684|Observed DNS Query to Suspicious Domain (log[.]appsolo[.]net)
+2018789|TLS possible TOR SSL traffic
+2522462|
+2522428|
+2522466|
+2522460|
+2522468|
+2522448|
+2522458|
+2522446|
+2809308|VBScript Use-After-Free CVE-2014-6363
+2802821|Adobe Audition Session File Stack Buffer Overflow 2
+2014920|Microsoft Online Storage Client Hello TLSv1 Possible SkyDrive (2)
+20140023|
+2013296|Free SSL Certificate Provider (StartCom Class 1 Primary Intermediate Server CA)
+2023214|Windows quser Microsoft Windows DOS prompt command exit OUTBOUND
+2016423|Reply Sinkhole - Georgia Tech (2)
+2012729|Known Hostile Domain .ntkrnlpa.info Lookup
+28400|
+2807985|Possible Internet Explorer RCE CVE-2014-1776
+2230019|
+2013935|Win32.Zbot.chas/Unruy.H Covert DNS CnC Channel TXT Response
+2018642|DNS Reply Sinkhole Microsoft NO-IP Domain
+2821883|Suspicious Google Docs Page - Possible Phishing Landing
+2100449|Time-To-Live Exceeded in Transit
+2016867|Backdoor.Win32.Pushdo.s Checkin
+2220005|
+4000565|Observed DNS Query to Suspicious Domain (lmodr[.]biz)
+4000567|Observed DNS Query to Suspicious Domain (molapple[.]ru)
+2260002|
+2024933|IoT_reaper DNS Lookup M4
+4000735|Observed DNS Query to Browser Coinminer (webmine[.]cz)
+2800778|Microsoft Internet Explorer JPEG Rendering Buffer Overflow
+2816897|Possible External IP Address Lookup SSL Cert (iplocation.net)
+2812875|External IP Lookup - iplocation.com
+2014341|Installshield One Click Install User-Agent Toys File
+2013483|DNS query for Morto RDP worm related domain jifr.co.cc
+2013496|DNS query for Morto RDP worm related domain jifr.co.be
+2013482|DNS query for Morto RDP worm related domain jaifr.net
+2016586|Query to a *.opengw.net Open VPN Relay Domain
+4000679|Observed DNS Query to Suspicious Domain (fajarweb[.]com)
+4000700|Observed DNS Query to Suspicious Domain (aps[.]kemoge[.]net)
+2017005|Possible Microsoft Office PNG overflow attempt invalid tEXt chunk length
+2800838|Adobe Shockwave Director tSAC Chunk Parsing Memory Corruption
+2812465|Suspicious User-Agent (User-Agent)
+4000642|Observed DNS Query to Suspicious Domain (judgebear[.]pro)
+2025218|Malicious Chrome Extension Domain Request (stickies .pro in DNS Lookup)
+2009702|DNS Update From External net
+2820115|Possible EDGE UAF (CVE-2016-0184)
+2828688|IoT FamilyHub UA (Tizen)
+1129|
+2020673|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2020674|FREAK Weak Export Suite From Client (CVE-2015-0204)
+16300|
+2016714|Possible Backslash Escaped UTF-8 0c0c Heap Spray
+5800424|
+2025256|Observed Evrial Domain (cryptoclipper .ru in DNS Lookup)
+2014002|Fake Variation of Mozilla 4.0 - Likely Trojan
+2011035|SQL Injection BULK INSERT in URI to Insert File Content into Database Table
+2012728|Known Hostile Domain citi-bank.ru Lookup
+4000695|Observed DNS Query to Suspicious Domain (interface[.]xyzs[.]com)
+2012080|Windows-Based OpenSSL Tunnel Connection Outbound 3
+4000636|Observed DNS Query to Suspicious Domain (iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea[.]com)
+5000009|
+5000000|
+2811539|Possible Tinba DGA NXDOMAIN Responses (us)
+2828375|Cerber Domain Observed (dmhl2o .bid in DNS Lookup)
+2828451|Cerber Domain Observed (tx0igu .bid in DNS Lookup)
+4000538|Observed DNS Query to Browser Coinminer (coinerra[.]com)
+2403480|
+2403422|
+2403544|
+2021158|Angler EK Payload URI Struct May 28 2015 M1
+10000004|
+15699|
+485|
+2829347|Master IP CAM 01 Hardcoded Password for Root Account (CVE-2018-5723)
+5102322|
+5102323|
+2403382|
+2403386|
+2403385|
+2403368|
+2011716|Sipvicious User-Agent Detected (friendly-scanner)
+2008578|Sipvicious Scan
+2025101|HTTP POST Request to Suspicious *.ga Domain
+2403398|
+2403391|
+2403392|
+2403393|
+2019327|Likely Bot Nick in IRC (Country Code ISO 3166-1 alpha-3
+2018005|Possible Upatre Downloader SSL certificate (fake org)
+2002752|Reserved Internal IP Traffic
+4000680|Observed DNS Query to Suspicious Domain (gt[.]yepodjr[.]com)
+28069|
+2100227|SNMP trap Format String detected
+2012089|Possible Call with No Offset UDP Shellcode
+2008038|Suspicious User-Agent (Mozilla/4.0 (compatible ICS))
+2012269|Hex Obfuscation of substr % Encoding
+2020116|DNS Query to .onion proxy Domain (onion.to)
+29653|
+4000675|Observed DNS Query to Suspicious Domain (20mbweb[.]com)
+2403358|
+2022520|Possible HTA Application Download
+30514|
+24892|
+4000663|Observed DNS Query to Suspicious Domain (hummercenter[.]com)
+2013459|Facebook Like Button Clicked (2)
+2007824|Banker.anv Generally Suspicious User-Agent (CustomExchangeBrowser)
+2807609|PDF Malformed Pattern Entry
+2101447|MS Remote Desktop Request RDP
+2001330|RDP connection confirm
+2023753|MS Terminal Server Traffic on Non-standard Port
+4000002|password detected in cleartext
+2019415|SSLv3 inbound connection to server vulnerable to POODLE attack
+2101616|named version attempt
+17524|
+2020959|CryptoWall .onion Proxy Domain (7oqnsnzwwnm6zb7y)
+2013843|DNS Query to a Suspicious *.orge.pl Domain
+2010228|Suspicious Microsoft Windows NT 6.1 User-Agent Detected
+2809279|PUA Win32/ShopperPro.A Checkin
+2406771|
+2406770|
+2406769|
+2829026|APT28 XAgent Domain (movieultimate .com in DNS Lookup)
+2025081|Patchwork Domain (rannd .org in DNS Lookup)
+2024986|SunOrcal Reaver Domain Observed (tashdqdxp .com in DNS Lookup)
+2403303|
+5101002|
+2804907|Microsoft Excel corrupted/hostile file download invalid Window2 BIFF record
+5000005|
+2403468|
+2002992|Rapid POP3 Connections - Possible Brute Force Attack
+2403384|
+2807718|Adobe Reader Double Free CVE-2014-0493 2
+2018430|SUSPICIOUS Possible automated connectivity check (www.google.com)
+2008210|Misspelled Mozilla User-Agent (Mozila)
+4000584|Observed DNS Query to Suspicious Domain (pullinfo[.]info)
+4000582|Observed DNS Query to Suspicious Domain (pixieinfo[.]info)
+2403304|
+2403302|
+2012709|MS Remote Desktop Administrator Login Request
+2808840|WebSocket Session Initiation Response
+2810645|Worm.Mydoom spreading via SMTP 29
+4000670|Observed DNS Query to Suspicious Domain (08[.]super5566[.]com)
+2024987|SunOrcal Reaver Domain Observed (weryhstui .com in DNS Lookup)
+20140020|
+2406338|
+2013770|USPS Spam/Trojan Executable Download
+2013566|Tom Sawyer Possible Memory Corruption Attempt Format String Function Call
+2014896|Possible IBM Lotus iNotes Upload Module possible ActiveX Control Attachment_Times Method Access Buffer Overflow Attempt
+2012816|EXE Using Suspicious IAT ZwUnmapViewOfSection Possible Malware Process Hollowing
+2015036|Possible Crystal Reports Viewer Activex Control ServerResourceVersion Insecure Method Access
+2010657|EasyMail Object SMTP Component Buffer Overflow Function call Attempt
+2010658|EasyMail Object IMAP4 Component Buffer Overflow Function call Attempt
+2015643|Possible Electronic Arts SnoopyCtrl ActiveX Control Buffer Overflow
+2015644|Possible Electronic Arts SnoopyCtrl ActiveX Control Buffer Overflow 2
+2015490|Possible beSTORM ActiveX (WinGraphviz.dll) Remote Heap Overflow
+2025079|Mirai Variant Domain (blacklister .nl in DNS Lookup)
+2828816|Cyberbit/PSS CnC Domain (time-local .net in DNS Lookup)
+2400016|
+2404018|
+2404019|
+2404041|
+2405036|
+2404020|
+2404037|
+2020637|FREAK Weak Export Suite From Client (CVE-2015-0204)
+2013784|Windows Mobile 7.0 User-Agent detected
+2825163|Successful Generic Phish (Redirect to Download PDF) Feb 28 2017
+2800567|Oracle MySQL Database COM_FIELD_LIST Buffer Overflow
+2801334|Adobe PDF Memory Corruption /Ff Dictionary Key Corruption
+1616|
+2002995|Rapid IMAPS Connections - Possible Brute Force Attack
+2020962|CozyDuke APT HTTP Checkin
+2006546|LibSSH Based Frequent SSH Connections Likely BruteForce Attack
+2403314|
+2500114|
+2014633|phpMyAdmin setup.php Remote File inclusion Attempt
+2500112|
+2403326|
+2403328|
+2500070|
+2012966|Possible %0d%0d%0d%0d Heap Spray Attempt
+2810909|.zip Download from GoogleAPI with Minimal headers Possible Trojan.MSIL.Banload.DD Dropping Spy.Banker
+2281|
+2023221|Windows WMIC PROCESS get Microsoft Windows DOS prompt command exit OUTBOUND
+2023220|Windows WMIC NIC get Microsoft Windows DOS prompt command exit OUTBOUND
+4000662|Observed DNS Query to Suspicious Domain (clickmsummer[.]com)
+4000673|Observed DNS Query to Suspicious Domain (panel[.]minecoins18[.]com)
+2523332|
+2523340|
+2523310|
+2523344|
+2523324|
+2523238|
+2018378|Possible OpenSSL HeartBleed Large HeartBeat Response (Server Init Vuln Client)
+2210006|
+2009897|Possible Windows executable sent when remote host claims to send html content
+2008411|LDPinch SMTP Password Report with mail client The Bat!
+2001795|Excessive SMTP MAIL-FROM DDoS
+2024934|IoT_reaper DNS Lookup M5
+1100021|
+2021181|Fake AV Phone Scam Landing June 4 2015 M1
+2020426|Double-Encoded Reverse Base64/Dean Edwards Packed JavaScript Observed in Unknown EK Feb 16 2015 b64 1 M2
+2021183|Fake AV Phone Scam Landing June 4 2015 M3
+2020725|RIG EK Landing March 20 2015
+2001317|Webhancer Data Upload
+2015563|Possible BarCodeWiz BarcodeWiz.dll ActiveX Control Barcode Method Remote Buffer Overflow Attempt
+2015564|Possible BarCodeWiz (BARCODEWIZLib.BarCodeWiz) ActiveX Control Buffer Overflow
+2803637|Sharepoint CalendarDate XSS Attempt
+2403373|
+2012296|Modified Sipvicious Asterisk PBX User-Agent
+2403339|
+2403336|
+2403337|
+2403351|
+2403375|
+2017072|Blackhole/Cool plugindetect in octal Jun 26 2013
+2022124|Sharik/Smoke Loader Microsoft Connectivity Check
+2009152|PHP Generic Remote File Include Attempt (HTTPS)
+2829129|Xtrat/XtremeRAT Google PING Connectivity Check
+2808717|Netcore Router Backdoor Usage
+2023016|SUSPICIOUS Path to BusyBox
+2003397|Zango Seekmo Bar Spyware User-Agent (Seekmo Toolbar)
+2019842|Possible Internet Explorer VBscript CVE-2014-6332 multiple redim preserve
+721|
+2016856|Android Dalvik Executable File Download
+2025365|
+2825054|Dropbox Shared Document Phishing Landing Feb 21 2017
+2025206|Dropbox Phishing Landing 2018-01-18
+7|
+2014612|TDS Sutra - cookie is set RULEZ
+254|
+2001379|Credit Card Number Detected in Clear (15 digit spaced)
+2400007|
+2403396|
+2017899|Possible PDF Dictionary Entry with Hex/Ascii replacement
+2812742|APT WinHTTPHelper/Tabuvys CnC Beacon
+31976|
+2024106|Win32/Teslacrypt Ransomware .onion domain (7tno4hib47vlep5o)
+2016903|Suspicious User-Agent (DownloadMR)
+26848|
+2404168|
+2011295|Butterfly/Mariposa Bot client init connection
+2404160|
+2015895|Unknown_comee.pl - POST with stpfu in http_client_body
+2016223|Andromeda Checkin
+2013289|MOBILE Apple device leaking UDID from SpringBoard
+2011032|HTTP POST invalid method case
+2810642|Worm.Mydoom spreading via SMTP 26
+2230015|
+2009930|User-Agent (User Agent) - Likely Hostile
+449|
+382|
+19274|
+2012272|Hex Obfuscation of eval % Encoding
+2001978|SSH session in progress on Expected Port
+2500068|
+2500054|
+2500052|
+2500090|
+2500058|
+12798|
+2825368|Successful Instagram Phish Mar 13 2017
+16431|
+2012611|Suspicious User-Agent Sample
+3472|
+2001378|Credit Card Number Detected in Clear (15 digit)
+4000575|Observed DNS Query to Suspicious Domain (disorderstatus[.]ru)
+21546|
+2826538|Core Bot IP Check
+997|
+2020785|Backdoor family PCRat/Gh0st CnC traffic (OUTBOUND) 84
+2024816|CCleaner Backdoor DGA Jan 2018
+2024817|CCleaner Backdoor DGA Feb 2018
+2800414|Fujitsu SystemcastWizard Lite PXEService UDP Handling Buffer Overflow
+2825352|External IP Lookup Domain (freegeiop .net in DNS lookup)
+2810643|Worm.Mydoom spreading via SMTP 27
+200000001|
+2017015|DropBox User Content Access over SSL
+2812087|Nuclear EK Landing URI Struct Jul 21 M2
+2828662|Gootkit Domain (ssl256cert .com in DNS Lookup)
+2828661|Gootkit Domain (sslsecure256 .com in DNS Lookup)
+2828639|TCP DNS Query Domain .bit M2 (Namecoin)
+2013290|MOBILE Apple device leaking UDID from SpringBoard via GET
+100000228|Winamp PlayList buffer overflow attempt
+2003020|TLS/SSL Encrypted Application Data on Unusual Port
+2002160|CoolWebSearch Spyware (Feat)
+2012933|Smilebox Software/Adware Checkin
+2010938|Suspicious inbound to mSQL port 4333
+4000563|Observed DNS Query to Suspicious Domain (search[.]feedvertizus[.]com)
+2816393|Possible Phishing Landing Obfuscation 2016-02-26
+2023055|Tech Support Phone Scam Landing (err.mp3) Aug 12 2016
+385|
+2023210|Windows net statistics server Microsoft Windows DOS prompt command exit OUTBOUND
+2013054|PyCurl Suspicious User Agent Outbound
+2403329|
+2019239|Possible CVE-2014-6271 Attempt in HTTP Cookie
+2019285|Possible bash shell piped to dev tcp Inbound to WebServer
+2019232|Possible CVE-2014-6271 Attempt in Headers
+2019314|Possible bash shell piped to dev udp Inbound to WebServer
+2023212|Windows driverquery -si Microsoft Windows DOS prompt command exit OUTBOUND
+2522524|
+2522536|
+2522520|
+2522538|
+2522529|
+2522546|
+2522562|
+2018277|Possible WordPress Pingback DDoS in Progress (Inbound)
+2016061|Possible WordpressPingbackPortScanner detected 
+2221029|
+100000938|
+2050|
+2804809|DYNAMIC_DNS Query to *.gicp.net Domain
+312|
+2100312|ntpdx overflow attempt
+2014778|Bebloh connectivity check
+4000724|Observed DNS Query to Browser Coinminer (minero[.]pw)
+2829409|Mirai Variant DNS Lookup M3
+4000573|Observed DNS Query to Suspicious Domain (8aa51d334c7f8aa5[.]pw)
+2829413|Mirai Variant DNS Lookup M7
+2024779|DNS Query For Browser Cryptocurrency Mining Domain
+4000682|Observed DNS Query to Suspicious Domain (qj[.]hoyow[.]com)
+2012932|Suspicious Email Attachment Possibly Related to Mydoom.L@mm
+2019730|GENERIC Possible IE Memory Corruption CollectGarbage with DOM Reset
+2815781|Possible Successful Generic Phish Jan 14 2016
+4000706|Observed DNS Query to Suspicious Domain (api7[.]wipmania[.]com[.]wipmsc[.]ru)
+24378|
+2022584|Possible SSLv2 Negotiation in Progress Client Master Key SSL2_RC4_128_WITH_MD5
+2022585|Possible SSLv2 Negotiation in Progress Client Master Key SSL2_RC2_128_CBC_WITH_MD5
+2018585|Supermicro BMC Password Disclosure 1
+2403521|
+2022587|Possible SSLv2 Negotiation in Progress ClientMaster Key SSL2_IDEA_128_CBC_WITH_MD5
+2010493|Non-Allowed Host Tried to Connect to MySQL Server
+2010144|Vuze BT UDP Connection (5)
+2022082|External IP Lookup ip-api.com
+2822354|DNS Query to server.com (Possible Misconfiguration)
+2022580|MySQL Malicious Scanning 2
+2013497|MS Terminal Server User A Login, possible Morto inbound
+2024038|Possible Apache Struts OGNL Expression Injection (CVE-2017-5638)
+2010494|Multiple MySQL Login Failures Possible Brute Force Attempt
+2017640|Possible Encrypted Webshell Download
+2014534|OSX/Flashback.K/I User-Agent
+2006372|Bittorrent P2P Client User-Agent (Bittorrent/5.x.x)
+2011710|Bittorrent P2P Client User-Agent (BitComet)
+2811141|WORM.WIN32/GOLDRV.A Checkin
+2016173|Generic -POST To gate.php w/Extended ASCII Characters (Likely Zeus Derivative)
+2822697|MalDoc Downloader Retrieving Payload Oct 14
+2404161|
+2404401|
+2404402|
+2001891|Suspicious User Agent (agent)
+2014543|TDS Sutra - request in.cgi
+2019137|Possible WP CuckooTap Arbitrary File Download
+2520032|
+2522032|
+2018388|Possible TLS HeartBleed Unencrypted Request Method 4 (Inbound to Common SSL Port)
+2500028|
+2016672|SQL Errors in HTTP 200 Response (error in your SQL syntax)
+2016935|SQL Injection Select Sleep Time Delay
+2522416|
+2008113|Tor Get Server Request
+2522438|
+2522432|
+1200004|
+1200003|
+2018301|Win32/Toolbar.CrossRider.A Checkin
+2008085|Alexa Search Toolbar User-Agent 2 (Alexa Toolbar)
+2018452|CryptoWall Check-in
+2822953|Successful Generic Phish Oct 27 2016
+2819978|Tordal/Hancitor/Chanitor Checkin
+1100043|
+2404324|
+2019627|Possible Cookie Based BackDoor Used in Drupal Attacks
+2023583|Known Malicious Doc Downloading Payload Dec 06 2016
+696969692|
+1201|
+1852|
+2002997|PHP Remote File Inclusion (monster list http)
+9000001|
+2016668|SQL Errors in HTTP 200 Response (mysql_query)
+37214|
+696969691|
+2101852|robots.txt access
+2015526|Fake Googlebot UA 1 Inbound
+2016222|GET with HTML tag in start of URI seen with PHPMyAdmin scanning
+2500062|
+2017440|PHP SESSION SuperGlobal in URI
+2500060|
+2023744|EITest SocEng Inject Jan 15 2017 M2
+2011042|MYSQL SELECT CONCAT SQL Injection Attempt
+2101071|.htpasswd access
+2006445|Possible SQL Injection Attempt SELECT FROM
+2024228|Suspicious HTML Decimal Obfuscated Title - Possible Phishing Landing Apr 19 2017
+2403324|
+2403313|
+2403370|
+2403366|
+2821335|Windows Settings Phishing Landing Jul 22
+2100494|command completed
+2021536|Google Drive Phishing Landing M2 July 24 2015
+2500020|
+2500022|
+2014020|Wordpress Login Bruteforcing Detected
+2018755|Possible WordPress xmlrpc.php BruteForce in Progress - Response
+1101024|
+2009345|HTTP 401 Unauthorized
+2003055|Suspicious FTP 220 Banner on Local Port (-)
+2013115|Muieblackcat scanner
+2403356|
+2403355|
+2020507|MySQL error in HTTP response, possible SQL injection point
+2018053|Malicious Redirect 8x8 script tag
+2001669|Proxy GET Request
+2021630|MS Terminal Server Single Character Login possible Morto inbound
+4000004|password detected in cleartext
+2001329|RDP connection request
+2014827|FedEX Spam Inbound
+2403367|
+2403354|
+2403327|
+2403352|
+2006444|Possible SQL Injection Attempt INSERT INTO
+2101919|CWD overflow attempt
+2100961|services.cnf access
+2100965|writeto.cnf access
+2023687|Acunetix scan in progress acunetix_wvs_security_test in http_uri
+17410|
+2015527|Fake Googlebot UA 2 Inbound
+2016977|allow_url_include PHP config option in uri
+2100824|php.cgi access
+2020102|PHP System Command in HTTP POST
+2016978|safe_mode PHP config option in uri
+2016979|suhosin.simulation PHP config option in uri
+2024930|401TRG Generic Webshell Request - POST with wget in body
+2824549|Hancitor encrypted payload Jan 17 (1)
+2004607|PNphpBB2 SQL Injection Attempt -- index.php c UNION SELECT
+2004606|PNphpBB2 SQL Injection Attempt -- index.php c SELECT
+2017337|ATTACKER SQLi - SELECT and Schema Columns
+19202|
+2017330|SQLi - SELECT and sysobject
+2005525|SmE FileMailer SQL Injection Attempt -- index.php us UNION SELECT
+2005524|SmE FileMailer SQL Injection Attempt -- index.php us SELECT
+2005529|SmE FileMailer SQL Injection Attempt -- index.php us UPDATE
+2018358|GENERIC SUSPICIOUS POST to Dotted Quad with Fake Browser 1
+2008795|TeamViewer Keep-alive inbound
+2805380|TeamViewer DynGate Remote Access Checkin
+2009475|TeamViewer Dyngate User-Agent
+34463|
+2022401|Backdoor family PCRat/Gh0st CnC traffic (OUTBOUND) 104
+2018193|Backdoor family PCRat/Gh0st CnC traffic (OUTBOUND) 30
+100095|
+2023611|Backdoor family PCRat/Gh0st CnC traffic (OUTBOUND) 107
+2023349|Backdoor family PCRat/Gh0st CnC traffic (OUTBOUND) 106
+5000106|
+5000108|
+2002801|Google Desktop User-Agent Detected
+2808012|Win32/Tofsee.AX google.com connectivity check
+2002383|Potential FTP Brute-Force attempt response
+2010706|Internet Explorer 6 in use - Significant Security Risk
+2829321|W32/z.wll Checkin
+2812544|Possible RPC Portmapper Reflected DDoS Attack Participation
+527|
+201501110|
+2014635|Possible Variant.Kazy.53640 Malformed Client Hello SSL 3.0 (Cipher_Suite length greater than Client_Hello Length)
+2804972|Herpbot.B ICMP
+2011410|DNS Query for Suspicious .cz.cc Domain
+2417|
+1748|
+1377|
+491|
+2022809|Taplika Browser Hijacker Checkin M1
+2826896|Win32/InstallCore CnC Activity
+2823423|Unknown Bot CnC Beacon
+2815960|OSX/Adware.InstallCore Install Activity
+2022807|Win32/InstallCore Initial Install Activity 1
+28883|
+7567|
+2823663|Win32.Addrop Checkin
+2820188|Win32/InstallCore Initial Install Activity 2
+2024428|InstallCore Variant CnC Checkin
+2821188|Win32/InstallCore Initial Install Activity 2
+2022354|DealPly Adware CnC Beacon 4
+2009080|VMProtect Packed Binary Inbound via HTTP - Likely Hostile
+2009005|Simbar Spyware User-Agent Detected
+2025140|Possible MyEtherWallet Phishing Landing - Title over non SSL
+2811175|Luminosity Link RAT CnC Beacon Inbound
+2012297|Possible Inbound VOIP Scan/Misuse With User-Agent Zoiper
+2009699|REGISTER Message Flood UDP
+2013801|Incoming Chromoting Session Response
+2221014|
+2102181|BitTorrent transfer
+2010284|SELECT INSTR in URI Possible ORACLE Related Blind SQL Injection Attempt
+2103070|fetch overflow attempt
+2103072|status overflow attempt
+2011124|Suspicious FTP 220 Banner on Local Port (spaced)
+2017808|Possible MySQL SQLi Attempt Information Schema Access
+2021585|APT Lurker GET CnC Beacon
+2200027|
+2100483|PING CyberKit 2.2 Windows
+2828005|Emotet Post Drop C2 Comms
+2828008|W32/Emotet.v4 Checkin 3
+2827279|W32/Emotet.v4 Checkin
+2827580|W32/Emotet.v4 Checkin 2
+2023476|ABUSE.CH SSL Blacklist Malicious SSL certificate detected (Dridex)
+2022535|ABUSE.CH SSL Blacklist Malicious SSL certificate detected (Dridex)
+2014411|Fareit/Pony Downloader Checkin 2
+2404313|
+2828006|Emotet Post Drop C2 Comms M2
+2023333|Linux.Mirai Login Attempt (xc3511)
+2024272|W32.Geodo/Emotet Checkin
+2024274|W32/Emotet CnC Beacon 1
+2826327|W32/Emotet Empty CnC Beacon
+2828913|WIN32/KOVTER.B Checkin 2 M3
+2829688|Kovter Malicious SSL Certificate Detected
+2020912|Possible IIS Integer Overflow DoS (CVE-2015-1635)
+2102156|mod_gzip_status access
+2016835|Exim/Dovecot Possible MAIL FROM Command Execution
+2011161|HotNews hnmain.inc.php3 incdir Parameter Remote File Inclusion Attempt
+2819965|Cisco ucs_manager Remote Code Execution
+2015023|IIS 8.3 Filename With Wildcard (Possible File/Dir Bruteforce)
+2210054|
+2102392|RETR overflow attempt
+2102546|MDTM overflow attempt
+4000798|HTTP Request to a *.xyz domain
+2103195|name query overflow attempt TCP
+2014170|HTTP Request to .su TLD (Soviet Union) Often Malware Related
+2014275|W32/Rovnix Activity
+2806456|
+300000000|
+2016676|SQL Errors in HTTP 200 Response (ORA-)
+2210056|
+2013438|HTTP Request to a *.uni.cc domain
+2014124|Softango.com Installer POSTing Data
+2014123|Softango.com Installer Checking For Update
+2022550|Possible Malicious Macro DL EXE Feb 2016
+2012118|http string in hex Possible Obfuscated Exploit Redirect
+2017012|Possible 2012-1533 altjvm (jvm.dll) Requested Over WeBDAV
+4000005|password detected in cleartext
+2011699|Bittorrent P2P Client User-Agent (Transmission/1.x)
+2808512|Android/SmsSpy.AS Checkin
+2008975|Suspicious Malformed Double Accept Header
+2021607|Potential W32/Dridex Alphanumeric Download Pattern
+7861|
+2829202|MSIL/Zbrain PUP/Stealer Installer UA
+2019422|Possible CVE-2014-3704 Drupal SQLi attempt URLENCODE 1
+2015919|WebShell - Generic - c99shell based header w/colons
+2013042|Android.Plankton/Tonclank Successful Installation Device Information POST
+2003508|Wordpress wp-login.php redirect_to credentials stealing attempt
+2013721|Suspicious User-Agent (WindowsNT) With No Separating Space
+2015803|Possible Blackhole/Cool Landing URI Struct
+1000071|
+2815134|Zmap User-Agent (zgrab)
+2812041|PUP.Installmonster Hardcoded UA
+2017930|Trojan Generic - POST To gate.php with no referer
+2814144|Win32/Amonetize.FG
+2404164|
+2021847|Evil Redirector Sep 29 2015
+2022504|Alphacrypt/TeslaCrypt Ransomware CnC Beacon
+2010518|Possible HTTP 404 XSS Attempt (External Source)
+2021846|Evil JavaScript Injection Sep 29 2015
+2010515|Possible HTTP 403 XSS Attempt (Local Source)
+2403319|
+886|
+2018382|Possible OpenSSL HeartBleed Large HeartBeat Response from Common SSL Port (Outbound from Server)
+2003099|Poison Null Byte
+2012649|All Numerical .ru Domain HTTP Request Likely Malware Related
+2832778|
+2814120|Backdoor.AndroidOS.Agent.aw Checkin
+2404430|
+2404418|
+2022896|SUSPICIOUS Firesale gTLD EXE DL with no Referer June 13 2016
+2404414|
+2017199|Java UA Requesting Numeric.ext From Base Dir (Observed in Redkit/Sakura)
+2816510|Angler EK Landing Mar 02 2016 M2 T2
+2021139|H1N1 Loader CnC Beacon M1
+2816661|Ursnif Variant CnC Beacon 5
+2013435|Win32.Shiz.fxm/Agent-TBT Checkin
+2808643|Zeus variant C2
+2018784|Win32/Neurevt.A/Betabot Check-in 4
+2016858|Generic - POST To .php w/Extended ASCII Characters (Likely Zeus Derivative)
+2807970|Win32/Neurevt.A/Betabot Checkin 3
+2832774|
+2826369|IPMI Get Authentication Request (null seq number - null sessionID)
+2820680|W32/Bayrob Attempted Checkin 2
+2400003|
+2404562|
+2404400|
+2404403|
+2022225|Vawtrak HTTP CnC Beacon
+2021153|Wordpress Errorcontent CnC Beacon
+2832420|Observed Malicious SSL Cert (MagentoCore Skimmer)
+2022992|Tech Support Phone Scam Landing M2 Jul 29 2016
+2023058|Tech Support Phone Scam Landing M2 Aug 12 2016
+2024227|Lets Encrypt Free SSL Cert Observed with IDN/Punycode Domain - Possible Phishing
+2829710|MSIL/Linkury Toolbar Activity
+2024721|CoinHive In-Browser Miner Detected
+2828180|CoinMiner Known Malicious Stratum Authline (2017-10-06 9)
+2009219|Tomcat Successful default credential login from external source
+2020490|SuperFish CnC Beacon 2
+2017555|DotkaChef EK initial landing from Oct 02 2013 mass-site compromise EK campaign
+2832603|Android Device (KitKat OS) Connectivity Check
+2802103|MOBILE iPhone locationd User-Agent Detected
+2001492|ISearchTech.com XXXPornToolbar Activity (MyApp)
+2022814|Conduit Trovi Adware/PUA
+2807403|Win32.InstallMonetizer Download
+17409|
+2013407|SSL MiTM Vulnerable or EOL iOS 4.x device
+2808202|suspicious User-Agent (None)
+2802188|GET in ICMP Payload - Likely Covert Channel
+2022825|Toolbar User-Agent (BrandThunderHelper)
+1156|
+2018413|Probable OneLouder downloader (Zeus P2P)
+2802841|Suspicious User-Agent Setup Agent - Likely Malware
+9999002|
+2812809|Trojan.Llac.Win32 PUP Activity
+4|
+2408000|
+5000017|
+2221028|
+2100486|Destination Unreachable Communication with Destination Host is Administratively Prohibited
+2001865|MyWebSearch Spyware User-Agent (MyWebSearch)
+18379|
+5803|
+2011225|Suspicious User Agent (AskInstallChecker)
+1000044|
+2022112|Possible Nuclear EK Landing Nov 17 2015
+2007929|User-Agent (User-Agent Mozilla/4.0 (compatible ))
+2824800|Lets Encrypt Free SSL Cert Observed in Possible Apple iCloud Phishing
+2809522|Qbot Checkin
+2021359|Fake AV Phone Scam Landing June 26 2015 M3
+2024446|Microsoft Tech Support Phone Scam M3 Jul 07 2017
+2828007|W32/Emotet.v4 Checkin Fake 404 Payload Response
+2022989|LastPass RCE Attempt
+4000380|
+2816421|USAA Phishing Landing Feb 26
+2013960|Blackhole Exploit Kit Delivering PDF Exploit to Client
+12286|
+2014865|MP4 Embedded in PDF File - Potential Flash Exploit
+2814466|ZxShell FileMG Command
+2807231|Adobe Acrobat Reader Font Memory Corruption Vulnerability CVE-2013-3353
+2806235|Trojan-Ransom.Win32.Blocker.avsx Checkin
+2025401|Possible Memcached DDoS Amplification Query (set)
+2022290|Evil Redirector Leading to EK Mon Dec 21 2015 5
+2021746|Evil Redirector Leading to EK September 04 2015
+2025314|Vulnerable Java Version 9.0.x Detected
+2015562|Trojan.Win32.Jorik.Totem.vg HTTP request
+2013406|SSL MiTM Vulnerable or EOL iOS 3.x device
+2009114|Downadup/Conficker A Worm reporting
+2014954|Vulnerable iTunes Version 10.6.x
+2014382|HTTP OPTIONS invalid method case outbound
+2022551|Logmein.com/Join.me SSL Remote Control Access
+2810582|WIN32/KOVTER.B Checkin 2 M1
+2404154|
+2800584|Yahoo Messenger ActiveX Control Command Execution
+2013498|Netflix Streaming Player Access
+2021511|Edwards Packed proxy.pac from 724sky
+2812824|Possible Successful Generic Phish Aug 31 2015
+2025534|Drupalgeddon2 <8.3.9 <8.4.6 <8.5.1 RCE Through Registration Form (CVE-2018-7600)
+2011034|HTTP OPTIONS invalid method case
+2021763|SUSPICIOUS Grey Advertising Often Leading to EK
+2013013|StumbleUpon Submission Detected
+2013336|SSL MiTM Vulnerable iOS 4.x CDMA iPhone device
+2013408|SSL MiTM Vulnerable iOS 4.x CDMA iPhone device
+2808413|telize.com IP lookup
+2021918|DustySky Checkin
+2210041|
+2014976|Blackhole - Landing Page Received - catch and flowbit
+2400030|
+2803840|Microsoft Active Accessibility oleacc.dll Insecure Library Loading Code Execution - WebDAV
+2015745|EXE CheckRemoteDebuggerPresent (Used in Malware Anti-Debugging)
+2820605|ATMFD.DLL Privilege Elevation Vuln (CVE-2016-3220)
+2018403|GENERIC Likely Malicious Fake IE Downloading .exe
+2018234|JAR Sent Claiming To Be Text Content - Likely Exploit Kit
+2016817|Possible Java Applet JNLP applet_ssv_validated in Base64 2
+2024444|Microsoft Tech Support Phone Scam M2 Jul 07 2017
+2024844|Tech Support Phone Scam Landing M1 Oct 16 2016
+2809683|IP Check freegeoip.net
+8375|
+2522806|
+2522802|
+2522800|
+2819814|Suspicious Redirect Attempting to Hide Referer
+2825610|Lets Encrypt Free SSL Cert Observed in Possible Apple Phishing
+2812237|Possible Successful Generic Phish July 28
+2406416|
+2823606|Possible Evil Redirect Leading to EK Dec 04 2016
+2023236|Microsoft Tech Support Scam M2 Sept 15 2016
+2003383|Hotbar Tools Spyware User-Agent (hbtools)
+2009247|Rothenburg Shellcode
+2812130|SpyHunter Spyware Removal Tool PUP User-Agent (SpyHunter)
+1113|
+2008428|Suspicious User-Agent (HTTP Downloader)
+2016919|Malicious Redirect URL
+2021830|Ursnif Variant CnC Data Exfil
+2021813|Ursnif Variant CnC Beacon
+2823044|W32.Dreambot Checkin
+2812833|Successful Google Drive Phish Sept 1 M1
+2811898|Possible Successful Phish (Google/Dropbox/Netflix) Jul 10 2015
+2812834|Successful Google Drive Phish Sept 1 M2
+2008989|IP Check Domain (showmyip in HTTP Host)
+2828231|IP Lookup l2 . io
+2013057|Inbound PHP User-Agent
+2831998|Unknown APT VBS/PS/VBA Downloader
+2010520|Possible HTTP 405 XSS Attempt (External Source)
+13573|
+2021697|EXE Download Request To Wordpress Folder Likely Malicious
+2816102|Successful Generic Phish (Redirect to Download PDF) Feb 8
+2804292|Win32/Xtrat.B CnC Traffic
+2828608|Successful RBC Royal Bank Phish Nov 10 2017
+2017814|Safe/CritX/FlashPack URI Struct .php?id=Hex
+2824316|Possible Adobe Reader (CVE-2017-2946)
+2019650|Possible Malicious Attachment With Double Extension Ending In EXE
+2820092|Android/Spy.Agent.US Checkin
+4000489|Internal Host Retrieving External IP Address (ip-api. com)
+2823676|W32/Quasar 1.3 RAT Connectivity Check
+5638028|
+5553518|
+2017077|Redirect to DotkaChef EK Landing
+2018394|Common Upatre Header Structure
+2820157|Angler EK Landing May 10 2016 M1 T1
+2816123|Microsoft Rich Text File download with malformed drawing objects (CVE-2016-0022)
+2810022|Microsoft Word (CVE-2015-0086)
+2016141|Executable Download from dotted-quad Host
+2101432|GNUTella client request
+2018752|Generic .bin download from Dotted Quad
+2804830|Win32.Sality.bh Checkin 2
+2010461|User-Agent (MSIE7 na)
+2022930|Possible CVE-2016-2211 Symantec Cab Parsing Buffer Overflow
+2021285|Fake AV Phone Scam Landing June 16 2015 M1
+2022925|Tech Support Phone Scam Landing M1 Jun 29 2016
+2020984|Fiesta EK PDF Exploit Apr 23 2015
+2014475|JAVA - Java Class Download By Vulnerable Client
+2808839|WebSocket Session Initiation Request
+1015|
+2812116|External IP Address/Location Disclosure - geoplugin.net
+2025342|OneDrive Phishing Landing 2018-02-12
+2025248|Generic Multi-Email Popupwnd Phishing Landing 2018-01-25
+2025410|OneDrive Phishing Landing 2018-03-08
+2023482|Evil Redirector Leading to EK EITest Inject Oct 17 2016 M2
+12632|
+88896|
+2020659|FREAK Weak Export Suite From Server (CVE-2015-0204)
+2022376|Suspicious Script Loaded from Pastebin
+2022962|Evil Redirector Leading to EK Jul 12 2016
+2822847|Evil Redirect to RIG-v EK Oct 24 2016
+2815562|Base64 HTTP URL Refresh - Common Phish Landing Obfuscation Dec 31
+2023765|Betabot Checkin 5
+2002827|POSSIBLE Crawl using Fetch
+15363|
+10505|
+22110432|
+21039|
+2024199|EITest SocENG Inject M2
+2024238|HoeflerText Chrome Popup DriveBy Download Attempt 1
+2024387|Possible Docusign Phishing Landing - Title over non SSL
+2022608|Fake Virus Phone Scam Landing Mar 9 M2
+4156|
+2001404|ZIPPED EXE in transit
+2815450|Win32/InterStat Adware PUP
+2015789|BegOpEK - TDS - icon.php
+2011873|Suspicious HTTP GET to JPG with query string
+21112|
+2804909|Hostile Microsoft Rich Text File (RTF) with corrupted listoverride
+2830247|Win32/MapsVoyage PUA Installation Successful
+2008438|Possible Windows executable sent when remote host claims to send a Text File
+2024647|Fake Adobe Flash Update Landing - Title over non SSL
+2828914|KuaiZip Adware CnC Checkin
+2807400|AutoIt EXE or DLL Windows file download
+2400000|
+2802033|Microsoft Excel Malformed CatSerRange Record Vulnerability
+2815702|Successful Adobe Phish Jan 8
+2015905|WSO - WebShell Activity - WSO Title
+2015906|WSO - WebShell Activity - POST structure
+2016874|Unsupported/Fake Internet Explorer Version MSIE 1.
+2015791|archive.org heritix Crawler User-Agent (Outbound)
+2020889|Vobus/Beebone Sinkhole DNS Reply
+4000095|Unauthenticated Command Injection (ZyXEL P660HN-T v1)
+2013437|Executable served from Amazon S3
+4000003|password detected in cleartext
+4000307|Kasperagent C2 Beacon 2
+2820273|W32/Bayrob Attempted Checkin
+2023051|Tech Support Phone Scam Landing Aug 12 M1
+2023052|Tech Support Phone Scam Landing Aug 12 M2
+2014137|Common Adware Library ISX User Agent Detected
+2000348|IRC Channel JOIN on non-standard port
+2828509|Koadic Backdoor CnC Beacon
+2828510|Koadic Backdoor Receiving Payload
+2023131|Possible Pegasus/Trident Related HTTP Beacon 1
+2010285|SELECT SUBSTR/ING in URI Possible Blind SQL Injection Attempt
+2013097|DYNAMIC_DNS HTTP Request to a *.dyndns.* domain
+2014932|DynDNS CheckIp External IP Address Server Response
+2812183|ZIP file embedded in JPG
+2012891|Http Client Body contains pword= in cleartext
+2008228|Suspicious User-Agent inbound (bot)
+2016032|JCE Joomla Scanner
+19653|
+21925|
+2025231|Multiple Javascript Unescapes - Common Obfuscation Observed in Phish Landing
+2014304|External IP Lookup Attempt To Wipmania
+2013745|Double HTTP/1.1 Header Outbound - Likely Infected or Hostile Traffic
+2802022|Excel File Malformed Label recType BIFF5 record
+2022134|Possible eDellRoot Rogue Root CA
+2020493|SuperFish Possible SSL Cert Signed By Compromised Root CA
+2816041|Phishing Landing via Weebly.com Feb 2 M2
+2827247|Imminent Monitor Style IP Check freegeoip.net
+2825239|Lets Encrypt Free SSL Cert Observed in Possible Apple Phishing
+2015878|Maxmind geoip check to /app/geoip.js
+2009027|User-Agent (FileDownloader)
+2024447|Apple Tech Support Phone Scam Jul 07 2017
+2013273|Hex Obfuscated JavaScript Heap Spray 41414141
+2101320|fuck movies
+2010666|Adobe Macromedia Flash Player In Windows XP Remote Arbitrary Code Execution CLSID Access Attempt
+2014098|Excessive JavaScript replace /g - Exploit Kit Behavior Flowbit Set
+21037|
+2001855|Fun Web Products Spyware User-Agent (FunWebProducts)
+2825248|Successful Credential Phish JS RePOST Mar 06 2017
+2830246|Win32/MapsVoyage PUA Checkin
+9100002|
+2013795|Bifrose/Cycbot Checkin
+2809316|Exchange URL Redirection Vulnerability link (CVE-2014-6336)
+2020772|Backdoor family PCRat/Gh0st CnC traffic (OUTBOUND) 71
+2002023|IRC USER command
+5747788|
+2012278|Suspicious User-Agent (Our_Agent)
+2824980|PUP Win32/InstallMonstr.QJ CnC Beacon
+5800222|
+1841|
+2815164|W32/Bayrob Attempted Checkin 1
+2021761|Possible Successful Phish - Generic Status Messages Sept 11 2015
+2021760|PHISH Generic Webmail - Landing Page Sept 11
+2019833|Possible Dyre SSL Cert (fake state)
+2802994|Microsoft Excel Improper Record Parsing Vulnerability Attack
+2804910|Microsoft Excel corrupted/hostile file invalid SXLI BIFF record
+2801929|Microsoft Office Excel Pivot Item Index Boundary Error Memory Corruption 1
+2827572|Successful Generic .EDU Phish Aug 17 2017
+2803564|Worm.Win32.Morto.A Propagating via Windows Remote Desktop Protocol
+2404162|
+2008983|Suspicious User Agent (BlackSun)
+2003337|Suspicious User Agent (Autoupdate)
+2010726|Adobe browser document ActiveX DoS Attempt
+2824515|Successful Netflix Phish Jan 18 2017
+2003326|Apple Quicktime RTSP Overflow (1)
+2022141|Angler encrypted payload Nov 23 (4)
+2012692|Microsoft user-agent automated process response to automated request
+2831954|Nullsoft Mozilla UA (NSISDL)
+2013036|Java EXE Download by Vulnerable Version - Likely Driveby
+2013715|BingBar ToolBar User-Agent (BingBar)
+2815591|HTTP Request to Fake Virus Warning
+2025275|Windows OS Submitting USB Metadata to Microsoft
+2002196|Casalemedia Spyware Reporting URL Visited 2
+2018315|Microsoft Rich Text File .RTF File download with invalid listoverridecount
+2102586|eDonkey transfer
+2805133|Win32/Zegost.Z CnC Traffic
+2017091|WebShell - Pouya - URI - action=
+2012726|OpenVAS User-Agent Inbound
+2101519|apache ?M=D directory list attempt
+2017090|WebShell - Pouya - URI - raiz
+1200|
+2100987|.htr access
+2001381|Credit Card Number Detected in Clear (14 digit)
+2802912|Backdoor.Nervos.A Checkin to Server
+2014296|eval/base64_decode Exploit Attempt Inbound
+2012230|Likely Malicious Request for /proc/self/environ
+2002034|Possible /etc/passwd via HTTP (linux style)
+2003394|User Agent Containing http Suspicious - Likely Spyware/Trojan
+2006609|iWare Professional SQL Injection Attempt -- index.php D SELECT
+2019418|SSL excessive fatal alerts (possible POODLE attack against server)
+2014704|PHP-CGI query string parameter vulnerability
+2008176|Possible SQL Injection (exec)
+2016182|ColdFusion componentutils access
+1560|
+2009885|Unusually Fast 404 Error Messages (Page Not Found), Possible Web Application Scan/Directory Guessing Attack
+2014985|Hacked Website Response /*qhk6sa6g1c*/ Jun 25 2012
+2012997|PHP Possible http Remote File Inclusion Attempt
+2004588|PsychoStats XSS Attempt -- login.php
+2807531|Basine/Outbreak Checkin
+2020506|MySQL error in HTTP response, possible SQL injection point
+2010964|SHOW CHARACTER SET SQL Injection Attempt in URI
+2229|
+2303|
+2101229|CWD ...
+2009778|Joomla Full Path Disclosure -- php5x.php
+11263|
+2804254|Xtrat/Bifrose/VBKrypt CnC Channel Keepalive
+2103192|Windows Media Player directory traversal via Content-Disposition attempt
+2001343|IIS ASP.net Auth Bypass / Canonicalization % 5 C
+2020221|WP Generic revslider Arbitrary File Download
+2100977|.cnf access
+2015687|Inbound /uploadify.php Access
+2410|
+2020509|MySQL error in HTTP response, possible SQL injection point
+2016664|SQL Errors in HTTP 200 Response (mssql_query)
+2022485|Possible Compromised Webserver Retriving Inject
+2010524|Possible HTTP 500 XSS Attempt (Internal Source)
+2016982|auto_prepend_file PHP config option in uri
+696969695|
+2023467|COMTREND ADSL Router CT-5367 Remote DNS Change Attempt
+2020487|Generic ADSL Router DNS Change GET Request
+2020486|Possible ShuttleTech 915WM DNS Change Attempt
+2019880|Double Encoded Characters in URI (../)
+2025756|D-Link DSL-2750B - OS Command Injection
+2014984|Hacked Website Response /*km0ae9gr6m*/ Jun 25 2012
+2810615|Possible Information Leak Vuln CVE-2015-1648
+2019526|WEB-PHP phpinfo access
+2014890|Possible attempt to enumerate MS SQL Server version
+2008175|Possible SQL Injection (varchar)
+2016673|SQL Errors in HTTP 500 Response (error in your SQL syntax)
+2010965|SHOW VARIABLES SQL Injection Attempt in URI
+2017441|PHP REQUEST SuperGlobal in URI
+2010086|Possible CREATE SQL Injection Attempt in URI
+2260000|
+2015940|SFTP/FTP Password Exposure via sftp-config.json
+2016674|SQL Errors in HTTP 200 Response (ERROR syntax error at or near)
+2010963|SELECT USER SQL Injection Attempt in URI
+1214|
+2009954|Tilde in URI after file, potential source disclosure vulnerability
+2831299|D-LINK Router DSL-2750B RCE M2 (metasploit version)
+2011464|/bin/csh In URI Possible Shell Command Execution Attempt
+2011141|PHP Easteregg Information-Disclosure (phpinfo)
+2011494|OpenX OpenFlashChart Remote Exploit - possible Access to uploaded Files 
+2025883|MVPower DVR Shell UCE
+2808023|PHP Possible Open Flash Direct Access to File Upload Directory
+2017081|ClearTextAuth - HTTP - http_uri contains pasa=
+2017604|PHP WebShell Embedded In GIF (OUTBOUND)
+2831451|D-Link DSL-2750B - OS Command Injection
+2011041|MYSQL Benchmark Command in URI to Consume Server Resources
+25783|
+2017807|Possible MySQL SQLi User-Dump Attempt
+13990|
+2101156|apache directory disclosure attempt
+2017605|PHP WebShell Embedded In JPG (OUTBOUND)
+2134|
+2811446|uWarrior RAT CnC Beacon
+865|
+2016680|WebShell Generic - net user
+2066|
+2570|
+2020085|Microsoft CScript Banner Outbound
+9|
+2003287|SOCKSv5 UDP Proxy Inbound Connect Request (Linux Source)
+2830102|Possible Cacti Weathermap Plugin RCE (CVE 2013-2618)
+2009363|Suspicious Chmod Usage in URI
+2024915|Possible Vacron NVR Remote Command Execution
+2022816|Possible SQLi Attempt in User Agent (Inbound)
+2520020|
+2522018|
+2022014|Reversed Pastebin Injection in Magento DB
+2005111|Eclectic Designs CascadianFAQ SQL Injection Attempt -- index.php catid SELECT
+2019231|Possible CVE-2014-6271 Attempt in URI
+2019251|Possible CVE-2014-6271 Attempt in HTTP URLENCODE Generic 8
+2100495|command error
+2016936|SQL Injection Local File Access Attempt Using LOAD_FILE
+2010037|Possible SQL Injection INTO OUTFILE Arbitrary File Write Attempt
+2522048|
+2520048|
+2010260|Joomla AjaxChat Component ajcuser.php GLOBALS Parameter Remote File Inclusion Attempt
+2009358|Nmap Scripting Engine User-Agent Detected (Nmap Scripting Engine)
+2017172|Apache Struts Possible OGNL Java ProcessBuilder URI
+2522060|
+2522062|
+2522072|
+2522070|
+2016078|Amateur Photographer Image Gallery file parameter Local File Inclusion Attempt
+2101877|printenv access
+2011497|Hydra User-Agent
+2018290|WEBSHELL CFM Shell Access
+2018459|SUSPICIOUS Possible WebShell Login Form (Outbound)
+2024096|Possible Apache Struts OGNL Expression Injection (CVE-2017-5638) (Content-Disposition) M1
+2011465|/bin/sh In URI Possible Shell Command Execution Attempt
+2026094|Apache Struts memberAccess and getWriter inbound OGNL injection remote code execution attempt
+2019309|WGET Command Specifying Output in HTTP Headers
+2019804|PHP.//Input in HTTP POST
+2522132|
+2009384|Joomla Dada Mail Manager Component config.dadamail.php GLOBALS Parameter Remote File Inclusion
+2522136|
+2019379|Win32/PSW.Papras.CK file upload
+2019378|Gozi Checkin
+2831962|Ursnif Variant CnC Beacon 8 M1
+2831963|Ursnif Variant CnC Beacon 8 M2
+2022970|W32.Dreambot File Upload (No Data Sent)
+5102320|
+5102321|
+2022658|Possible Malicious Macro DL EXE Feb 2016 (WinHTTPRequest)
+2026519|Suspicious User-Agent (Windows XP)
+1000072|
+2009040124|
+2009040125|
+2009040123|
+2007702|Storm Worm Encrypted Variant 1 Traffic (2)
+2007701|Storm Worm Encrypted Variant 1 Traffic (1)
+2009205|Possible Downadup/Conficker-C P2P encrypted traffic UDP Ping Packet (bit value 1)
+2009206|Possible Downadup/Conficker-C P2P encrypted traffic UDP Ping Packet (bit value 4)
+2009207|Possible Downadup/Conficker-C P2P encrypted traffic UDP Ping Packet (bit value 5)
+2012115|DNS Query for a Suspicious Malware Related Numerical .in Domain
+2012738|DYNAMIC_DNS Query to 3322.net Domain *.8866.org
+2014941|TOR .exit Pseudo TLD DNS Query
+2014868|DYNAMIC_DNS Query to dns-stuff.com Domain *.dns-stuff.com
+2833094|SOAP Request Outbound
+2025284|Microsoft Live Login Phishing Landing 2018-02-01
+2829294|Successful Microsoft Account Phish 2018-01-16
+2210051|
+2825553|Successful Facebook Phish Mar 22 2017
+2827147|Possible Successful Generic Phish Jul 17 2017
+2017713|Taidoor Checkin
+2100528|loopback traffic
+2100502|source route ssrr
+2100527|same SRC/DST
+4000829|W32/Emotet CnC Checkin
+2404311|
+2404312|
+2830701|W32/Emotet CnC Checkin
+2829638|External IP Address Lookup via ident .me
+2523180|
+2523042|
+2523184|
+2523084|
+2523144|
+2523026|
+2523146|
+2522694|
+2523166|
+2523104|
+2523168|
+2522134|
+2009646|Acunetix Version 6 (Free Edition) Scan Detected
+2522108|
+2523024|
+2523030|
+2523036|
+2523044|
+2522494|
+2009698|INVITE Message Flood UDP
+2002950|TOR 1.0 Server Key Retrieval
+2522512|
+2522506|
+2523160|
+2523186|
+2523188|
+2523126|
+2523076|
+2523120|
+2523214|
+2523124|
+2523218|
+2523128|
+2523236|
+2523164|
+2523148|
+2522356|
+2522336|
+2522338|
+2522332|
+2522204|
+2522200|
+2522352|
+2522642|
+2522688|
+2522680|
+2522682|
+2522684|
+2522686|
+2522690|
+2522384|
+2522382|
+2523096|
+2523118|
+2522998|
+2523090|
+2523100|
+2523062|
+2523102|
+2523110|
+2523116|
+2522532|
+2522542|
+2522412|
+2522530|
+2522518|
+2522244|
+2522238|
+2522234|
+2523244|
+2523140|
+2523142|
+2523194|
+2523198|
+2522738|
+2522844|
+2522726|
+2522860|
+2522740|
+2016980|disable_functions PHP config option in uri
+2522130|
+2522098|
+2808937|revslider_show_image Plugin Local File Inclusion Exploit Attempt
+2522100|
+2522084|
+2500072|
+2522082|
+2522078|
+2522470|
+2522464|
+2522090|
+2522092|
+2522258|
+2522252|
+2522248|
+2522320|
+2523078|
+2523070|
+2523064|
+2523088|
+2522628|
+2522638|
+2522668|
+2522982|
+2522842|
+2522954|
+2522840|
+2522846|
+2522988|
+2522984|
+2014899|Wordpress Plugin Tinymce Thumbnail Gallery href parameter Remote File Disclosure Attempt
+2809092|Possible XMLRPC DoS in Progress
+23|
+2522990|
+2522366|
+2522374|
+2522364|
+2522362|
+2522360|
+2522194|
+2522190|
+2522192|
+2522198|
+2523038|
+2523046|
+2523040|
+2021013|ABUSE.CH SSL Blacklist Malicious SSL certificate detected (Dridex/Trickbot CnC)
+2019737|IP Check wtfismyip.com
+2821200|Observed External IP (wtfismyip) Lookup SSL Cert (Server Hello)
+2812782|IP Check wtfismyip.com SSL
+2021997|External IP Lookup api.ipify.org
+2831048|Observed SSL Cert (IP Lookup - ipify .org)
+2023746|User-Agent (Xmaker)
+2023338|TheTrick Banking Trojan User-Agent
+2814787|External IP Check (checkip.amazonaws.com)
+2815463|Win32/Megalodon Conn Check 2
+2017398|IP Check Domain (icanhazip. com in HTTP Host)
+2018635|Common Upatre Header Structure 2
+2810702|Likely Upatre External IP Check
+500015830|
+2025279|Hellion Postmaster Phishing Landing 2018-01-31
+2018317|NMAP SIP Version Detect OPTIONS Scan
+2018318|NMAP SIP Version Detection Script Activity
+2021076|SUSPICIOUS Dotted Quad Host MZ Response
+2023450|Possible Linux.Mirai Login Attempt (xmhdipc)
+2023445|Possible Linux.Mirai Login Attempt (meinsm)
+2023433|Possible Linux.Mirai Login Attempt (7ujMko0admin)
+2023432|Possible Linux.Mirai Login Attempt (666666)
+2023431|Possible Linux.Mirai Login Attempt (54321)
+2023430|Possible Linux.Mirai Login Attempt (1111111)
+2023437|Possible Linux.Mirai Login Attempt (dreambox)
+2023443|Possible Linux.Mirai Login Attempt (klv123)
+2522500|
+2522508|
+2522474|
+2522498|
+2522502|
+2522482|
+2522922|
+2522930|
+2522354|
+2522858|
+2522758|
+2522872|
+2522728|
+2522700|
+2522724|
+2522870|
+2522706|
+2522780|
+2002901|PHP Aardvark Topsites PHP CONFIG PATH Remote File Include Attempt
+2522058|
+2522350|
+2024670|Apache Struts 2 REST Plugin ysoserial Usage (B64) 3
+2520054|
+2522050|
+2522262|
+2522264|
+2522284|
+2522280|
+2522260|
+2522282|
+2522240|
+2522268|
+2520040|
+2520042|
+2523268|
+2523338|
+2523258|
+2523250|
+2523330|
+2523272|
+2026526|Potentially Vulnerable LibSSH Server Observed - Possible Authentication Bypass (CVE-2018-10933)
+2522358|
+2520058|
+2522492|
+2522948|
+2522866|
+2522964|
+2522878|
+2522766|
+2520022|
+2522022|
+2522346|
+2522308|
+2522306|
+2522302|
+2523086|
+2523318|
+2523314|
+2523316|
+2523312|
+2520164|
+2520162|
+2522966|
+2522978|
+2522968|
+2522980|
+2522976|
+2522644|
+2522645|
+2522646|
+2522640|
+2522704|
+2522648|
+2523282|
+2523270|
+2523182|
+2523048|
+2522330|
+2522318|
+2522314|
+2522288|
+2522662|
+2522568|
+2522274|
+2522276|
+2522266|
+2522270|
+2522278|
+2522496|
+2523012|
+2523022|
+2522076|
+2522074|
+2008187|Paros Proxy Scanner Detected
+2017260|WebShell Generic - ASP File Uploaded
+2522960|
+2522962|
+2008116|Outbound TFTP Write Request
+2802839|ISC DHCP dhclient Network Configuration Script Command Injection
+3628|
+2011740|TeamSpeak2 Standard/Player List
+2011741|TeamSpeak2 Standard/Login End
+2008119|Outbound TFTP Error Message
+2012648|Dropbox Client Broadcasting
+5000003|
+17487|
+2015588|Suspicious Windows Executable WriteProcessMemory
+2020757|Windows executable sent when remote host claims to send an image M2
+2020202|Terse Named Filename EXE Download - Possibly Hostile
+2019384|Neverquest Request URI Struct
+2016837|Alina Checkin
+2022462|Win32/Neutrino Checkin 2
+2022722|Win32/Adware.Adposhel.A Checkin 3
+2018341|Kazy Checkin
+2016838|Alina User-Agent(Alina)
+2018787|Unknown Locker DL URI Struct Jul 25 2014
+2020723|FindPOS Checkin
+2016780|Adware.Win32/SProtector.A Client Checkin
+2012249|Suspicious Win32 User Agent
+2018867|MultiPlug.A checkin
+2002157|Skype User-Agent detected
+2809615|Critroni Likely Malicious Tor Proxy Cookie
+40360|
+2022566|Possible Malicious Macro EXE DL AlphaNumL
+2022679|Possible Psiphon Proxy Tool traffic
+2210048|
+2833684|WebDav Auth Request Outbound M2 (Possible NTLM Hash Theft)
+5102330|
+5001330|
+5101447|
+2016184|ColdFusion administrator access
+2012710|MS Terminal Server Root login
+2014617|Cisco IOS Self Signed Certificate Served to External Host
+2019182|HTTP POST Generic eval of base64_decode
+92009582|
+2403318|
+2403394|
+2403421|
+2403543|
+2011547|AlstraSoft AskMe que_id Parameter SELECT FROM SQL Injection Attempt
+2013473|Apache mod_deflate DoS via many multiple byte Range values
+2012116|DD-WRT Information Disclosure Attempt
+2008858|evision cms addplain.php module parameter Local File Inclusion
+2403323|
+2403320|
+2102466|SMB-DS IPC$ unicode share access
+2025649|Possible ETERNALBLUE Probe MS17-010 (MSF style)
+2102465|SMB-DS IPC$ share access
+2024917|AVTECH Unauthenticated Command Injection in DVR Devices
+2016992|WebShell Generic - *.tar.gz in POST body
+2024216|Possible DOUBLEPULSAR Beacon Response
+2022776|Magento Shoplift Exploit Inbound
+2009832|DCERPC rpcmgmt ifids Unauthenticated BIND
+2024217|Possible ETERNALBLUE MS17-010 Heap Spray
+2024297|ETERNALBLUE Exploit M2 MS17-010
+2025992|Possible ETERNALBLUE Probe MS17-010 (Generic Flags)
+2024044|Possible Apache Struts OGNL Expression Injection (CVE-2017-5638) M2
+2009714|Script tag in URI Possible Cross Site Scripting Attempt
+2009004|Login Credentials Possibly Passed in POST Data
+2808022|PHP Open Flash Charts File  Upload Attempt
+2012708|HTTP 414 Request URI Too Large
+2025802|file_put_contents php base64 encoded Remote Code Execution 2
+2005015|Noname Media Photo Galerie Standard SQL Injection Attempt -- view.php id SELECT
+2005016|Noname Media Photo Galerie Standard SQL Injection Attempt -- view.php id UNION SELECT
+2025282|Cloned Website Phishing Landing - Mirrored Website Comment Observed
+2023137|Possible Successful Phish to .tk domain Aug 26 2016
+2026731|ThinkPHP RCE Exploitation Attempt
+2823168|AVTECH IP Camera Unauthenticated CGI Dir Vulnerablity
+19439|
+2004961|LushiNews SQL Injection Attempt -- comments.php id SELECT
+2403397|
+1145|
+2018489|NMAP OS Detection Probe
+2011013|Attempted UDP Access Attempt to Cisco IOS 12.1 Hidden Read/Write Community String cable-docsis
+2022586|Possible SSLv2 Negotiation in Progress Client Master Key SSL2_RC2_128_CBC_EXPORT40_WITH_MD5
+2022588|Possible SSLv2 Negotiation in Progress Client Master Key SSL2_DES_64_CBC_WITH_MD5
+2020899|D-Link Devices Home Network Administration Protocol Command Execution
+2025576|HackingTrio UA (Hello, World)
+2024045|Possible Apache Struts OGNL Expression Injection (CVE-2017-5638) M3
+4000218|Apache Struts S2-045 RCE
+2014067|PHP Booking Calendar page_info_message parameter Cross-Site Scripting Vulnerability 
+2101874|Oracle Java Process Manager access
+2022261|Joomla RCE (JDatabaseDriverMysqli)
+2022263|Joomla RCE M2 (Serialized PHP in UA)
+2025494|[PT OPEN] Drupalgeddon2 <8.3.9 <8.4.6 <8.5.1 RCE Through Registration Form (CVE-2018-7600)
+2021992|Possible Joomla SQLi Attempt
+2522054|
+2016416|base64_decode in UA
+2009217|Tomcat admin-admin login credentials
+39058|
+2014615|Jembot PHP Webshell (hell.php)
+1309|
+39059|
+38700|
+5006445|
+2011768|PHP tags in HTTP POST
+5201803|
+2830243|W32/Trickbot C2 (networkDll module)
+2830177|Observed Malicious SSL Cert (QuantLoader C2)
+2002993|Rapid POP3S Connections - Possible Brute Force Attack
+2804209|Kaseya Remote Access/Management Tool Checkin Response
+2820385|APT.Fimlis CnC Beacon
+5500000|
+2403369|
