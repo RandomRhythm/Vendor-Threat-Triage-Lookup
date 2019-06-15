@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.5 Load useAlienVapiKey via INI setting. Move whois lookups outside of VirusTotal sub.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.6 - Updated whois lookups moved in version 8.2.0.5 to function properly outside of VirusTotal sub.
 
 'Copyright (c) 2019 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -11060,6 +11060,9 @@ else
 end if
 if strTmpCClineE = "" or strTmpCClineE = "|" then
 	strTmpCClineE = "|" & getdata(strWhoisTmp, chr(34), chr(34) & "country_code" & chr(34) & ": " & chr(34) )
+	if strTmpCClineE = "" or strTmpCClineE = "|" then
+		strTmpCClineE = "|" & getdata(strWhoisTmp, chr(34), chr(34) & "country" & chr(34) & ": " & chr(34) )
+	end if
 end if
 
 if strTmpCNlineE = "|" and strTmpCClineE = "|" Then
@@ -11714,7 +11717,7 @@ Sub whoIsPopulate(strTmpWhoIs)
       if strTmpRequestResponse = "|" then strTmpRequestResponse = ""
       'if VirusTotal does not have owner information get data from WhoIs lookup
       if BoolWhoisDebug = True then msgbox "Country code = " & strTmpCClineE
-      if (strTmpRequestResponse = "" or BoolForceWhoisLocationLookup = True and strTmpCClineE = "|") and instr(strFullAPIURL,"domain=") then
+      if (strTmpRequestResponse = "" or BoolForceWhoisLocationLookup = True and strTmpCClineE = "|") and isIPaddress(strTmpWhoIs) = False then
         if strTmpRequestResponse = "" then 
           if boolWhoisCache = True then strTmpRequestResponse = WhoisCacheLookup(strTmpWhoIs)
         else' don't overwrite strTmpRequestResponse but populate country code and other missing data
@@ -11759,7 +11762,7 @@ Sub whoIsPopulate(strTmpWhoIs)
       end if
       strTmpRequestResponse = CleanupWhoisData(strTmpRequestResponse)
       
-      if strTmpWCO_CClineE <> "|" and instr(strFullAPIURL,"domain=") and boolWhoisCache = True then
+      if strTmpWCO_CClineE <> "|" and isIPaddress(strTmpWhoIs) = False and boolWhoisCache = True then
         CacheWhois strTmpWhoIs, strTmpRequestResponse
         if BoolWhoisDebug = True then msgbox "Cached domain whois:" & strTmpWhoIs & "=" & strTmpRequestResponse
       end if
