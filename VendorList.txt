@@ -9,6 +9,7 @@ ALYac
 AntiVir (deprecated)
 Antivir7 (deprecated)
 Antiy-AVL
+APEX
 Arcabit
 a-squared (deprecated)
 Authentium (deprecated)
@@ -47,6 +48,7 @@ eTrust-InoculateIT (depreciated)
 eTrust-Vet (depreciated)
 Ewido
 FileAdvisor
+FireEye
 Fortinet
 FortinetBeta (depreciated)
 F-Prot
