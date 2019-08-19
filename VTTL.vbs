@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.6 - Updated whois lookups moved in version 8.2.0.5 to function properly outside of VirusTotal sub.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.6 - Updated whois lookups moved in version 8.2.0.5 to function properly outside of VirusTotal sub. Further integration with VirusTotal v3.
 
 'Copyright (c) 2019 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -519,7 +519,7 @@ boolEnableXforce = False 'Perform queries against IBM X-Force Threat Intelligenc
 BoolEnableMetascan = False 'Disabled due to API changes. Disabled if no API key provided 
 boolEnableMalShare = True 'Perform queries against malshare.com. Disabled if no API key provided
 boolEnablePassiveTotal = True 'Perform queries for publisher on PassiveTotal. 
-intPTDailyLimit = 15 'Number of PassiveTotal queries allowed in a day. Default is 15.
+intPTDailyLimit = 100 'Number of PassiveTotal queries allowed in a day. Default is 100.
 enableFreeGeoIP = False 'Run SubmitGIP
 enableIP_DB = True 'Use internal IP-DB for GeoIP
 boolEnableWhoAPI = False 'Enable WhoAPI whois lookups
@@ -1469,7 +1469,7 @@ if BoolCreateSpreadsheet = True then
         elseif BoolEnCaseLookup = True and BoolUseCarbonBlack = True then
           strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
         elseif BoolUseCarbonBlack = True then
-          strTmpCBHead = "|CB File Path|CB Digital Sig|CB Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
         elseif BoolSigCheckLookup = True then
           if cint(inthfPrevalenceLoc) > -1 then 'CB custom CSV export
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
@@ -1489,15 +1489,17 @@ if BoolCreateSpreadsheet = True then
 			if inthfProductLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Product Name","")
 			if intCompanyLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Company Name","")
 		  end if
+
+        elseif boolEnableCuckoo = True then 
+          strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
+          'StrTmpCTimeStamp = "|PE TimeStamp"
+        elseif BoolDisableVTlookup = False and boolVTuseV3 = True Then
+        	strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
         elseif BoolEnCaseLookup = True then
           strTmpCBHead = "|File Path|File Size"
-        elseif boolEnableCuckoo = True then 
-          strTmpCBHead = "|CB Digital Sig|CB Company Name|Product Name|File Size|Digial Signature Tracking"
-          StrTmpCTimeStamp = ""
-          'StrTmpCTimeStamp = "|PE Timestamp"
-        elseif boolEnableCuckooV2 = True then   
+        ElseIf boolEnableCuckooV2 = True then   
 			strTmpCBHead = "|File Size"
-        else
+        Else
           strTmpCBHead = ""
           StrTmpCTimeStamp = ""
           strYARAhead = ""
@@ -1509,10 +1511,12 @@ if BoolCreateSpreadsheet = True then
           strYARAhead = ""
           strFileTypeHead = ""
         end if
-		if boolEnableCuckooV2 = True then 
-          
+		if boolEnableCuckooV2 = True Or (BoolDisableVTlookup = False and boolVTuseV3 = True) then 
           strFileTypeHead = "|File Type"
-	    end if
+	    end If
+	    if BoolDisableVTlookup = False and boolVTuseV3 = True Then
+        	StrTmpCTimeStamp = "|PE TimeStamp"
+        End if	
         if boolEnableMalShare = True then
           strTmpMalShareHead = "|MalShare"
         else
@@ -1591,7 +1595,7 @@ if BoolCreateSpreadsheet = True then
         Wscript.echo "Data was found besides hashes. Please include only hashes or IP/domains in vtlist.txt. If only contains hashes make sure each entire line contains valid hashes (extra, missing, invalid characters)."
         
         ExitExcel
-        wscript.quit(747)
+        wscript.quit(748)
       Case 0
         Wscript.echo "No data was found in vtlist.txt that can be scanned. If you are scanning a hash make sure the character length is appropiate (Example: 32 characters in MD5 hash). If scanning a domain or IP address please check your formatting."
         
@@ -1806,7 +1810,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		if BoolUseMalShare = True then
           MalShareHashLookup  strScanDataInfo       
         end If
-    elseif BoolDisableVTlookup = True Then    
+    elseif BoolDisableVTlookup = True and IsHash(strData) = False Then    
         whoIsPopulate strScanDataInfo
 	End If
 	
@@ -2433,15 +2437,17 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		strCBFileSize = AddPipe(strCBFileSize) 
 		strFileTypeLineE = addpipe(strFileTypeLineE)		
 	  end if
-	  if boolEnableCuckoo = True then
+	  if boolEnableCuckoo = True Or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
         strCBdigSig = AddPipe(strCBdigSig) 'CB Digital Sig
         strCBcompanyName = AddPipe(strCBcompanyName)'CB Company Name
         strCBproductName = AddPipe(strCBproductName) 'Product Name  
         strCBFileSize = AddPipe(strCBFileSize)  
-        'strPE_TimeStamp = AddPipe(strPE_TimeStamp)    
-        strTmpSigAssesslineE = Addpipe(strTmpSigAssesslineE)    
-        StrYARALineE = addpipe(StrYARALineE)
+        strPE_TimeStamp = AddPipe(strPE_TimeStamp)    
+        strTmpSigAssesslineE = Addpipe(strTmpSigAssesslineE)
         strFileTypeLineE = addpipe(strFileTypeLineE)
+      End if
+      If boolEnableCuckoo = True then    
+        StrYARALineE = addpipe(StrYARALineE)
         if strDetectNameLineE = "None Identified" then 
           strDetectNameLineE = "|"
         else
@@ -2452,8 +2458,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         else
           StrDetectionTypeLineE = addpipe(StrDetectionTypeLineE)
         end if
-                
-      end if
+      end If
+      
       if boolTGwasEnabled = True then 
         strTmpTGlineE = addpipe(strTmpTGlineE)
       end if
@@ -2520,7 +2526,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           end if
           if boolDisableSQL_IQ = False and boolSQLcache = True and ishash(strdata) = True then SQL_Intelligence_Query lcase(strdata)           
           'write row for hash lookups
-          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpIXFlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strFileTypeLineE & strPPidsLineE
+          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpIXFlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strFileTypeLineE & strPE_TimeStamp & strPPidsLineE
       end select 
       
 
@@ -2678,6 +2684,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        strCategoryLineE = ""
        strRevDNS = ""
        strDFSlineE = ""
+       strPE_TimeStamp = ""
+       strFileTypeLineE = ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
 	  
 	  if boolNoCrLf = True then 
@@ -3078,10 +3086,18 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 			boolVT_V3 = False
 		end if
 		'msgbox "boolVT_V3=" & boolVT_V3
-		if boolVT_V3 = True then
-			
+		if boolVT_V3 = True Then			
 			strDateTimeLineE = ParseVT_v3ScanDate(strresponseText)
-
+			If ispipeorempty(strCBdigSig) Then strCBdigSig = GetData(strresponseText, Chr(34), Chr(34) & "signers" & Chr(34) & ": " & Chr(34))
+	        If ispipeorempty(strCBcompanyName) Then strCBcompanyName = GetData(strresponseText, Chr(34), Chr(34) & "CompanyName" & Chr(34) & ": " & Chr(34))
+	        If ispipeorempty(strCBproductName) Then strCBproductName = GetData(strresponseText, Chr(34), Chr(34) & "product" & Chr(34) & ": " & Chr(34))
+	        If ispipeorempty(strCBFileSize) Then strCBFileSize = GetData(strresponseText, " ", Chr(34) & "size" & Chr(34) & ": " )
+	        If ispipeorempty(strPE_TimeStamp) Then strPE_TimeStamp = GetData(strresponseText, " ", Chr(34) & "timestamp" & Chr(34) & ": " )
+			If IsNumeric(strPE_TimeStamp) = True And strPE_TimeStamp <> "" Then
+				strPE_TimeStamp = DateAdd("s", strPE_TimeStamp, "01/01/1970 00:00:00") 'epoch2date
+			End If	
+			If ispipeorempty(strFileTypeLineE) Then strFileTypeLineE = GetData(strresponseText, Chr(34), Chr(34) & "PEType" & Chr(34) & ": " & Chr(34))
+			If ispipeorempty(strFileIMP) Then strFileIMP = GetData(strresponseText, Chr(34), Chr(34) & "imphash" & Chr(34) & ": " & Chr(34))
 		else
 			strDateTimeLineE = ParseVTScanDate(strresponseText)
 			if len(strDateCompare) > 7 Then strDateTimeLineE = ReformatDateTime(strDateTimeLineE, "VirusTotal") 'use the same format for datetime
@@ -7058,7 +7074,7 @@ end if
 end function
 
 
-Function CheckBitDefenderEngines(strBDvendorNames)
+Function CheckBitDefenderEngines(strBDvendorNames)'http://www.av-comparatives.org/list-of-consumer-av-vendors-pc/
 Dim boolCBDEreturn
 Dim strTmpBDvendorNames
 Dim StrTmpVendPosDet
@@ -7068,7 +7084,7 @@ boolCBDEreturn = False
 
 if instr(strTmpBDvendorNames, "ad-aware" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "bitdefender" & StrTmpVendPosDet) then boolCBDEreturn = True
-if instr(strTmpBDvendorNames, "f-secure" & StrTmpVendPosDet) then boolCBDEreturn = True
+if instr(strTmpBDvendorNames, "f-secure" & StrTmpVendPosDet) then boolCBDEreturn = True 'moved to Avira
 if instr(strTmpBDvendorNames, "gdata" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "microworld-escan" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "emsisoft" & StrTmpVendPosDet) then boolCBDEreturn = True
@@ -7078,6 +7094,10 @@ if instr(strTmpBDvendorNames, "alyac" & StrTmpVendPosDet) then boolCBDEreturn = 
 if instr(strTmpBDvendorNames, "ad-aware" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "arcabit" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "cat-quickheal" & StrTmpVendPosDet) then boolCBDEreturn = True
+If instr(strTmpBDvendorNames, "tencent" & StrTmpVendPosDet) then boolCBDEreturn = True
+if instr(strTmpBDvendorNames, "totaldefense" & StrTmpVendPosDet) then boolCBDEreturn = True
+If instr(strTmpBDvendorNames, "Qihoo-360" & StrTmpVendPosDet) then boolCBDEreturn = True
+if instr(strTmpBDvendorNames, "vipre" & StrTmpVendPosDet) then boolCBDEreturn = True
 CheckBitDefenderEngines = boolCBDEreturn
  if BoolDebugTrace = True then LogData strDebugPath & "\bitdefen.log", boolCBDEreturn & "|" & strTmpBDvendorNames , false
 end function
@@ -11116,7 +11136,7 @@ Function pullAlienVault(strAlienURL, strCheckItem, strSection)
   on error resume next
     objHTTP.send 
     if err.number <> 0 then
-      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " WhoAPI lookup failed with HTTP error. - " & err.description,False 
+      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " AlienVault lookup failed with HTTP error while querying " & strCheckItem & " - " & err.description,False 
       exit function 
     end if
   on error goto 0  
