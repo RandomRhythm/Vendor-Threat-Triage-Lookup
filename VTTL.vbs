@@ -95,9 +95,6 @@ Dim StrIPMetaScanFormatted
 Dim StrRBL_Results
 DIm strMetaScanOnlineAssessments
 Dim strMetaScanOnlineGeoIP
-Dim strGlobalTM_OPR_Response
-Dim strGlobalTM_CPR_Response
-Dim strGlobalTM_SS_Response
 DIm strRandom
 Dim BoolRunSilent
 Dim boolsubmitVT
@@ -112,7 +109,6 @@ DIm BoolUseCIF
 Dim strTGAPIkey
 Dim strCIF_APIkey
 Dim StrTmpRBLOutput
-Dim BoolTGscan
 Dim strCIFoutput
 Dim intTGpageLimit
 Dim BoolDNS_BLchecks
@@ -145,7 +141,6 @@ Dim strTmpIXFlineE 'IBM X-Force Exchange
 Dim strTmpCacheLineE 'Was a cached lookup CacheLookup
 Dim strTmpMalShareLineE
 Dim BoolNoScanning
-Dim BoolNoSubmit
 Dim strRevDNS
 Dim BoolDisableVTlookup
 Dim BooWhoIsIPLookup
@@ -220,7 +215,6 @@ Dim DictOrgWhois: Set DictOrgWhois = CreateObject("Scripting.Dictionary")
 Dim DictWhois: Set DictWhois = CreateObject("Scripting.Dictionary")
 Dim DictAlpabet: Set DictAlpabet = CreateObject("Scripting.Dictionary")
 Dim IntTmpHkTlScore
-Dim StrDetectionTypeReportLine
 Dim StrDetectionTypeLineE
 Dim strTmpDomainRestric 'spreadsheet output for domain restricted
 Dim strTmpSinkHole 'domain has been sinkholed
@@ -2797,7 +2791,6 @@ Dim dicIPurls
 Dim intCountDomains
 Dim strTmpVTSips
 Dim StrTmpDomainOrIP
-Dim strTmpReturnedResults
 Dim strNumberOfPositiveDetections
 Dim strTmpRequestResponse
 Dim DIcHashes
@@ -3146,7 +3139,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 	      if boolCheckFSecure = True then VTvendorParseName strresponseText, "F-Secure", True
 		  if boolCheckBitdefender = True then VTvendorParseName strresponseText, "BitDefender", True
 		  if boolCheckPanda = True then VTvendorParseName strresponseText, "Panda", True
-		  if DisplayVendor <> "" then strDiplayVendDname = "|" & VTvendorParseName (strresponseText, DisplayVendor, True)
+		  if DisplayVendor <> "" then strDiplayVendDname = "|" & VTvendorParseName (strresponseText, DisplayVendor, False)
       End If 'End virus total results were returned
 
       if instr(strresponseText,"md5" & chr(34) & ": " & chr(34)) or IsHash(strScanDataInfo) then'grab file hash
@@ -3377,7 +3370,6 @@ if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then
 	if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "No positive detections found." ,BoolEchoLog 
   else
 	Dim lastX
-    Dim lastURL
 	intHashlookupCount = 0
 	DicTmpDnames.RemoveAll
 	DictTypeNames.RemoveAll
@@ -4524,7 +4516,6 @@ Dim strTGQueryString
 Dim ArrayCIFsplit
 Dim strTmpAssessment
 Dim strTmpDescription
-Dim strTmpCIFurl
 Dim intConfidence
 Dim DictCIFinfo: Set DictCIFinfo = CreateObject("Scripting.Dictionary")
 
@@ -4714,22 +4705,6 @@ if outQueue.Count = 0 then boolPendingTIAItems = False
 end sub
 
 
-Sub Add_Workbook_Worksheet(strWorksheetName)
-Set objWorkbook = objExcel.Worksheets(objExcel.Worksheets.count)
-objWorkbook.Activate
-
-objExcel.ActiveWorkbook.Worksheets.Add
-intWriteRowCounter = 1
-Set objSheet1 = objExcel.Worksheets(objExcel.Worksheets(objExcel.Worksheets.count -1).name)
-    Set objSheet2 = objExcel.Worksheets(objExcel.Worksheets(objExcel.Worksheets.count).name)
-    objSheet2.Move objSheet1
-
-objExcel.Worksheets(objExcel.Worksheets.count).Name = strWorksheetName
-Set objWorkbook = objExcel.Worksheets(objExcel.Worksheets.count)
-objWorkbook.Activate
-end sub
-
-
 Function SubmitGIP(strSGIPaddr)
 Dim strReturnGIPResults
 strReturnGIPResults = ""
@@ -4753,10 +4728,8 @@ Function CheckGIP(strGIPaddress)
 Dim objHTTP_GIP
 Dim strHTTP_GIPResponse
 Dim strTGQueryString
-Dim ArrayGIPsplit
 Dim strTmpAssessment
 Dim strTmpDescription
-Dim strTmpGIPurl
 Dim DictGIPinfo: Set DictGIPinfo = CreateObject("Scripting.Dictionary")
 Set objHTTP_GIP = CreateObject("MSXML2.ServerXMLHTTP")
 strHTTP_GIPResponse = ""
@@ -4781,7 +4754,7 @@ strHTTP_GIPResponse = ""
 on error resume next
 strHTTP_GIPResponse = objHTTP_GIP.responseText
 
-  Dim objStreamConvertConvert
+  Dim objStreamConvert
   Set objStreamConvert = CreateObject("ADODB.Stream")
 
  'FreeGeoIP gives data in unicode which messes up file logging. This code converts to ASCII.
@@ -6369,7 +6342,7 @@ end sub
 Function Encyclopdia_Cache(strAV_Vendor, strVendorDetectionName)
 Dim strTmpEC_URLreturn
 Dim BoolSkipElookup
-BoolSkipElookup = false
+BoolSkipElookup = False
 if instr(lcase(strVendorDetectionName), "adware") then BoolSkipElookup = True
 if instr(lcase(strVendorDetectionName), "unwanted") then BoolSkipElookup = True
 if instr(lcase(strVendorDetectionName), "toolbar") then BoolSkipElookup = True
@@ -6659,8 +6632,7 @@ end function
 
 Function ParseVTScanDate(strVTresponseText)
 Dim strTmpVTDateTime
-Dim StrTmpVTStartTime
-Dim StrTmpVTEndTime
+
 if instr(strVTresponseText, chr(34) & "scan_date" & chr(34) & ": ") then
   arrayPVTScanDate = split(strVTresponseText, chr(34) & "scan_date" & chr(34) & ": ")
 
@@ -6696,7 +6668,6 @@ Function VTnameDetect(strTmpMalDname, IntCompare) 'attempts to resolve the detec
 'add something to track matches of detection names for excel reporting
 Dim strTmpVTNDreturn
 Dim strVTNDreturn
-Dim strTmpMDnames
 Dim strArrayNBreaks
 Dim arrayNamebreaks
 Dim strTmpDatFileSave
@@ -10848,7 +10819,7 @@ if getPositiveDetections(VTresponse) <> 0 then '
 
 			end if
 		end if
-	end if
+	End if
 end if
 end Function
 
