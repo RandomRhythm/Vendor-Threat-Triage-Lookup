@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.6 - Updated whois lookups moved in version 8.2.0.5 to function properly outside of VirusTotal sub. Further integration with VirusTotal v3.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.7 - Fix VirusTotal filesize parsing
 
 'Copyright (c) 2019 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -3084,7 +3084,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 			If ispipeorempty(strCBdigSig) Then strCBdigSig = GetData(strresponseText, Chr(34), Chr(34) & "signers" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBcompanyName) Then strCBcompanyName = GetData(strresponseText, Chr(34), Chr(34) & "CompanyName" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBproductName) Then strCBproductName = GetData(strresponseText, Chr(34), Chr(34) & "product" & Chr(34) & ": " & Chr(34))
-	        If ispipeorempty(strCBFileSize) Then strCBFileSize = GetData(strresponseText, " ", Chr(34) & "size" & Chr(34) & ": " )
+	        If ispipeorempty(strCBFileSize) Then strCBFileSize = GetData(strresponseText, ",", Chr(34) & "size" & Chr(34) & ": " )
 	        If ispipeorempty(strPE_TimeStamp) Then strPE_TimeStamp = GetData(strresponseText, " ", Chr(34) & "timestamp" & Chr(34) & ": " )
 			If IsNumeric(strPE_TimeStamp) = True And strPE_TimeStamp <> "" Then
 				strPE_TimeStamp = DateAdd("s", strPE_TimeStamp, "01/01/1970 00:00:00") 'epoch2date
