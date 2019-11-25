@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.7 - Fix VirusTotal filesize parsing
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.8 - Fix file does not exist error on line 2767 when Excel is used for output. Change where BoolReportOnly is implemented. Modify supported CSV input columns.
 
 'Copyright (c) 2019 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1769,13 +1769,13 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 
     strScanDataInfo = strData 
 	if BoolWhoisDebug = True then msgbox "Read list item:" & strData
-    if BoolReportOnly = False then
+    
       if boolsubmitVT = True and (IsHash(strData) or BoolCreateSpreadsheet = False) = True then 
         VT_Submit 'submit to virustotal as a URL or File
         inLoopCounter = inLoopCounter + 1
         If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter=" & inLoopCounter,False 
       end if
-    end if
+
 	
 	if (BoolDisableVTlookup = True Or boolsubmitVT = false) and IsHash(strData) = True Then
 		AlienHashLookup(strData)
@@ -2763,9 +2763,11 @@ end if
 
 wscript.sleep(30)
 if objFSO.fileexists(CurrentDirectory & "\vtlist.que") = false then
-  if BoolRunSilent = False then _
-   objShellComplete.run chr(34) & strSSfilePath & chr(34)
-
+  if BoolRunSilent = False Then
+  	If objFSO.fileexists(strSSfilePath) = True Then 'if we output to a file then open it. Else Excel output was configured
+     objShellComplete.run chr(34) & strSSfilePath & chr(34)
+    End If 
+  End if
   if BoolRunSilent = False then _
   Msgbox "The VTTL script has finished lookups and will exit. The following items were processed:" & vbcrlf & strScannedItems
 else
@@ -2831,7 +2833,7 @@ if BoolDisableVTlookup = False then
 		strresponseText = CacheLookup("", "\vt\", strScanDataInfo, intHashCacheThreashold)
 	end if
 
-  if BoolPost = true then
+  if BoolPost = true and BoolReportOnly = False then
     'file url "https://www.virustotal.com/vtapi/v2/file/report"
     'url scan url "https://www.virustotal.com/vtapi/v2/url/scan"
     'url report "http://www.virustotal.com/vtapi/v2/url/report"
@@ -2867,7 +2869,7 @@ if BoolDisableVTlookup = False then
       end if
     on error goto 0
     end if
-  else 'Perform HTTP GET
+  elseif BoolReportOnly = False then 'Perform HTTP GET
    
     if BoolDebugTrace = True then logdata strDebugPath & "\VT_debug" & "" & ".txt",Date & " " & Time & " " & strDataType & strScanDataInfo & strOptionalParameter & "&APIKEY"  ,BoolEchoLog 
  
@@ -2893,7 +2895,7 @@ if BoolDisableVTlookup = False then
     end if
   end if   
   
-  if strresponseText = "" Then 'if we didn't get results from cache
+  if strresponseText = "" And BoolReportOnly = false Then 'if we didn't get results from cache
     if objHTTP.status = 200 & objHTTP.responseText = "" Then
     	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 200 status code with no data.",False 
     ElseIf objHTTP.status = 403 Then
@@ -4281,7 +4283,7 @@ end if
 CurrentDirectory = GetFilePath(wscript.ScriptFullName)
 
 ExecQuery = "cmd.exe /c nslookup " & TempReverseIP & " " & strDNSServer & ">" & chr(34) & strCachePath & "\rbl.txt" & chr(34)   
-ErrRtn = sh_rbl.run ("%comspec% /c " &  ExecQuery,0 ,True)
+ErrRtn = sh_rbl.run (ExecQuery,0 ,True)
 
 set readfilePath = fso_rbl.OpenTextFile(strCachePath & "\rbl.txt", 1, false)
 if not readfilePath.AtEndOfStream then dataresults = readfilepath.readall
@@ -8624,9 +8626,9 @@ if objFSO.fileexists(OpenFilePath1) then
 		end if
         if (BoolHeaderLocSet = False and (instr(strSCData, "Publisher") > 0 and instr(strSCData,	"Company") > 0 and instr(strSCData, "MD5") > 0)) or _
 		(BoolHeaderLocSet = False and instr(strSCData, "File Name") > 0 and instr(strSCData,	"SHA256") > 0 and instr(strSCData, "# of Hosts") > 0) or _
-		(BoolHeaderLocSet = False and instr(strSCData, "Object") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Path") > 0) or _
-		(BoolHeaderLocSet = False and instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Company") > 0) then
-          if instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
+		(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "Path") > 0) or _
+		(BoolHeaderLocSet = False and instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Company") > 0) Then
+          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
             boolSuppressNoHash = True
           end if
           'header row
@@ -11009,6 +11011,7 @@ end function
 
 
 Function AlienVaultWhois(strWhoisTmp)
+
 aWhoisReturn = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Org" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "org" & chr(34) & "}")
 
 if aWhoisReturn = "" then aWhoisReturn = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Name" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "name" & chr(34) & "}")
@@ -11717,7 +11720,7 @@ Sub whoIsPopulate(strTmpWhoIs)
         if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "results after cache query: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE & "^" & "strTmpCClineE =" & strTmpCClineE & "^" & "strTmpRequestResponse =" & strTmpRequestResponse, false
         if BoolWhoisDebug = True then msgbox "strTmpRequestResponse=" & strTmpRequestResponse & vbcrlf & "len=" & len(strTmpRequestResponse) & vbcrlf & "null=" & isnull(strTmpRequestResponse)
         
-		if boolDisableAlienVaultWhoIs = False then
+		if boolDisableAlienVaultWhoIs = False Then
 			strAlienWho = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/domain/", strTmpWhoIs, "/whois")
 			if strTmpRequestResponse = "" or strTmpRequestResponse = "|" or isnull(strTmpRequestResponse) = True then 
 				'msgbox "Setting with Alien"
