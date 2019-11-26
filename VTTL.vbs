@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.0.8 - Fix file does not exist error on line 2767 when Excel is used for output. Change where BoolReportOnly is implemented. Modify supported CSV input columns.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.0 - Expose ini setting to control caching domain query results.
 
 'Copyright (c) 2019 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -418,6 +418,7 @@ Dim boolVTuseV3 'Use v3 of VirusTotal API
 Dim boolVT_V3 'internal setting used to track VT JSON version
 Dim etHashLookedUp 'have we looked up hash on Proofpoint ET 
 Dim tcHashLookedUp 'have we looked up hash on ThreatCrowd
+Dim boolCacheDomain 'Database caching for domain lookups
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -439,6 +440,7 @@ intDelayBetweenLookups = 15052 'miliseconds to wait between each lookup (default
 boolCacheVTNoExist = False 'Cache VirusTotal has does not exist results. Default value is False
 BoolDisableCacheLookup = False 'Do not query cache for lookups
 BoolDisableCaching = False ' Do not write cache items
+boolCacheDomain = false 'Cache domain lookups
 intHashCacheThreashold = 900 'number of days to use a cached return before refreshing. Anything older than this will not be refreshed. Default set to same as intCacheRefreshLimit
 intCacheRefreshLimit = 900 'number of days back that a refresh is allowed. Anything older than this will not be refreshed.
 intRefreshAge = -1 'Number of days from fist time seeing the hash that you want to refresh the cache data (get updated results) for processed items. Default value is 10
@@ -555,7 +557,8 @@ end if
 
 BoolDisableCaching = ValueFromINI("vttl.ini", "main", "disable_CacheWrite", BoolDisableCaching) ' Do not write cache items
 BoolDisableCacheLookup = ValueFromINI("vttl.ini", "main", "disable_CacheRead", BoolDisableCacheLookup) 'Do not query cache for lookups
-boolWhoisCache = ValueFromINI("vttl.ini", "main", "whoisCache", boolWhoisCache)
+boolWhoisCache = ValueFromINI("vttl.ini", "main", "whoisCache", boolWhoisCache) 'Cache whois data for domains
+boolCacheDomain = ValueFromINI("vttl.ini", "main", "DomainCache", boolWhoisCache) 'Cache domain lookups
 BoolUseExcel = ValueFromINI("vttl.ini", "main", "enable_Excel", BoolUseExcel) 'load value from INI
 sleepOnSkippedVT = ValueFromINI("vttl.ini", "main", "SleepOnCachedLookup", sleepOnSkippedVT) 'load value from INI to sleep if VirusTotal results came from cache
 intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) 'Number of days from first time seeing the hash that you want to refresh the cache data (get updated results) for processed items. Default value is 10
@@ -3633,7 +3636,7 @@ if instr(strFullAPIURL,"domain=") then
   if len(strTmpSinkHole) > 1 then set objparameter8 = cmd1.createparameter("@Sinkhole", 129, 1, len(strTmpSinkHole)-1,right(strTmpSinkHole,len(strTmpSinkHole) -1))
 
  'UpdateDomainVendTable strdomainName, objCreatedDate, objLastUpDate, objVTdomain, objTCdomain, objRevDomain, objCountryNameDomain,	CountryCodeDomain, objRegionNameDomain, objRegionCodeDomain, objCityNameDomain, objCreationDate, objWHOISName, objIPaddress, objETdomain, ObjXForce, ObjSinkhole)
-  if BoolUseSQLite = True then
+  if BoolUseSQLite = True And BoolDisableCaching = false And boolCacheDomain = True then
 	UpdateDomainVendTable strData    , objparameter0, objparameter1, objparameter2, objparameter3, objparameter4,                "",	             ""  ,         ""         ,            ""      ,                "",              "",           "", objparameter5, objparameter6, objparameter7, objparameter8
   end if
   set cmd1 = nothing
