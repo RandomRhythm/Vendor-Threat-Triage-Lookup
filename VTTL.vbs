@@ -555,7 +555,7 @@ end if
 
 BoolDisableCaching = ValueFromINI("vttl.ini", "main", "disable_CacheWrite", BoolDisableCaching) ' Do not write cache items
 BoolDisableCacheLookup = ValueFromINI("vttl.ini", "main", "disable_CacheRead", BoolDisableCacheLookup) 'Do not query cache for lookups
-boolWhoisCache = ValueFromINI("vttl.ini", "vendor", "main", boolWhoisCache)
+boolWhoisCache = ValueFromINI("vttl.ini", "main", "whoisCache", boolWhoisCache)
 BoolUseExcel = ValueFromINI("vttl.ini", "main", "enable_Excel", BoolUseExcel) 'load value from INI
 sleepOnSkippedVT = ValueFromINI("vttl.ini", "main", "SleepOnCachedLookup", sleepOnSkippedVT) 'load value from INI to sleep if VirusTotal results came from cache
 intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) 'Number of days from first time seeing the hash that you want to refresh the cache data (get updated results) for processed items. Default value is 10
