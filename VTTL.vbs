@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.0 - Expose ini setting to control caching domain query results.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.1 - Support for Seclytics API lookups. Provide SURBL the full domain not the parent.
 
 'Copyright (c) 2019 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -21,7 +21,6 @@
 '/g       Perform queries against CSV output from Sysinternals SigCheck and Carbon Black hash dump script.
 '/a       Perform queries against EnCase tab separated value output or NetAMP CSV (Item Path, Logical Size, MD5, File Name, SHA256, Size (KB))
 '/dcb     Disable Carbon Black
-'/dte     Disable ThreatExpert
 '/dms     Disable MalShare
 '/dtc     Disable Threat Crowd lookups
 '/det     Disable Proofpoint Emerging Threats Intelligence
@@ -137,7 +136,6 @@ Dim strTmpWCO_CClineE
 Dim strTmpIPContactLineE
 Dim strTmpVTPositvLineE 'greatest value for positive detections
 Dim strTmpIPlineE
-Dim strTmpIXFlineE 'IBM X-Force Exchange
 Dim strTmpCacheLineE 'Was a cached lookup CacheLookup
 Dim strTmpMalShareLineE
 Dim BoolNoScanning
@@ -405,6 +403,7 @@ Dim intSigDateRange
 Dim strCAPEport
 Dim UniqueString
 Dim boolLogURLs 'Output URLs associated with the lookup items.
+Dim boolLogIPs 'Output IP addresses associated with the lookup items.
 Dim boolEnableCuckooV2 'Perform API queries for hashes against Cuckoo v2
 Dim strCuckooV2IPAddress 'Cuckoo v2 host or IP address
 Dim strCuckooPort 'Cuckoo v2 port
@@ -419,6 +418,10 @@ Dim boolVT_V3 'internal setting used to track VT JSON version
 Dim etHashLookedUp 'have we looked up hash on Proofpoint ET 
 Dim tcHashLookedUp 'have we looked up hash on ThreatCrowd
 Dim boolCacheDomain 'Database caching for domain lookups
+Dim DicIP_Context: Set DicIP_Context = CreateObject("Scripting.Dictionary") 'Seclytics IP Address context
+Dim DicFile_Context: Set DicFile_Context = CreateObject("Scripting.Dictionary") 'Seclytics File context
+
+Dim BoolSeclytics 'set to true to use Seclytics
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -455,7 +458,8 @@ strDatabasePath = "vttl.db" 'Default is vttl.db which will exist in current dire
 boolOutputHosts = False 'Set to True to have the script import/export Carbon Black host names associated with a hash
 boolNoCrLf = True 'Remove carriage return and line feed from cell entries.
 boolLogURLs = True 'Log URLs associated with an IP/Domain
-boolLogHashes = True 'Output URLs and hashes associated with the lookup items. (only outputs from VirusTotal currently)
+boolLogHashes = True 'Output URLs and hashes associated with the lookup items. (outputs from VirusTotal and Seclytics)
+boolLogIPs = True 'Output IP addresses associated with the lookup items.
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -511,7 +515,6 @@ BoolEnableCarbonBlack = True 'Perform queries for md5 against Carbon Black. Disa
 BoolDisableCBCachLookup = True 'Default value is True. Prevents getting CB results from cache
 BoolLimitCBQueries = True 'Default is True. If a custom CSV export was feed to the script; rely on CSV data and don't lookup API for known CSV items. Set to False to perform queries against CB regardless of CSV data.
 BoolEnableThreatGRID = True 'Perform queries against ThreatGRID. Disabled if no API key provided
-boolEnableXforce = False 'Perform queries against IBM X-Force Threat Intelligence. No longer supported due to API changes. 
 BoolEnableMetascan = False 'Disabled due to API changes. Disabled if no API key provided 
 boolEnableMalShare = True 'Perform queries against malshare.com. Disabled if no API key provided
 boolEnablePassiveTotal = True 'Perform queries for publisher on PassiveTotal. 
@@ -538,7 +541,10 @@ boolCheckAvira = True 'Check for Avira write-up (requires TIA API)
 boolCheckSymantec = True 'Check for Symantec write-up (requires TIA API)
 boolCheckESET = True 'Lookup write-ups via Threat Intelligence Aggregator
 BoolNSRLLookup = False 'Public service is for demo purposes only. Need to stand up your own server and modify to query it.
-boolUseXforce = False 'Requires API key now and is no longer supported. Do not enable
+BoolSeclytics = False 'set to true to use Seclytics
+SeclytRepReason = "" 'Seclytics Reputation and Reason
+SeclytFileRep = "" 'Seclytics Associated File Metadata
+SeclytFileCount = "" 'Seclytics File Count"
 DisplayVendor = "" 'Add column to display all of this vendor's detection names. Example: BitDefender
 intClippingLevel = 2 'Domain/IP reporting for detection name will report on name label with score greater than this
 BoolCacheRelatedHashLookups = True
@@ -611,8 +617,11 @@ boolUseRIPE = ValueFromINI("vttl.ini", "vendor", "UseRIPE", boolUseRIPE)
 boolUseARIN = ValueFromINI("vttl.ini", "vendor", "useARIN", boolUseARIN)
 enableFreeGeoIP = ValueFromINI("vttl.ini", "vendor", "useFreeGeoIP", enableFreeGeoIP)
 boolLogURLs = ValueFromINI("vttl.ini", "vendor", "LogURLs", boolLogURLs)
+boolLogHashes = ValueFromINI("vttl.ini", "vendor", "LogHashes", boolLogHashes)
+boolLogIPs = ValueFromINI("vttl.ini", "vendor", "LogIPs", boolLogIPs)
 boolUseTrancoList = ValueFromINI("vttl.ini", "vendor", "TrancoList", boolUseTrancoList) 'Check domains against https://tranco-list.eu
 boolSkipOnTrancoHit = ValueFromINI("vttl.ini", "vendor", "SkipLookupsOnTrancoMatch", boolSkipOnTrancoHit)
+BoolSeclytics = ValueFromINI("vttl.ini", "vendor", "useSeclytics", BoolSeclytics)
 BoolURLWatchLlistRegex = ValueFromINI("vttl.ini", "VirusTotal", "UseRegexForURL", BoolURLWatchLlistRegex)
 intDetectionNameCount = ValueFromINI("vttl.ini", "VirusTotal", "WebSamplesToCheck", intDetectionNameCount) 'Set greater than zero to enable reporting on detection names associated with domain/IP. set to zero to disable.
 intDetectionCategory = ValueFromINI("vttl.ini", "VirusTotal", "WebSampleCategory", intDetectionCategory) 'associated with domain/IP category to use: detected_downloaded_samples=0, detected_referrer_samples=1, detected_communicating_samples=2
@@ -932,7 +941,7 @@ LoadEncyclopedia_Cache 'populates encyclopedia dictionaries DictMicrosoftEncyclo
 
 
 'for loop to load API keys
-for intCountVendors = 0 to 11
+for intCountVendors = 0 to 12 'Count of vendor APIs
 	boolVendorEnabled = True
   if BoolDisableVTlookup = True and intCountVendors = 0 then 
 	intCountVendors = 1
@@ -989,7 +998,11 @@ for intCountVendors = 0 to 11
     BoolEnableTIA = False  
 	intCountVendors = 11
   end if  
-   if (boolUseAlienVault = false or objFSO.fileexists(CurrentDirectory & "\av.disable")) and intCountVendors = 11 then 
+   
+    if intCountVendors = 11 And BoolSeclytics = false then 
+		intCountVendors = 12
+  end if
+   If (boolUseAlienVault = false or objFSO.fileexists(CurrentDirectory & "\av.disable")) and intCountVendors = 12 then 
      useAlienVapiKey = False
 	 boolAlienVaultNIDS = False 'need an API key for this to work
 	 boolAlienHostCheck = False 'Don't want to go over query threshold so disabled without API key
@@ -1038,6 +1051,10 @@ for intCountVendors = 0 to 11
     strAPIproduct = "ThreatIntelligenceAggregator.org"  
 	strDisableFile = CurrentDirectory & "\tia.disable"
    elseif intCountVendors = 11 then
+    strFile= CurrentDirectory & "\scl.dat"
+    strAPIproduct = "Seclytics"  
+	strDisableFile = CurrentDirectory & "depreciated"   
+   ElseIf intCountVendors = 12 then
     strFile= CurrentDirectory & "\av.dat"
     strAPIproduct = "AlienVault"  
 	strDisableFile = CurrentDirectory & "\av.disable"
@@ -1137,7 +1154,11 @@ strData = ""
 		  intAnswer = msgbox ("Continuing without TIA API check. Do you want to disable TIA API lookups in the future?",vbYesNo, "VTTL TIA API Lookups")
 		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "enable_TIA=False" ,"[vendor]"     
 		  boolEnableTIA = False	  
-		elseif intCountVendors = 11 and useAlienVapiKey = True then
+		elseif intCountVendors = 11 and BoolSeclytics = True then
+		  intAnswer = msgbox ("Continuing without Seclytics API check. Do you want to disable Seclytics API lookups in the future?",vbYesNo, "VTTL Seclytics API Lookups")
+		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "Seclytics=False" ,"[vendor]"     
+		  BoolSeclytics = False	  		
+		elseif intCountVendors = 12 and useAlienVapiKey = True then
 		  intAnswer = msgbox ("Continuing without AlienVault API key. Do you want to disable this AlienVault API key prompt in the future?",vbYesNo, "VTTL AlienVault API Lookups")
 		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "use_AlienVaultAPIkey=False" ,"[vendor_AlienVault]"     
 		  useAlienVapiKey = False	  
@@ -1189,7 +1210,9 @@ strData = ""
 	strWAPIkey = strTempAPIKey
   elseif intCountVendors = 10 and boolEnableTIA = True then
 	strTIAkey = strTempAPIKey
-  elseif intCountVendors = 11 and useAlienVapiKey = True then
+  elseif intCountVendors = 11 and BoolSeclytics = True then
+	SeclyApikey = strTempAPIKey
+  elseif intCountVendors = 12 and useAlienVapiKey = True then
 	strAlienVaultkey = strTempAPIKey
   end if
   on error resume next
@@ -1294,11 +1317,7 @@ if BoolCreateSpreadsheet = True then
     else
       strTmpMetahead = ""
     end if 
-    if boolUseXforce = True then
-      strTmpXforceHead = "|X-Force"
-    else
-      strTmpXforceHead = ""
-    end if
+
     if boolUsePassiveTotal = True then
       strTmpPThead = "|PassiveTotal"
     else
@@ -1326,26 +1345,31 @@ if BoolCreateSpreadsheet = True then
 	strTmpAlienHead2 = ""
 	if boolUseAlienVault = True then 
 		strTmpAlienHead1 = "|AlienVault Pulse"
-		strTmpAlienHead2 ="|AlienVault Validation"
+	end If
+	if boolUseAlienVault = True Or BoolSeclytics = True Then
+		strTmpAlienHead2 ="|Validation"
 		if dictKWordWatchList.count > 0 then
 			strTmpKeyWordWatchListHead = "|Keyword Watch List"
 		else
 			strTmpKeyWordWatchListHead = ""
-		end if
-	end if
+		end If
+	End if	
+	
+
+	
 	if boolUseThreatCrowd = True then
 		strTmpTCrowdHead = "|ThreatCrowd"
 	else
 		strTmpTCrowdHead = ""
 	end if
-	strDomainWatchListHead = ""
+	strDetectWatchListHead  = ""
     select case intVTListDataType
       case 1 'ip/domain
         LoadIPAuthorities 'populates Dictripe, DictArin, etc
 		if boolUseTrancoList = True and boolTrancoSQL = False then LoadTrancoList CurrentDirectory &"\top-1m.csv", dictTrancoList 'whitelist
         if cint(intDetectionNameCount) > 0 then'set modified for number of columns
           intaddDNameCount = round(intDetectionNameCount /2 +.1) 'round up to add additional column(s) for IP/Domain detection name association
-          if dictDnameWatchList.count > 0 then strDomainWatchListHead = "|Detection Name Watch List"
+          if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
         end if
 
         if dictURLWatchList.count > 0 Then
@@ -1414,7 +1438,15 @@ if BoolCreateSpreadsheet = True then
 			TrancoHead = "|Tranco_list"
 		else
 			TrancoHead = ""
-		end if
+		end If
+		
+		If BoolSeclytics = True Then
+			SeclytHead = "|Seclytics Reputation and Reason|Seclytics Associated File Metadata|Seclytics File Count"
+	        if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
+ 
+		Else
+			SeclytHead = ""
+		End If	
         DetectionNameHeaderColumns = DetectionNameHeader 'header row for IP/Domain detection names
 		if BoolDisableVTlookup = False then
 			strVThead = "Scanned Item|VTTI Download From|VTTI Referrer|VTTI Callback To|VTTI_Uniq_URLs|VTTI_Uniq_Domains"
@@ -1423,8 +1455,8 @@ if BoolCreateSpreadsheet = True then
 			strVThead = "Scanned Item"
 			vtHead2 = ""
 		end if
-            'write header row
-        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDomainWatchListHead & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead)
+            'write IP/domain header row
+        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead)
         if BoolCreateSpreadsheet = True then
           if cint(intDetectionNameCount) > 0 then 
             
@@ -1458,9 +1490,9 @@ if BoolCreateSpreadsheet = True then
         else
           intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
         end if
-      case 2
+      case 2 'Hash lookups only                                                                                       'hash lookups only
         intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
-		'strTmpSSline  & strTmpVTTIlineE & strTmpTGlineE & strTmpMSOlineE & strTmpIXFlineE & strTMPTCrowdLine & strTmpVTPositvLineE
+
         if BoolSigCheckLookup = True and BoolUseCarbonBlack = True then
           strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
         elseif BoolEnCaseLookup = True and BoolUseCarbonBlack = True then
@@ -1579,9 +1611,27 @@ if BoolCreateSpreadsheet = True then
 		else
 			strTmpDispVendHead = ""
 		end if
-
-		if dictDnameWatchList.count > 0 then strDomainWatchListHead = "|Detection Name Watch List"
-        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDomainWatchListHead & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strFileTypeHead & StrTmpCTimeStamp & strTmpETIdshead)
+		If BoolSeclytics = False Then
+			SeclytHead = ""
+		Else
+			
+	 		SeclytHead = "|Seclytics File Associated Metadata"
+			if dictURLWatchList.count > 0 Then
+	          strTmpURLWatchListHead = "|URL Watch List"
+	        else
+	          strTmpURLWatchListHead = ""
+	        end if
+	        if dictIPdomainWatchList.count > 0 then 
+	          strTmpIpDwatchListHead = "|IP Domain Watch List"
+	        else
+	          strTmpIpDwatchListHead = ""
+	        end If
+	        if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
+	    End if    
+		
+		if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
+		'Write file hash header row
+        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strFileTypeHead & StrTmpCTimeStamp & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
         BoolUseCIF = False 'don't use CIF when in spreadsheet mode and performing hash lookups
       case 3
         Wscript.echo "Can't process IP/domains along side hashes. Please remove hashes or include only hashes in vtlist.txt. If only contains hashes make sure each entire line contains valid hashes (extra, missing, invalid characters)."
@@ -1811,6 +1861,17 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         whoIsPopulate strScanDataInfo
 	End If
 	
+	If IsHash(strData) = True Then
+		If BoolSeclytics = True Then 'set to true to use Seclytics
+			SeclytReturnBody = httpget("https://api.seclytics.com/files/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
+			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
+			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
+			SeclytFileRep = dict2List(DicFile_Context, "^")
+			SeclytFileDate SeclytReturnBody 'Populate first seen date
+			KeywordSearch SeclytReturnBody 'keyword search watch list processing
+		End If
+	End If
+	
     if inLoopCounter >= 4 then
       wscript.sleep 60000
       If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter greater than 4",False 
@@ -1904,19 +1965,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 
             end if
          next 
-       end if
-       if boolUseXforce = True then 
-         strTmpXforce = CheckXForce(strData)
-         logdata strIPreportsPath & "\IBM_IPaddress_" & RemoveInvalidFromDomain(strData) & ".txt", strScanDataInfo & vbtab & strTmpXforce,BoolEchoLog 
-         if strTmpXforce <> "" then
-          if strXforce_Output = "" then
-            strXforce_Output = "https://exchange.xforce.ibmcloud.com/ip/" & strData
-          else
-            strXforce_Output = strXforce_Output & vbcrlf & "https://exchange.xforce.ibmcloud.com/ip/" & strData
-          end if
-         end if
-       end if
-
+       end If
+       
+		
 	   'Threat Crowd lookups
         if boolUseThreatCrowd = True then
            strTmpTCrowd = CheckThreatCrowd("ip", strData)
@@ -1981,6 +2032,17 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				end if
 			end if
 		end if
+
+        If BoolSeclytics = True Then 'set to true to use Seclytics
+			SeclytReturnBody = httpget("https://api.seclytics.com/ips/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
+			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
+			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
+			SeclytFileRep = dict2List(DicFile_Context, "^")
+			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
+			SeclytASN SeclytReturnBody 'populate IP owner field
+			KeywordSearch SeclytReturnBody 'keyword search watch list processing
+			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
+		End If
 
         if isIPaddress(strdata) and strTmpCNlineE = "|" and strTmpCClineE = "|" then 'have not gotten geiop by other means 
           If enableFreeGeoIP = True then SubmitGIP strdata 
@@ -2059,8 +2121,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				strQuad9DNS = "|"
 			end if
 		  end if
-		  if boolUseAlienVault = True then 'process domain
-
+		  If boolUseAlienVault = True then 'process domain
 				strAlienVaultReturn = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/domain/", strData, "/general")
 				if BoolDebugTrace = True then  logdata strDomainreportsPath & "\AVault_Domain_" & strData & ".txt", strData & vbtab & strAlienVaultReturn,BoolEchoLog 
 				KeywordSearch strAlienVaultReturn 'keyword search watch list processing
@@ -2072,12 +2133,27 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 						ProcessAlienURLs strAlienHostURLs
 					end if
 				end if
-			end if
-
-			AlienVaultPulseLine = AlienPulse(strAlienVaultReturn)
-			AlienVaultValidation = AlienValidation(strAlienVaultReturn)
 		  end if
-        end if
+		  AlienVaultPulseLine = AlienPulse(strAlienVaultReturn)
+		  AlienVaultValidation = AlienValidation(strAlienVaultReturn)
+		  
+		If BoolSeclytics = True Then 'set to true to use Seclytics
+			SeclytReturnBody = httpget("https://api.seclytics.com/hosts/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
+			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
+			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
+			SeclytFileRep = dict2List(DicFile_Context, "^")
+			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
+			KeywordSearch SeclytReturnBody 'keyword search watch list processing
+			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
+			If strTmpIPlineE = "|" Or strTmpIPlineE = "" Then
+				SeclytPdns SeclytReturnBody
+				domainPassiveDNS strTmpIPlineE 'set strRevDNS and pending items
+			End If	
+		End If
+		  
+        end If 'end domain lookup  
+		  
+     end If 'end instr(strData,".") then
       'end if
 
       'if an IP address then this will be blank
@@ -2149,8 +2225,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  if boolCheckBitdefender = True then strBitdefenderlineE = addPipe(strBitdefenderlineE)
 	  if DisplayVendor <> ""  then strDiplayVendDname = addPipe(strDiplayVendDname)
 	  if boolUseAlienVault = True then AlienVaultPulseLine = addPipe(AlienVaultPulseLine)
-	  if boolUseAlienVault = True then AlienVaultValidation = addPipe(AlienVaultValidation)
-	  if boolUseAlienVault = True and dictKWordWatchList.count > 0 then addPipe(strTmpKeyWordWatchList)
+	  if boolUseAlienVault = True Or BoolSeclytics = True then AlienVaultValidation = addPipe(AlienVaultValidation)
+	  If (boolUseAlienVault = True Or BoolSeclytics = True) and dictKWordWatchList.count > 0 then addPipe(strTmpKeyWordWatchList)
       if strDetectNameLineE = "" then strDetectNameLineE = "|"
       strTmpDomainRestric = AddPipe(strTmpDomainRestric)
       if strTmpCacheLineE = "" then strTmpCacheLineE = "|"
@@ -2196,10 +2272,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
            end if
 
         end if
-        if strTmpIXFlineE  <> "|" and strTmpIXFlineE  <> "|0" and strTmpIXFlineE  <> "" then
-          if intTmpMalScore > 1 and IntTmpPUA_Score < 1 then _
-           IntTmpAdjustedMalScore = IntTmpAdjustedMalScore + 1
-        end if      
+   
         if ispipeorempty(strTMPTCrowdLine) = False then
           if intTmpMalScore > 1 and IntTmpPUA_Score < 1 then _
            IntTmpAdjustedMalScore = IntTmpAdjustedMalScore + 1
@@ -2465,7 +2538,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         if boolCheckProofpointIDS = True then strPPidsLineE = AddPipe(strPPidsLineE)
       end if
       strCategoryLineE = AddPipe(strCategoryLineE)   
-      if boolUseXforce = True then strTmpIXFlineE = AddPipe(strTmpIXFlineE)   
+        
       if boolEnableCuckoo = True then strCuckooScore  = AddPipe(strCuckooScore)
 
       if BoolEnCaseLookup = True or BoolUseCarbonBlack = True then
@@ -2488,26 +2561,33 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       end if
 	  
 	  if boolCheckProofpointIDS = True then strPPidsLineE = AddPipe(strPPidsLineE)
+	  
 	  'Add columns for detection name array if none exist
 	  if cint(intDetectionNameCount) > 0 and intVTListDataType = 1 then ' 0=unknown, 1 domain/IP, 2=hash, 3=hash/domain/ip
 		  if len(DetectionNameSSlineE) < 1 + ubound(ArrayDnameLineE) and BoolDisableVTlookup = False then 
 			do while len(DetectionNameSSlineE) < 1 + ubound(ArrayDnameLineE)
 				DetectionNameSSlineE = DetectionNameSSlineE & "|"
 			loop
-		  end if
-
-		if dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
-
-	  end if
+		  end If
+	  end If
+	  if dictDnameWatchList.count > 0 And (BoolSeclytics = True Or intVTListDataType = 2) then strDnameWatchLineE = addPipe(strDnameWatchLineE)
+	  
+	  If BoolSeclytics = True Then 'set to true to use Seclytics
+		SeclytRepReason = AddPipe(SeclytRepReason) 'Seclytics Reputation and Reason
+		SeclytFileRep = AddPipe(SeclytFileRep)'Seclytics Associated File Metadata
+		SeclytFileCount = AddPipe(SeclytFileCount)'Seclytics File Count"
+	  End if 
+	  If BoolSeclytics = True Or intVTListDataType = 1 Then
 		if dictURLWatchList.count > 0 then strURLWatchLineE = addPipe(strURLWatchLineE)
-		if dictIPdomainWatchList.count > 0 then strIpDwatchLineE = addPipe(strIpDwatchLineE)	  
+		if dictIPdomainWatchList.count > 0 then strIpDwatchLineE = addPipe(strIpDwatchLineE)
+	  End If			
       'write spreadsheet row
       select case intVTListDataType
         case 1
           'write row for domain & IP
-          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strTmpIXFlineE & strCategoryLineE & strDDNSLineE & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS '& strTmpCacheLineE
+          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount '& strTmpCacheLineE
         case 2
-          if dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
+          If dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 		  'Add to adjusted malware score for custom list malware and update detection name if one was given in malhash.dat
           if DictMalHash.exists(lcase(strdata)) then 
             IntTmpAdjustedMalScore = IntTmpAdjustedMalScore + 100
@@ -2523,13 +2603,13 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           end if
           if boolDisableSQL_IQ = False and boolSQLcache = True and ishash(strdata) = True then SQL_Intelligence_Query lcase(strdata)           
           'write row for hash lookups
-          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpIXFlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strFileTypeLineE & strPE_TimeStamp & strPPidsLineE
+          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strFileTypeLineE & strPE_TimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
       end select 
       
 
       
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSSline = "  & strTmpSSline,BoolEchoLog 
-       if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSSline = "  & intHashDetectionsLineE & "-" & "|" & intTmpMalScorE & "-" & "|" & IntTmpGenericScorE & "-" & "|" & IntTmpPUA_ScorE & "-" & "|" & IntTmpHkTlScorE & "-" & "|" & IntTmpAdjustedMalScorE & "-" & strTmpMSOlineE & "-" & strTmpIXFlineE & "-" & strTmpTGlineE & "-" & strTMPTCrowdLinE & "-" & strTrendMicroLineE & "-" & strMicrosoftLineE & "-" & strMcAfeeLineE & "-" & strSophoslineE & "-" & strSymanteclineE & "-" & strESETlineE & "-" & strAviralineE & "-" & strDrWeblineE & "-" & "|" & strDateTimeLineE & "-" & strDetectNameLineE & "-" & StrDetectionTypeLineE & "-" & strTmpCacheLineE & "-" & strTmpMalShareLineE,BoolEchoLog 
+       if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSSline = "  & intHashDetectionsLineE & "-" & "|" & intTmpMalScorE & "-" & "|" & IntTmpGenericScorE & "-" & "|" & IntTmpPUA_ScorE & "-" & "|" & IntTmpHkTlScorE & "-" & "|" & IntTmpAdjustedMalScorE & "-" & strTmpMSOlineE & "-" & strTmpTGlineE & "-" & strTMPTCrowdLinE & "-" & strTrendMicroLineE & "-" & strMicrosoftLineE & "-" & strMcAfeeLineE & "-" & strSophoslineE & "-" & strSymanteclineE & "-" & strESETlineE & "-" & strAviralineE & "-" & strDrWeblineE & "-" & "|" & strDateTimeLineE & "-" & strDetectNameLineE & "-" & StrDetectionTypeLineE & "-" & strTmpCacheLineE & "-" & strTmpMalShareLineE,BoolEchoLog 
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSSline" & "=" & strTmpSSline ,BoolEchoLog
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "intHashDetectionsLineE" & "=" & intHashDetectionsLineE ,BoolEchoLog
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpVTTIlineE" & "=" & strTmpVTTIlineE ,BoolEchoLog
@@ -2561,8 +2641,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpDomainRestric" & "=" & strTmpDomainRestric ,BoolEchoLog                    
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSinkHole" & "=" & strTmpSinkHole ,BoolEchoLog                    
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpCacheLineE" & "=" & strTmpCacheLineE ,BoolEchoLog                    
-       if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpMalShareLineE" & "=" & strTmpMalShareLineE ,BoolEchoLog  
-       if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpIXFlineE" & "=" & strTmpIXFlineE ,BoolEchoLog  
+       if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpMalShareLineE" & "=" & strTmpMalShareLineE ,BoolEchoLog    
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTMPTCrowdLine" & "=" & strTMPTCrowdLine ,BoolEchoLog 
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strDFSlineE " & "=" & strDFSlineE  ,BoolEchoLog 
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strCBFileSize " & "=" & strCBFileSize  ,BoolEchoLog 
@@ -2622,7 +2701,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  strTmpIPlineE = "|"
       'clear domain lookup items
       strTmpZDBLlineE = ""
-      if boolUseXforce = True then strTmpIXFlineE = "|"
+      
       'clear more stuff
       if boolUseTrancoList = True Then strTrancoLineE = "|"
       if boolUseThreatCrowd = True then strTMPTCrowdLine = "|"
@@ -2994,29 +3073,20 @@ elseif instr(strFullAPIURL,"domain=") then
         end if
       end if
       if Instr(strresponseText, "ip_address" & Chr(34) & ": " & Chr(34)) then
-        strTmpVTSips = ParseVTforIPaddress(strresponseText)
-        if DicDomainIPmatch.exists(strScanDataInfo) then 
+        strTmpVTSips = ParseVTforIPaddress(strresponseText) 'get most recent IP address resolution from VirusTotal 
+        if DicDomainIPmatch.exists(strScanDataInfo) Then 'check for error condition 
           MsgBox "Duplicate domain address processed! This should only occur if you edited vlist.txt"
-        else
+        Else 'domain to IP Adress mapping
           DicDomainIPmatch.add strScanDataInfo, strTmpVTSips
         end if
-        strTmpIPlineE = "|" & strTmpVTSips
-        if strTmpVTSips <> "" then 'reverselookup IP address for the domain we are checking
-          'set strTmpIPlineE and strRevDNS
-          subReverseDNSwithSinkhole strTmpVTSips, "8.8.8.8"
-        end if
-        if strRevDNS = "|" then
+        strTmpIPlineE = "|" & strTmpVTSips 'set spreadsheet cell value for IP address
+
+		domainPassiveDNS strTmpVTSips 'set strRevDNS and pending items
+
+        if strRevDNS = "|" Then 'Reverse lookup for domain name
           subReverseDNSCachewithSinkhole strScanDataInfo
         end if
-        if not DicScannedItems.Exists(strTmpVTSips) then
-          if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Have not scanned IP address" ,BoolEchoLog 
-          if not DicPendingItems.Exists(strTmpVTSips) then
-            if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Adding IP address to pending items" ,BoolEchoLog 
-            DicPendingItems.Add strTmpVTSips, DicPendingItems.Count 
-            
-          end if
-          boolPendingItems = True
-        end if
+
       else'no IP address found/never looked up by virustotal
         strTmpIPlineE = "|"
       end if
@@ -3089,7 +3159,10 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 			If ispipeorempty(strCBdigSig) Then strCBdigSig = GetData(strresponseText, Chr(34), Chr(34) & "signers" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBcompanyName) Then strCBcompanyName = GetData(strresponseText, Chr(34), Chr(34) & "CompanyName" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBproductName) Then strCBproductName = GetData(strresponseText, Chr(34), Chr(34) & "product" & Chr(34) & ": " & Chr(34))
-	        If ispipeorempty(strCBFileSize) Then strCBFileSize = GetData(strresponseText, ",", Chr(34) & "size" & Chr(34) & ": " )
+	        If ispipeorempty(strCBFileSize) Then 
+	        	strCBFileSize = GetData(strresponseText, ",", Chr(34) & "size" & Chr(34) & ": " )
+	        	If InStr(strCBFileSize, " ") > 0 Then strCBFileSize = Left(strCBFileSize,InStr(strCBFileSize, " "))
+	        End if	
 	        If ispipeorempty(strPE_TimeStamp) Then strPE_TimeStamp = GetData(strresponseText, " ", Chr(34) & "timestamp" & Chr(34) & ": " )
 			If IsNumeric(strPE_TimeStamp) = True And strPE_TimeStamp <> "" Then
 				strPE_TimeStamp = DateAdd("s", strPE_TimeStamp, "01/01/1970 00:00:00") 'epoch2date
@@ -3283,7 +3356,7 @@ if instr(strFullAPIURL,"domain=") then
 	for RBL_loop = 0 to 2
       if RBL_loop = 0 and boolEnableZDBL = True then StrTmpRBLOutput = RBL_Lookup(strData, ".dbl.spamhaus.org " & zenDNS) ' it is optional and not necessary to strip the hostname down to query the actual domain only. 
       if RBL_loop = 1 and enableURIBL = True then StrTmpRBLOutput = RBL_Lookup(tmpParentDomain, ".multi.uribl.com " & uriblDNS )
-      if RBL_loop = 2 and enableSURBL = True then StrTmpRBLOutput = RBL_Lookup(tmpParentDomain, ".multi.surbl.org " & surblDNS)
+      if RBL_loop = 2 and enableSURBL = True then StrTmpRBLOutput = RBL_Lookup(strData, ".multi.surbl.org " & surblDNS)
       if StrTmpRBLOutput <> "" then
         if StrRBL_Results = "" then
           StrRBL_Results = StrTmpRBLOutput
@@ -3632,7 +3705,7 @@ if instr(strFullAPIURL,"domain=") then
   if len(strRevDNS) > 1 then set objparameter4 = cmd1.createparameter("@strRevDNS", 129, 1, len(strRevDNS)-1,right(strRevDNS,len(strRevDNS) -1))
   if len(strTmpIPlineE) > 1 then set objparameter5 = cmd1.createparameter("@IPaddress", 129, 1, len(strTmpIPlineE)-1,right(strTmpIPlineE,len(strTmpIPlineE) -1))
   if len(strTmpPPointLine) > 1 then set objparameter6 = cmd1.createparameter("@ETintel", 129, 1, len(strTmpPPointLine)-1,right(strTmpPPointLine,len(strTmpPPointLine) -1))
-  if len(strTmpIXFlineE) > 1 then set objparameter7 = cmd1.createparameter("@x-force", 129, 1, len(strTmpIXFlineE)-1,right(strTmpIXFlineE,len(strTmpIXFlineE) -1))
+  if len(strTmpIXFlineE) > 1 then set objparameter7 = cmd1.createparameter("@x-force", 129, 1, len(strTmpIXFlineE)-1,right(strTmpIXFlineE,len(strTmpIXFlineE) -1)) 'no longer used
   if len(strTmpSinkHole) > 1 then set objparameter8 = cmd1.createparameter("@Sinkhole", 129, 1, len(strTmpSinkHole)-1,right(strTmpSinkHole,len(strTmpSinkHole) -1))
 
  'UpdateDomainVendTable strdomainName, objCreatedDate, objLastUpDate, objVTdomain, objTCdomain, objRevDomain, objCountryNameDomain,	CountryCodeDomain, objRegionNameDomain, objRegionCodeDomain, objCityNameDomain, objCreationDate, objWHOISName, objIPaddress, objETdomain, ObjXForce, ObjSinkhole)
@@ -3800,11 +3873,10 @@ x= instr(contents, MatchString)
     if instr(strSubContents,EndOfStringChar) > 0 then
       GetData = Mid(contents, x + MatchStringLength, instr(strSubContents,EndOfStringChar) -1)
       exit function
-    else
+    ElseIf Len(strSubContents) > 0 Then 'if equal to zero then match string is very last char
       GetData = Mid(contents, x + MatchStringLength, len(contents) -x -1)
       exit function
     end if
-    
   end if
 GetData = ""
 
@@ -10392,9 +10464,8 @@ if instr(strVTAPIresponse,chr(34) & ": {" & chr(34) & "detected" & chr(34) & ": 
       'output excel entry for detection name
       for each strUniqueDname in DicTmpDnames
 		'msgbox strUniqueDname
-         if dictDnameWatchList.exists(strUniqueDname) then
-			strDnameWatchLineE = concatenateItem(strDnameWatchLineE, strUniqueDname, "^")
-		 end if
+		 DetectNameWatchlist strUniqueDname 'check against detection name watchlist and populate strDnameWatchLineE
+
 		 if BoolDebugTrace = True then LogData strDebugPath & "\dnames.log", strUniqueDname & "|" & DicTmpDnames.item(strUniqueDname) , false
          intAmplifyDNscore = 0
          'favor Microsoft detection name
@@ -11176,7 +11247,8 @@ end function
 Function ValueFromIni(strFpath, iniSection, iniKey, currentValue)
 returniniVal = ReadIni( strFpath, iniSection, iniKey)
 if returniniVal = " " or returniniVal = "" then 
-	returniniVal = currentValue
+	ValueFromIni = currentValue
+	Exit function
 end if 
 if TypeName(returniniVal) = "String" then
 	returniniVal = stringToBool(returniniVal)'convert type to boolean if needed
@@ -11277,7 +11349,7 @@ if dictKWordWatchList.count > 0 then
       strTmpKeyWordWatchList = concatenateItem(strTmpKeyWordWatchList, strKeyWord, "^")
     end if
   next
-	strTmpKeyWordWatchList = "|" & strTmpKeyWordWatchList
+	strTmpKeyWordWatchList = AddPipe(strTmpKeyWordWatchList)
 end if
 end sub
 
@@ -11773,4 +11845,211 @@ Sub whoIsPopulate(strTmpWhoIs)
       end if
       if BoolWhoisDebug = True then msgbox "whois contact line=" & strTmpIPContactLineE
 
+End Sub
+
+'----Seclytics functions and subs
+Function dict2List(DictList, strJoin)
+listReturn = ""
+for each item in DictList
+  listReturn = AppendValuesList(listReturn, Item , strJoin)
+next
+dict2List = listReturn
+End function
+
+
+Function getSeclyticFileCount(httpbody)
+accessed_by_files = GetData(httpbody, "]", chr(34) & "accessed_by_files" & Chr(34) & ": [")
+If InStr(accessed_by_files, ",") > 0 Then
+	arraySeclytFiles = Split(accessed_by_files, ",")
+	getSeclyticFileCount = UBound(arraySeclytFiles) + 1
+Else
+	getSeclyticFileCount = 0
+End If
+End Function
+
+
+Sub SeclyticsProcess(httpbody)
+SeclytFileCount = 0
+SeclytFileRep = ""
+SeclytRepReason = ""
+DicFile_Context.RemoveAll
+DicIP_Context.RemoveAll
+arraycontextLists = split(httpbody,chr(34) & "type" & chr(34) & ": " )
+
+for each contextEntry in arraycontextLists
+
+	contextent = GetData(contextEntry, chr(34) & "id" & chr(34) & ": "  , chr(34) & "context" & chr(34) & ": {")
+	'msgbox contextent
+	endOfCategories = InStr(contextent, chr(34) & "country" & chr(34) & ": {")
+	If endOfCategories > 0 Then
+		contextent = Left(contextent, endOfCategories)
+	End If
+	
+	cEntArrayLevel1 = split(contextent, "},")
+	for each cItemLevel1 in cEntArrayLevel1
+	
+		contextEntArray = split(cItemLevel1, "],")
+	
+		for each contextItem in contextEntArray
+		
+		itemEntry = GetData(contextItem, "],", chr(34) & ": [")
+		
+		If InStr(contextEntry, chr(34) & "md5" & Chr(34)) > 0 Then 'file
+			'place holder for tracking sandbox results
+	
+			
+			If InStr(itemEntry, Chr(34)) Then 
+				getJsonItems itemEntry, DicFile_Context
+			End if
+		Else
+			'msgbox itemEntry
+			If InStr(itemEntry, Chr(34)) Then 
+				getJsonItems itemEntry, DicIP_Context
+			End if	
+		End If
+		next
+	
+	Next
+Next
 End sub
+
+
+Sub getJsonItems(jsonEntry,dictRecord)
+if instr(jsonEntry, ",") then
+  itemEntArray = split(jsonEntry, ",")
+  for each entItem in itemEntArray
+    tmpItem = getdata(entItem, chr(34), chr(34))
+    'msgbox tmpItem
+    SeclytDictAdd dictRecord, tmpItem
+  next
+else
+    tmpItem = getdata(jsonEntry, chr(34), chr(34))
+    'msgbox tmpItem
+    SeclytDictAdd dictRecord, tmpItem
+end if
+end sub
+
+Sub SeclytDictAdd(dictRecord, dictEntry)
+If InStr(dictEntry, "|") > 0 Then dictEntry = Replace(dictEntry, "|", "^")
+
+If isIPaddress(dictEntry) = True Then
+	strIpDwatchLineE = MatchIpDwatchLIst(dictEntry)
+	If boolLogIPs = True Then  logdata strReportsPath & "\IPs_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, False 'Output IP addresses associated with the lookup items.
+ElseIf IsHash(dictEntry) = True Then
+	If boolLogHashes = True Then logdata strReportsPath & "\Hashes_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, False
+ElseIf InStr(dictEntry, "@")> 0 Then 'email address
+	'not collecting email addresses
+ElseIf InStr(dictEntry, "http") > 0  Then
+	strURLWatchLineE = MatchURLwatchList(strURLWatchLineE, dictEntry)
+	If boolLogURLs = True Then logdata strReportsPath & "\URLs_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, false
+ElseIf InStr(dictEntry, vblf) > 0 Then
+	'MsgBox dictEntry
+ElseIf Len(dictEntry) < 32 And Right(dictEntry,3) <> "_at" And dictEntry <> "duration" Then
+	if dictRecord.exists(dictEntry) = false then dictRecord.add dictEntry, ""
+	DetectNameWatchlist dictEntry 'check against detection name watchlist and populate strDnameWatchLineE
+	If InStr(dictEntry, ".") > 0 and InStr(dictEntry, " ") = 0  Then 'possible domain name
+		strIpDwatchLineE = MatchIpDwatchLIst(dictEntry)
+	End if	
+ElseIf InStr(dictEntry, ".") > 0 and InStr(dictEntry, " ") = 0  Then 'possible domain name
+	strIpDwatchLineE = MatchIpDwatchLIst(dictEntry)
+End if	
+End Sub
+
+Function HTTPget(strRequestURL, strCheckItem, strSection, strAPIheader, strApiKey, boolHeader)
+'returns HTTP body
+  
+  if instr(strRequestURL,"/domain/") > 0 then
+    StrValidDomainName = RemoveInvalidFromDomain(strCheckItem)
+  else
+    StrValidDomainName = strCheckItem
+  end if
+  Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
+
+      strAVEurl = strRequestURL & StrValidDomainName &  strSection
+    if boolHeader = True then 
+      objHTTP.setRequestHeader strAPIheader, strApiKey 
+    elseif strApiKey <> "" and strAPIheader <> "" then
+      strAVEurl = strAVEurl & strAPIheader & "=" & strApiKey
+    end if
+   
+    'objHTTP.setRequestHeader 
+    objHTTP.open "GET", strAVEurl
+   
+  on error resume next
+    objHTTP.send 
+    if err.number <> 0 then
+      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " " & strAPIheader  & "lookup failed with HTTP error while querying " & strCheckItem & " - " & err.description,False 
+      exit function 
+    end if
+  on error goto 0  
+
+  'if BoolDebugTrace = True then logdata strAlienVaultreportsPath & "\AlienV_" & replace(strData, ":",".") & ".txt", objHTTP.responseText & vbcrlf & vbcrlf,BoolEchoLog 
+  if len(objHTTP.responseText) > 0 then
+    HTTPget = objHTTP.responseText
+  end if
+   
+  Set objHTTP = Nothing
+end Function
+
+Sub SeclytPdns(httpAPIbody)
+
+PdnsSection = GetData(httpAPIbody, "]"  , chr(34) & "passive_dns" & chr(34) & ": [")
+answer_ip = GetData(PdnsSection,  chr(34) , chr(34) & "answer_ip" & chr(34) & ": " & chr(34))
+If isIPaddress(answer_ip) = True Then strTmpIPlineE = answer_ip
+End Sub
+
+Sub SeclytASN(httpAPIbody)
+If ispipeorempty(strTmpIPContactLineE) then
+	strTmpIPContactLineE = GetData(httpAPIbody, "},", chr(34) & "asn" & chr(34) & ": {")
+	If InStr(strTmpIPContactLineE, Chr(34) & ": " & Chr(34)) > 0 Then
+		strTmpIPContactLineE = GetData(strTmpIPContactLineE, Chr(34), Chr(34) & ": " & Chr(34))
+	End If
+End if
+End Sub
+
+Sub SeclytFileDate(httpAPIbody)
+If ispipeorempty(strDateTimeLineE) Then
+	globalHistorySect = GetData(httpAPIbody, "]"  , chr(34) & "global_history" & chr(34) & ": [")
+	FileDate = GetData(globalHistorySect,  chr(34) , chr(34) & "start_at" & chr(34) & ": " & chr(34))
+	If IsDate(Replace(FileDate, "T", " ")) = True Then strDateTimeLineE = Replace(FileDate, "T", " ")
+End if	
+End Sub
+
+Sub SeclytWhitelist(httpAPIbody)
+If ispipeorempty(AlienVaultValidation) = False Then Exit Sub 'already set
+If instr(httpAPIbody, chr(34) & "type" & chr(34) & ": "  & chr(34) & "ip" & chr(34)) > 0 Then 'IP address
+	ipSection = GetData(httpAPIbody, "{"  , chr(34) & "type" & chr(34) & ": "  & chr(34) & "ip" & chr(34))
+	If InStr(ipSection, chr(34) & "whitelist" & chr(34) & ": "  & chr(34)) > 0 Then
+		AlienVaultValidation = GetData(httpAPIbody, Chr(34)  , chr(34) & "whitelist" & chr(34) & ": "  & chr(34))
+	End If
+else 'domain
+	lastSection = rGetData(httpAPIbody, "},", "}")
+	If InStr(lastSection, Chr(34) & "whitelist" & Chr(34) & ":") > 0 Then 'whitelisted item
+		AlienVaultValidation = "|Whitelist"
+	End If
+End if	
+End Sub
+'----End Seclytics functions and subs
+
+
+Sub domainPassiveDNS(strPdnsIPaddress) 'set strRevDNS and pending items
+        if strPdnsIPaddress = "" Or strPdnsIPaddress = "|" Then exit sub 'reverselookup IP address for the domain we are checking
+        If strRevDNS = "|" Or strRevDNS = "" then
+          subReverseDNSwithSinkhole strPdnsIPaddress, "8.8.8.8"
+        end if
+        if not DicScannedItems.Exists(strPdnsIPaddress) then
+          if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Have not scanned IP address" ,BoolEchoLog 
+          if not DicPendingItems.Exists(strPdnsIPaddress) then
+            if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Adding IP address to pending items" ,BoolEchoLog 
+            DicPendingItems.Add strPdnsIPaddress, DicPendingItems.Count 
+            
+          end if
+          boolPendingItems = True
+        end if
+End Sub
+
+Sub DetectNameWatchlist(strUniqueDname)
+	if dictDnameWatchList.exists(strUniqueDname) then
+		strDnameWatchLineE = concatenateItem(strDnameWatchLineE, strUniqueDname, "^")
+	end If
+End Sub
