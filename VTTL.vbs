@@ -1,6 +1,6 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.1 - Support for Seclytics API lookups. Provide SURBL the full domain not the parent.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.2 - Update keyword watchlist to work with concatenate function and not add extra ^ char. Disable hash logging when hash values are what is being queried.
 
-'Copyright (c) 2019 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -1492,7 +1492,7 @@ if BoolCreateSpreadsheet = True then
         end if
       case 2 'Hash lookups only                                                                                       'hash lookups only
         intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
-
+        boolLogHashes = false 'Don't log hashes if that is what we are looking up
         if BoolSigCheckLookup = True and BoolUseCarbonBlack = True then
           strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
         elseif BoolEnCaseLookup = True and BoolUseCarbonBlack = True then
@@ -2226,7 +2226,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  if DisplayVendor <> ""  then strDiplayVendDname = addPipe(strDiplayVendDname)
 	  if boolUseAlienVault = True then AlienVaultPulseLine = addPipe(AlienVaultPulseLine)
 	  if boolUseAlienVault = True Or BoolSeclytics = True then AlienVaultValidation = addPipe(AlienVaultValidation)
-	  If (boolUseAlienVault = True Or BoolSeclytics = True) and dictKWordWatchList.count > 0 then addPipe(strTmpKeyWordWatchList)
+	  If (boolUseAlienVault = True Or BoolSeclytics = True) and dictKWordWatchList.count > 0 then strTmpKeyWordWatchList = addPipe(strTmpKeyWordWatchList)
       if strDetectNameLineE = "" then strDetectNameLineE = "|"
       strTmpDomainRestric = AddPipe(strTmpDomainRestric)
       if strTmpCacheLineE = "" then strTmpCacheLineE = "|"
@@ -11349,7 +11349,6 @@ if dictKWordWatchList.count > 0 then
       strTmpKeyWordWatchList = concatenateItem(strTmpKeyWordWatchList, strKeyWord, "^")
     end if
   next
-	strTmpKeyWordWatchList = AddPipe(strTmpKeyWordWatchList)
 end if
 end sub
 
@@ -11427,10 +11426,8 @@ Function LogHashes(dictHashlist, strHashListName, strQueriedItem)
 if boolLogHashes = False then exit function
 if dictHashlist.Count > 0 then	
  for each listedHash in dictHashlist
-	logdata strReportsPath & "\Hashes_" & strHashListName & "_" & UniqueString & ".log", strQueriedItem & "|" & listedHash, false
- 
+	logdata strReportsPath & "\Hashes_" & strHashListName & "_" & UniqueString & ".log", strQueriedItem & "|" & listedHash, False
  next 
-
 end if
 end function
 
