@@ -28,10 +28,12 @@ Additional data points:
 * Whois
 * Website category (from web proxy vendors)
 * Dynamic DNS
+* Tranco List
+  * Requires SQLite database (included in default.db)
 * Geolocation (often provided via APIs already listed)
- * https://freegeoip.app
- * Internal IP Geolocation Database
-  * IP to Country Lite or IP to Country from https://db-ip.com/db/
+  * https://freegeoip.app
+  * Internal IP Geolocation Database (included in default.db)
+    * IP to Country Lite or IP to Country from https://db-ip.com/db/
 * Registration date of domains
 * Sinkhole checks
 
