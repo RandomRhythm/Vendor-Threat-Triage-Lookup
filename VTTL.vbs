@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.2 - Update keyword watchlist to work with concatenate function and not add extra ^ char. Disable hash logging when hash values are what is being queried.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.3 - Update VTHashLookup function to not overwrite strresponseText (was causing some VTTI columns to not properly populate)
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -829,6 +829,7 @@ else
           BoolUseThreatGRID = False
           BoolUseThreatGRID_IP = False
           BoolEnableThreatGRID = False
+          AddQueueParameter("/dtg")
          Case "/dtia"
 			BoolEnableTIA = False
 		 case else
@@ -10615,9 +10616,9 @@ if ishash(strVThashItem) = false then
 end if
 
  if BoolDisableCacheLookup = False then
-  strresponseText = CacheLookup("", "\vt\", strVThashItem, intHashCacheThreashold)
-	if strresponseText <> "" then
-		VTHashLookup = strresponseText
+  strVTresponseText = CacheLookup("", "\vt\", strVThashItem, intHashCacheThreashold)
+	if strVTresponseText <> "" then
+		VTHashLookup = strVTresponseText
 		if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup Cached - " & strVThashItem ,false
 		inLoopCounter = inLoopCounter -1 'zero out loop as we didn't utilize the API
     	If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " Didn't utilize API  inLoopCounter=" & inLoopCounter,False 
