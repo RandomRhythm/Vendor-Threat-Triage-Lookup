@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.3 - Update VTHashLookup function to not overwrite strresponseText (was causing some VTTI columns to not properly populate)
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.4 - Initial support for Pulsedive.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -138,6 +138,7 @@ Dim strTmpVTPositvLineE 'greatest value for positive detections
 Dim strTmpIPlineE
 Dim strTmpCacheLineE 'Was a cached lookup CacheLookup
 Dim strTmpMalShareLineE
+Dim strTmpPulsediveLineE
 Dim BoolNoScanning
 Dim strRevDNS
 Dim BoolDisableVTlookup
@@ -420,7 +421,8 @@ Dim tcHashLookedUp 'have we looked up hash on ThreatCrowd
 Dim boolCacheDomain 'Database caching for domain lookups
 Dim DicIP_Context: Set DicIP_Context = CreateObject("Scripting.Dictionary") 'Seclytics IP Address context
 Dim DicFile_Context: Set DicFile_Context = CreateObject("Scripting.Dictionary") 'Seclytics File context
-
+Dim boolPulsedive
+Dim PulsediveAPIprompt
 Dim BoolSeclytics 'set to true to use Seclytics
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
@@ -542,6 +544,8 @@ boolCheckSymantec = True 'Check for Symantec write-up (requires TIA API)
 boolCheckESET = True 'Lookup write-ups via Threat Intelligence Aggregator
 BoolNSRLLookup = False 'Public service is for demo purposes only. Need to stand up your own server and modify to query it.
 BoolSeclytics = False 'set to true to use Seclytics
+boolPulsedive = False 'Set to true to use Pulsedive
+PulsediveAPIprompt = True 'Prompt for Pulsedive API key
 SeclytRepReason = "" 'Seclytics Reputation and Reason
 SeclytFileRep = "" 'Seclytics Associated File Metadata
 SeclytFileCount = "" 'Seclytics File Count"
@@ -622,6 +626,8 @@ boolLogIPs = ValueFromINI("vttl.ini", "vendor", "LogIPs", boolLogIPs)
 boolUseTrancoList = ValueFromINI("vttl.ini", "vendor", "TrancoList", boolUseTrancoList) 'Check domains against https://tranco-list.eu
 boolSkipOnTrancoHit = ValueFromINI("vttl.ini", "vendor", "SkipLookupsOnTrancoMatch", boolSkipOnTrancoHit)
 BoolSeclytics = ValueFromINI("vttl.ini", "vendor", "useSeclytics", BoolSeclytics)
+boolPulsedive = ValueFromINI("vttl.ini", "vendor", "usePulsedive", boolPulsedive)
+PulsediveAPIprompt = ValueFromINI("vttl.ini", "vendor", "PulsediveAPIprompt", PulsediveAPIprompt)
 BoolURLWatchLlistRegex = ValueFromINI("vttl.ini", "VirusTotal", "UseRegexForURL", BoolURLWatchLlistRegex)
 intDetectionNameCount = ValueFromINI("vttl.ini", "VirusTotal", "WebSamplesToCheck", intDetectionNameCount) 'Set greater than zero to enable reporting on detection names associated with domain/IP. set to zero to disable.
 intDetectionCategory = ValueFromINI("vttl.ini", "VirusTotal", "WebSampleCategory", intDetectionCategory) 'associated with domain/IP category to use: detected_downloaded_samples=0, detected_referrer_samples=1, detected_communicating_samples=2
@@ -942,7 +948,7 @@ LoadEncyclopedia_Cache 'populates encyclopedia dictionaries DictMicrosoftEncyclo
 
 
 'for loop to load API keys
-for intCountVendors = 0 to 12 'Count of vendor APIs
+for intCountVendors = 0 to 13 'Count of vendor APIs
 	boolVendorEnabled = True
   if BoolDisableVTlookup = True and intCountVendors = 0 then 
 	intCountVendors = 1
@@ -1002,8 +1008,11 @@ for intCountVendors = 0 to 12 'Count of vendor APIs
    
     if intCountVendors = 11 And BoolSeclytics = false then 
 		intCountVendors = 12
-  end if
-   If (boolUseAlienVault = false or objFSO.fileexists(CurrentDirectory & "\av.disable")) and intCountVendors = 12 then 
+	End if	
+    if intCountVendors = 12 And (boolPulsedive = false Or PulsediveAPIprompt = False) Then 
+		intCountVendors = 13
+  	end if
+   If (boolUseAlienVault = false or objFSO.fileexists(CurrentDirectory & "\av.disable")) and intCountVendors = 13 then 
      useAlienVapiKey = False
 	 boolAlienVaultNIDS = False 'need an API key for this to work
 	 boolAlienHostCheck = False 'Don't want to go over query threshold so disabled without API key
@@ -1055,7 +1064,11 @@ for intCountVendors = 0 to 12 'Count of vendor APIs
     strFile= CurrentDirectory & "\scl.dat"
     strAPIproduct = "Seclytics"  
 	strDisableFile = CurrentDirectory & "depreciated"   
-   ElseIf intCountVendors = 12 then
+   elseif intCountVendors = 12 then
+    strFile= CurrentDirectory & "\pd.dat"
+    strAPIproduct = "Pulsedive"  
+	strDisableFile = CurrentDirectory & "depreciated"
+   ElseIf intCountVendors = 13 then
     strFile= CurrentDirectory & "\av.dat"
     strAPIproduct = "AlienVault"  
 	strDisableFile = CurrentDirectory & "\av.disable"
@@ -1157,15 +1170,20 @@ strData = ""
 		  boolEnableTIA = False	  
 		elseif intCountVendors = 11 and BoolSeclytics = True then
 		  intAnswer = msgbox ("Continuing without Seclytics API check. Do you want to disable Seclytics API lookups in the future?",vbYesNo, "VTTL Seclytics API Lookups")
-		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "Seclytics=False" ,"[vendor]"     
-		  BoolSeclytics = False	  		
-		elseif intCountVendors = 12 and useAlienVapiKey = True then
+		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "useSeclytics=False" ,"[vendor]"     
+		  BoolSeclytics = False	  
+		elseif intCountVendors = 12 and boolPulsedive = True And PulsediveAPIprompt = True then
+		  'API key is not required.
+		  intAnswer = msgbox ("Continuing without Pulsedive API key. Do you want to disable Pulsedive API key prompts in the future?",vbYesNo, "VTTL Pulsedive API Lookups")
+		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "PulsediveAPIprompt=False" ,"[vendor]"     
+		  'boolPulsedive = False
+		elseif intCountVendors = 13 and useAlienVapiKey = True then
 		  intAnswer = msgbox ("Continuing without AlienVault API key. Do you want to disable this AlienVault API key prompt in the future?",vbYesNo, "VTTL AlienVault API Lookups")
 		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "use_AlienVaultAPIkey=False" ,"[vendor_AlienVault]"     
 		  useAlienVapiKey = False	  
 		end if
-	  end if
-  end if
+	  end If ' if strTempAPIKey <> "" then
+  end If 'if strTempAPIKey = "" then
   if intCountVendors = 0 then
 	strAPIKey = strTempAPIKey
   elseif intCountVendors = 1 and BoolEnableMetascan = True then
@@ -1213,7 +1231,9 @@ strData = ""
 	strTIAkey = strTempAPIKey
   elseif intCountVendors = 11 and BoolSeclytics = True then
 	SeclyApikey = strTempAPIKey
-  elseif intCountVendors = 12 and useAlienVapiKey = True then
+  elseif intCountVendors = 12 and boolPulsedive = True then
+		PulsediveApikey = strTempAPIKey
+  elseif intCountVendors = 13 and useAlienVapiKey = True then
 	strAlienVaultkey = strTempAPIKey
   end if
   on error resume next
@@ -1347,7 +1367,7 @@ if BoolCreateSpreadsheet = True then
 	if boolUseAlienVault = True then 
 		strTmpAlienHead1 = "|AlienVault Pulse"
 	end If
-	if boolUseAlienVault = True Or BoolSeclytics = True Then
+	if boolUseAlienVault = True Or BoolSeclytics = True Or boolPulsedive = True Then
 		strTmpAlienHead2 ="|Validation"
 		if dictKWordWatchList.count > 0 then
 			strTmpKeyWordWatchListHead = "|Keyword Watch List"
@@ -1448,6 +1468,11 @@ if BoolCreateSpreadsheet = True then
 		Else
 			SeclytHead = ""
 		End If	
+		if boolPulsedive = True then
+      PulsediveHead = "|Pulsedive"
+		else
+      PulsediveHead = ""
+		end if
         DetectionNameHeaderColumns = DetectionNameHeader 'header row for IP/Domain detection names
 		if BoolDisableVTlookup = False then
 			strVThead = "Scanned Item|VTTI Download From|VTTI Referrer|VTTI Callback To|VTTI_Uniq_URLs|VTTI_Uniq_Domains"
@@ -1457,7 +1482,7 @@ if BoolCreateSpreadsheet = True then
 			vtHead2 = ""
 		end if
             'write IP/domain header row
-        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead)
+        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
         if BoolCreateSpreadsheet = True then
           if cint(intDetectionNameCount) > 0 then 
             
@@ -1867,9 +1892,12 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytReturnBody = httpget("https://api.seclytics.com/files/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
+			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
 			SeclytFileDate SeclytReturnBody 'Populate first seen date
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
+			
+
 		End If
 	End If
 	
@@ -1878,8 +1906,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter greater than 4",False 
       inLoopCounter = 0
     end if
-
-	  if BoolUseCIF = True and ishash(strData) = False then
+	If  ishash(strData) = False then
+	  if BoolUseCIF = True Then
 		if instr(strCIFoutput, "for " & strData & ":") = 0 then
 			strTmpRequestResponse = SubmitCIF(strData)
 
@@ -1894,7 +1922,38 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			  strTmpCIFlineE = "|"
 			end if
 		end if
-	  end if
+	  end If
+		If boolPulsedive = True Then
+		    PulsediveBody = httpget("https://pulsedive.com/api/info.php?indicator=", strScanDataInfo,"","key", PulsediveApikey, false) 'get API results
+		    If instr(PulsediveBody, "Indicator not found.") = 0 Then
+		     KeywordSearch PulsediveBody
+				 strTmpPulsediveLineE = getdata(PulsediveBody, chr(34), "risk" & chr(34) & ":" & chr(34))
+      RiskFactor = getdata(PulsediveBody, "]", "riskfactors" & chr(34) & ":[")
+			if AlienVaultValidation = "" or AlienVaultValidation = "|" then
+        if instr(RiskFactor, "top 100 domain") > 0 then
+            AlienVaultValidation = "top 100 domain"
+        elseif instr(RiskFactor, "top 1k domain") > 0 then
+            AlienVaultValidation = "top 1k domain"
+        elseif instr(RiskFactor, "top 10k domain") > 0 then
+            AlienVaultValidation = "top 10k domain"		
+        elseif instr(RiskFactor, "top 100k domain") > 0 then
+            AlienVaultValidation = "top 100k domain"
+        end if
+      end if
+				Check_name_server PulsediveBody
+				If strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
+					strTmpIPContactLineE = WhoisPopulate (PulsediveBody) 'sets geolocation and whois contact
+				Else
+					WhoisPopulate PulsediveBody
+				End if	
+			Else
+				strTmpPulsediveLineE = ""
+			
+			End if
+			
+		end If
+	End if	
+	  
 	  if isIPaddress(strData) and not dictIPreported.Exists(strData) then'only report on the IP once
            dictIPreported.add strData, 1
            strOptionalParameter = ""
@@ -2034,16 +2093,20 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			end if
 		end if
 
-        If BoolSeclytics = True Then 'set to true to use Seclytics
+		If BoolSeclytics = True Then 'set to true to use Seclytics
 			SeclytReturnBody = httpget("https://api.seclytics.com/ips/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
+			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
+
 			SeclytFileRep = dict2List(DicFile_Context, "^")
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			SeclytASN SeclytReturnBody 'populate IP owner field
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
 			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
 		End If
+		
+
 
         if isIPaddress(strdata) and strTmpCNlineE = "|" and strTmpCClineE = "|" then 'have not gotten geiop by other means 
           If enableFreeGeoIP = True then SubmitGIP strdata 
@@ -2142,6 +2205,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytReturnBody = httpget("https://api.seclytics.com/hosts/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
+			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
+			msgbox "repres:" & len(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
@@ -2581,12 +2646,15 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  If BoolSeclytics = True Or intVTListDataType = 1 Then
 		if dictURLWatchList.count > 0 then strURLWatchLineE = addPipe(strURLWatchLineE)
 		if dictIPdomainWatchList.count > 0 then strIpDwatchLineE = addPipe(strIpDwatchLineE)
-	  End If			
+	  End If
+	  If boolPulsedive = True Then
+	  	strTmpPulsediveLineE = AddPipe(strTmpPulsediveLineE)
+	  End if  				
       'write spreadsheet row
       select case intVTListDataType
         case 1
           'write row for domain & IP
-          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount '& strTmpCacheLineE
+          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE '& strTmpCacheLineE
         case 2
           If dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 		  'Add to adjusted malware score for custom list malware and update detection name if one was given in malhash.dat
@@ -2763,6 +2831,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        strDFSlineE = ""
        strPE_TimeStamp = ""
        strFileTypeLineE = ""
+       strTmpPulsediveLineE = ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
 	  
 	  if boolNoCrLf = True then 
@@ -3579,7 +3648,7 @@ if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then
 	   if intCountOutDomain < 4 then
          for x = 1 to ubound(ArrayHostNames)
 		  if DictTrackDomain(ArrayHostNames(x)) = false then 
-			
+			intCountDomains = intCountDomains +1
 			  if intCountOutDomain < 5 then 
 
 				 strDomainListOut = AppendValuesList(strDomainListOut,left(ArrayHostNames(x),instr(ArrayHostNames(x), chr(34))-1),";")
@@ -7132,14 +7201,17 @@ strTmpBDvendorNames = lcase(strBDvendorNames)
 boolCBDEreturn = False
 
 if instr(strTmpBDvendorNames, "ad-aware" & StrTmpVendPosDet) then boolCBDEreturn = True
-if instr(strTmpBDvendorNames, "bitdefender" & StrTmpVendPosDet) then boolCBDEreturn = True
+if instr(strTmpBDvendorNames, "avg" & StrTmpVendPosDet) then boolCBDEreturn = True 'Avast purchased AVG
+if instr(strTmpBDvendorNames, "fireeye" & StrTmpVendPosDet) then boolCBDEreturn = True 'multiengine - bitdefender
+if instr(strTmpBDvendorNames, "bitdefender" & StrTmpVendPosDet) then boolCBDEreturn = True 'multiengine - bitdefender
+if instr(strTmpBDvendorNames, "Bitdefendertheta" & StrTmpVendPosDet) then boolCBDEreturn = True 'bitdefender engine
 if instr(strTmpBDvendorNames, "f-secure" & StrTmpVendPosDet) then boolCBDEreturn = True 'moved to Avira
 if instr(strTmpBDvendorNames, "gdata" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "microworld-escan" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "emsisoft" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "escan" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "nprotect" & StrTmpVendPosDet) then boolCBDEreturn = True
-if instr(strTmpBDvendorNames, "alyac" & StrTmpVendPosDet) then boolCBDEreturn = True
+if instr(strTmpBDvendorNames, "alyac" & StrTmpVendPosDet) then boolCBDEreturn = True 'multiengine - bitdefender
 if instr(strTmpBDvendorNames, "ad-aware" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "arcabit" & StrTmpVendPosDet) then boolCBDEreturn = True
 if instr(strTmpBDvendorNames, "cat-quickheal" & StrTmpVendPosDet) then boolCBDEreturn = True
@@ -12051,3 +12123,77 @@ Sub DetectNameWatchlist(strUniqueDname)
 		strDnameWatchLineE = concatenateItem(strDnameWatchLineE, strUniqueDname, "^")
 	end If
 End Sub
+
+Function WhoisPopulate(strWhoisText) 'currently only used by Pulsedive but should work with whoAPI
+strWhoisText = lcase(strWhoisText)
+
+      ' set city, region, and country code for spreadsheet output
+      if strTmpCITlineE = "" or strTmpCITlineE = "|" then
+      strTmpCITlineE = Getdata(strWhoisText, Chr(34), "city" & Chr(34) & ":" & Chr(34))
+      strTmpCITlineE = "|" & CleanupWhoisData(strTmpCITlineE)
+      end if
+      if strTmpRNlineE = "" or strTmpRNlineE = "|" then
+      strTmpRNlineE = Getdata(strWhoisText , Chr(34), "state" & Chr(34) & ":" & Chr(34))
+      strTmpRNlineE = "|" & CleanupWhoisData(strTmpRNlineE)
+      end if
+      if strTmpRNlineE = "" or strTmpRNlineE = "|" then
+      strTmpRNlineE = Getdata(strWhoisText , Chr(34), "region" & Chr(34) & ":" & Chr(34))
+      strTmpRNlineE = "|" & CleanupWhoisData(strTmpRNlineE)
+      end if
+      if strTmpCClineE = "" or strTmpCClineE = "|" then
+      strTmpCClineE = Getdata(strWhoisText , Chr(34), "country" & Chr(34) & ":" & Chr(34))
+      strTmpCClineE = "|" & CleanupWhoisData(strTmpCClineE)
+      end if
+
+      if strTmpWCO_CClineE = "" or strTmpWCO_CClineE = "|" then
+        strTmpWCO_CClineE = Getdata(strWhoisText, Chr(34), "date_created" & Chr(34) & ":" & Chr(34))
+        strTmpWCO_CClineE = "|" & CleanupWhoisData(strTmpWCO_CClineE)
+      end if
+      if strTmpWCO_CClineE = "" or strTmpWCO_CClineE = "|" then
+        strTmpWCO_CClineE = Getdata(strWhoisText, Chr(34), "registered" & Chr(34) & ":" & Chr(34))
+        strTmpWCO_CClineE = "|" & CleanupWhoisData(strTmpWCO_CClineE)
+      end if
+      tmpRegistrant = Getdata(strWhoisText, Chr(34), "++registrant" & Chr(34) & ":" & Chr(34))
+      
+      
+	  if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "results after WhoisPopulate but before moveSS: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE & "^" & "strTmpCClineE =" & strTmpCClineE , false
+
+      MoveSSLocationEntries 'check if country code is listed as country name
+      WhoisPopulate = tmpRegistrant
+end function
+
+
+sub Check_name_server(strNameServerText) 'currently only used by Pulsedive
+
+nameServers = getData (strNameServerText, "]", "Name Server" & chr(34) & ":[")
+
+if instr(nameServers, ",") > 0 then
+  arrayNames = split(nameServers, ",")
+  for each nameServer in arrayNames
+    serverName = getdata(nameServer, chr(34), chr(34))
+    if serverName <> "" then
+      SinkholeNSCheck serverName
+    end if
+  next
+else
+  serverName = getdata(nameServer, chr(34), chr(34))
+    if serverName <> "" then
+      SinkholeNSCheck serverName
+    end if
+end if
+
+end sub
+
+Function truncateCell(cellContents)
+  msgbox len(cellContents)
+			if len(cellContents) > 32460 then 'cell length limitation
+        cellContents= left(cellContents, 32460) 'truncate
+  msgbox len(cellContents)
+        sepLocation = InstrRev(cellContents, "^")
+        if sepLocation > 0 then
+          cellContents= left(cellContents, sepLocation) 'truncate to end at sep char
+        end if
+			end if
+			msgbox len(cellContents)
+			truncateCell = cellContents
+end function
