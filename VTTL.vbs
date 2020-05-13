@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.4 - Initial support for Pulsedive.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.5 - Support for Pulsedive SSL certificate organization and subject parsing. Fix column alignment when VirusTotal v3 API is used in conjuction with sigcheck.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -424,6 +424,8 @@ Dim DicFile_Context: Set DicFile_Context = CreateObject("Scripting.Dictionary") 
 Dim boolPulsedive
 Dim PulsediveAPIprompt
 Dim BoolSeclytics 'set to true to use Seclytics
+Dim sslOrg 'Pulsedive
+dim sslSubject 'Pulsedive
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -1469,7 +1471,7 @@ if BoolCreateSpreadsheet = True then
 			SeclytHead = ""
 		End If	
 		if boolPulsedive = True then
-      PulsediveHead = "|Pulsedive"
+      PulsediveHead = "|Pulsedive|SSL Subject|SSL Org"
 		else
       PulsediveHead = ""
 		end if
@@ -1528,7 +1530,7 @@ if BoolCreateSpreadsheet = True then
         elseif BoolSigCheckLookup = True then
           if cint(inthfPrevalenceLoc) > -1 then 'CB custom CSV export
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
-          elseif boolEnableCuckoo = True then
+          elseif boolEnableCuckoo = True or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
           else
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Digial Signature Tracking"
@@ -1536,14 +1538,14 @@ if BoolCreateSpreadsheet = True then
           if cint(intHostLocation) > 0 then
             strTmpCBHead = strTmpCBHead & "|Hosts"
           end if
-		  if BoolSigCheckLookup = True and BoolUseCarbonBlack = False and boolEnableCuckoo = False then
-			'crowdstrike csv export does not support any of these
-			if inthfSizeLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|File Size","")
-			if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digital Sig","")
-			if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digial Signature Tracking","")			
-			if inthfProductLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Product Name","")
-			if intCompanyLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Company Name","")
-		  end if
+          if BoolSigCheckLookup = True and BoolUseCarbonBlack = False and boolEnableCuckoo = False then
+            'crowdstrike csv export does not support any of these
+            if inthfSizeLoc = -1 and (boolVTuseV3 = False or BoolDisableVTlookup = True) then strTmpCBHead = replace(strTmpCBHead, "|File Size","")
+            if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digital Sig","")
+            if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digial Signature Tracking","")			
+            if inthfProductLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Product Name","")
+            if intCompanyLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Company Name","")
+          end if
 
         elseif boolEnableCuckoo = True then 
           strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
@@ -1559,7 +1561,7 @@ if BoolCreateSpreadsheet = True then
           StrTmpCTimeStamp = ""
           strYARAhead = ""
         end if
-        if boolEnableCuckoo = True then 
+        if boolEnableCuckoo = True then
           strYARAhead = "|YARA"
           strFileTypeHead = "|File Type"
         else
@@ -1943,12 +1945,16 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				Check_name_server PulsediveBody
 				If strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
 					strTmpIPContactLineE = WhoisPopulate (PulsediveBody) 'sets geolocation and whois contact
+					if sslOrg = "" or sslSubject= "" then
+            PulsediveSslPopulate PulsediveBody
+					end if
+        
 				Else
 					WhoisPopulate PulsediveBody
 				End if	
 			Else
 				strTmpPulsediveLineE = ""
-			
+
 			End if
 			
 		end If
@@ -2206,7 +2212,6 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
 			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
-			msgbox "repres:" & len(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
@@ -2607,9 +2612,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         
       if boolEnableCuckoo = True then strCuckooScore  = AddPipe(strCuckooScore)
 
-      if BoolEnCaseLookup = True or BoolUseCarbonBlack = True then
+      if BoolEnCaseLookup = True or BoolUseCarbonBlack = True or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
           strCBfilePath = AddPipe(strCBfilePath) 'CB File Path
-          if inthfSizeLoc > -1 then strCBFileSize = AddPipe(strCBFileSize)  
+          if inthfSizeLoc > -1 or (BoolDisableVTlookup = False and boolVTuseV3 = True) then strCBFileSize = AddPipe(strCBFileSize)  
       end if
       if BoolUseCarbonBlack = True then 'CB custom CSV export
         strCBprevalence = AddPipe(strCBprevalence)
@@ -2649,12 +2654,14 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  End If
 	  If boolPulsedive = True Then
 	  	strTmpPulsediveLineE = AddPipe(strTmpPulsediveLineE)
+	  	sslOrg = AddPipe(sslOrg)
+	  	sslSubject = AddPipe(sslSubject)
 	  End if  				
       'write spreadsheet row
       select case intVTListDataType
         case 1
           'write row for domain & IP
-          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE '& strTmpCacheLineE
+          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
         case 2
           If dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 		  'Add to adjusted malware score for custom list malware and update detection name if one was given in malhash.dat
@@ -2832,6 +2839,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        strPE_TimeStamp = ""
        strFileTypeLineE = ""
        strTmpPulsediveLineE = ""
+       sslOrg = ""
+       sslSubject = ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
 	  
 	  if boolNoCrLf = True then 
@@ -12185,15 +12194,26 @@ end if
 end sub
 
 Function truncateCell(cellContents)
-  msgbox len(cellContents)
+
 			if len(cellContents) > 32460 then 'cell length limitation
         cellContents= left(cellContents, 32460) 'truncate
-  msgbox len(cellContents)
+
         sepLocation = InstrRev(cellContents, "^")
         if sepLocation > 0 then
           cellContents= left(cellContents, sepLocation) 'truncate to end at sep char
         end if
 			end if
-			msgbox len(cellContents)
+
 			truncateCell = cellContents
 end function
+
+
+sub PulsediveSslPopulate(PulsediveText)
+
+if BoolDebugTrace = True then logdata strDebugPath & "\pulsedive" & "" & ".txt", PulsediveText ,BoolEchoLog
+if instr(PulsediveText, chr(34) & "ssl" & chr(34) & ":") > 0 then
+  pulsediveSSL = getdata(PulsediveText, "}", chr(34) & "ssl" & chr(34) & ":")
+	if sslOrg = "" then sslOrg = getdata(pulsediveSSL, chr(34), chr(34) & "org" & chr(34) & ":" & chr(34))
+  if sslSubject = "" then sslSubject = getdata(pulsediveSSL, chr(34), chr(34) & "subject" & chr(34) & ":" & chr(34))
+end if        
+end sub
