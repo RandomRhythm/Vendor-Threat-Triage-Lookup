@@ -38,7 +38,7 @@ Additional data points:
 * Registration date of domains
 * Sinkhole checks
 
-Combine hash lookups with tool output from:
+Combine hash lookups with tool output from (requires MD5 hash values):
 * Sysinternals Sigcheck
 * Sysinternals Autorunsc
 * Cisco AMP for Networks
@@ -52,7 +52,7 @@ Additional features:
 	* Malware Score
 	* Generic Score	
 	* PUA Score
-	* HackerTool Score
+	* Hacker Tool Score
 	* Adjusted Malicious Score
 * Cache results to SQLite and files on disk
 * Whitelist known hashes
