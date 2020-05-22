@@ -23,7 +23,7 @@ VTTL Performs lookups for file hashes, IP addresses and domain names. Results ar
 * SORBS
 * Barracuda
 
-Additional data points:
+Additional checks:
 * Reverse DNS
 * Reverse IP (lookup to document sample of associated domains)
 * Whois
@@ -57,8 +57,8 @@ Additional features:
 * Cache results to SQLite and files on disk
 * Whitelist known hashes
 * Blacklist known hashes
-* Track digital signatures (signatures need to be provided via combine input)
-* Track file path/vendor combination (file paths and vendor provided via combine input)
+* Track digital signatures (signatures can be provided via combine input or the VirusTotal API)
+* Track file path/vendor combination (file paths and vendor/company provided via combine input)
 * Exclude domain/subdomain/IP lookups
 * Detection name watchlist
 * URL watchlist (supports regex)
