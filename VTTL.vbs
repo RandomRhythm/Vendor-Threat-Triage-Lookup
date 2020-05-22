@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.5 - Support for Pulsedive SSL certificate organization and subject parsing. Fix column alignment when VirusTotal v3 API is used in conjuction with sigcheck.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.6 - Don't pause processing with message box for odd length hashes
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -5458,7 +5458,7 @@ elseif len(StrHashValue) = 40 then 'sha1
 elseif len(StrHashValue) = 64 then 'sha256
   strReturnHashType = "SHA256"
 else
-  msgbox "Error! Length of hash doesn't match supported hashes. Will use unknown folder. Len=" & len(StrHashValue) & vbCrLf & StrHashValue
+  objShellComplete.popup "Error! Length of hash doesn't match supported hashes. Will use unknown folder. Len=" & len(StrHashValue) & vbCrLf & StrHashValue, 10
 
   strReturnHashType = "unknown"
 end if
