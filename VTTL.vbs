@@ -305,6 +305,7 @@ Dim intWhoAPILimit
 Dim strPE_TimeStamp
 Dim StrYARALineE
 Dim strFileTypeLineE
+Dim strMimeTypeLineE
 Dim intTGerrorCount
 Dim boolTGwasEnabled
 Dim intDelayBetweenLookups
@@ -1551,7 +1552,7 @@ if BoolCreateSpreadsheet = True then
           strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
           'StrTmpCTimeStamp = "|PE TimeStamp"
         elseif BoolDisableVTlookup = False and boolVTuseV3 = True Then
-        	strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
+        	strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
         elseif BoolEnCaseLookup = True then
           strTmpCBHead = "|File Path|File Size"
         ElseIf boolEnableCuckooV2 = True then   
@@ -1573,6 +1574,7 @@ if BoolCreateSpreadsheet = True then
 	    end If
 	    if BoolDisableVTlookup = False and boolVTuseV3 = True Then
         	StrTmpCTimeStamp = "|PE TimeStamp"
+        	strMimeTypeHead = "|File Insight"
         End if	
         if boolEnableMalShare = True then
           strTmpMalShareHead = "|MalShare"
@@ -1659,7 +1661,7 @@ if BoolCreateSpreadsheet = True then
 		
 		if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
 		'Write file hash header row
-        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strFileTypeHead & StrTmpCTimeStamp & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
+        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strMimeTypeHead & strFileTypeHead & StrTmpCTimeStamp & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
         BoolUseCIF = False 'don't use CIF when in spreadsheet mode and performing hash lookups
       case 3
         Wscript.echo "Can't process IP/domains along side hashes. Please remove hashes or include only hashes in vtlist.txt. If only contains hashes make sure each entire line contains valid hashes (extra, missing, invalid characters)."
@@ -2586,7 +2588,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         strPE_TimeStamp = AddPipe(strPE_TimeStamp)    
         strTmpSigAssesslineE = Addpipe(strTmpSigAssesslineE)
         strFileTypeLineE = addpipe(strFileTypeLineE)
-      End if
+     end if
+     if BoolDisableVTlookup = False and boolVTuseV3 = True then
+        strMimeTypeLineE = AddPipe(strMimeTypeLineE)
+     End if
       If boolEnableCuckoo = True then    
         StrYARALineE = addpipe(StrYARALineE)
         if strDetectNameLineE = "None Identified" then 
@@ -2679,7 +2684,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           end if
           if boolDisableSQL_IQ = False and boolSQLcache = True and ishash(strdata) = True then SQL_Intelligence_Query lcase(strdata)           
           'write row for hash lookups
-          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strFileTypeLineE & strPE_TimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
+          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strMimeTypeLineE & strFileTypeLineE & strPE_TimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
       end select 
       
 
@@ -2838,6 +2843,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        strDFSlineE = ""
        strPE_TimeStamp = ""
        strFileTypeLineE = ""
+       strMimeTypeLineE = ""
        strTmpPulsediveLineE = ""
        sslOrg = ""
        sslSubject = ""
@@ -2851,7 +2857,6 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  if BoolCreateSpreadsheet = True and left(strTmpSSline,1) <> "|" then Write_Spreadsheet_line(strTmpSSline)
       strTmpSSline = ""
       StrYARALineE = ""
-      strFileTypeLineE = ""
 	  DetectionNameSSlineE = ""
 	  strDnameWatchLineE = ""
 	  strURLWatchLineE = ""
@@ -3247,6 +3252,11 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 				strPE_TimeStamp = DateAdd("s", strPE_TimeStamp, "01/01/1970 00:00:00") 'epoch2date
 			End If	
 			If ispipeorempty(strFileTypeLineE) Then strFileTypeLineE = GetData(strresponseText, Chr(34), Chr(34) & "PEType" & Chr(34) & ": " & Chr(34))
+			If ispipeorempty(strFileTypeLineE) Then strFileTypeLineE = GetData(strresponseText, Chr(34), Chr(34) & "type_description" & Chr(34) & ": " & Chr(34))
+			If ispipeorempty(strMimeTypeLineE) Then strMimeTypeLineE = GetData(strresponseText, Chr(34), Chr(34) & "MIMEType" & Chr(34) & ": " & Chr(34))
+			If ispipeorempty(strMimeTypeLineE) Then strMimeTypeLineE = GetData(strresponseText, Chr(34), Chr(34) & "file_type" & Chr(34) & ": " & Chr(34))
+			If ispipeorempty(strMimeTypeLineE) Then strMimeTypeLineE = GetData(strresponseText, Chr(34), Chr(34) & "magic" & Chr(34) & ": " & Chr(34))
+			If ispipeorempty(strCBfilePath) Then strCBfilePath = GetData(strresponseText, Chr(34), Chr(34) & "meaningful_name" & Chr(34) & ": " & Chr(34))
 			If ispipeorempty(strFileIMP) Then strFileIMP = GetData(strresponseText, Chr(34), Chr(34) & "imphash" & Chr(34) & ": " & Chr(34))
 		else
 			strDateTimeLineE = ParseVTScanDate(strresponseText)
