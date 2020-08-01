@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.6 - Don't pause processing with message box for odd length hashes
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.7 - Truncate Seclytics Associated File Metadata column
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1898,6 +1898,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
 			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
+			if len(SeclytFileRep) > 32767 then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileDate SeclytReturnBody 'Populate first seen date
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
 			
@@ -2108,6 +2109,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
 
 			SeclytFileRep = dict2List(DicFile_Context, "^")
+			if len(SeclytFileRep) > 32767 then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			SeclytASN SeclytReturnBody 'populate IP owner field
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
