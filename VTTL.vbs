@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.7 - Truncate Seclytics Associated File Metadata column
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.1.8 - Support for VirusTotal database cache lookup only (BoolReportOnly)
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -440,9 +440,9 @@ Dim boolInvalid
 
 
 '--- Config items
-BoolReportOnly = False 'Dont submit to VirusTotal
+BoolReportOnly = False 'Don't submit to VirusTotal. Report data will come from VirusTotal cache only.
 BoolNoScanning = True 'Don't scan anything with VirusTotal. Scanning something provides the scanned item publicly. Default is True preventing scanning.
-BoolDisableVTlookup = False 'Don't perform Virus Total lookups. Default is False. Setting to True breaks some functionality
+BoolDisableVTlookup = False 'Don't perform VirusTotal lookups. Default is False. Setting to True breaks some functionality
 sleepOnSkippedVT = True 'Default value is True. Set to False if only VirusTotal API is being used. Set to true to sleep when a VirusTotal result was pulled from cache. Setting True prevents overwhelming other APIs.
 intDelayBetweenLookups = 15052 'miliseconds to wait between each lookup (default 15052 one lookup every 15 seconds), 4052 AlienVault with API Key
 boolCacheVTNoExist = False 'Cache VirusTotal has does not exist results. Default value is False
@@ -3091,7 +3091,7 @@ if BoolDisableVTlookup = False then
       exit sub
     End if
   end if
-  if strresponseText = "" Then
+  if strresponseText = "" And BoolReportOnly = false Then
   	strresponseText = objHTTP.responseText
     if BoolDebugTrace = True then logdata strDebugPath & "\VT_Report_Debug" & "" & ".txt", strresponseText & vbcrlf,BoolEchoLog 
     if BoolDebugTrace = True then logdata strDebugPath & "\VT_HTTP_Debug" & "" & ".txt", strScanDataInfo & " - " & objHTTP.status,BoolEchoLog 
