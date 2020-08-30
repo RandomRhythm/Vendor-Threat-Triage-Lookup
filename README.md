@@ -71,3 +71,4 @@ Tests:
 * test.surbl.org
 * 127.0.0.2 - SORBS,	CBL abuseat,	Barrucda,	Spamhaus, ZEN RBL
 
+Check out the [wiki](https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup/wiki) for more information.
