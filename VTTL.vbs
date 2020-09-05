@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.0 - Support for importing ShimCacheParser and Cylance CSV to combine with lookup results. Correlated IOC output. Pulsedive passive DNS. AlienVault hash count and IOC output.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.1 - Support for including siblings in IOC output. Update Seclytics parser. Bugfix: DBL lookups occuring when should be disabled.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -101,6 +101,7 @@ Dim dictNoSubmit: Set dictNoSubmit = CreateObject("Scripting.Dictionary")'stuff 
 Dim dictNoDomainSubmit: set dictNoDomainSubmit = CreateObject("Scripting.Dictionary")'stuff not to submit to VT if not already there
 Dim dictIPreported: set dictIPreported = CreateObject("Scripting.Dictionary")'IP addresses reported on already
 Dim dictTLD: set dictTLD = CreateObject("Scripting.Dictionary")'Top Level Domains for Whois parent domain identification
+Dim dictFileExt: Set dictFileExt = CreateObject("Scripting.Dictionary")
 Dim DictHashAssociation: set DictHashAssociation = CreateObject("Scripting.Dictionary")'hash correalation
 Dim BoolReportWebScan
 Dim BoolUseThreatGRID
@@ -562,6 +563,7 @@ SeclytFileCount = "" 'Seclytics File Count"
 DisplayVendor = "" 'Add column to display all of this vendor's detection names. Example: BitDefender
 intClippingLevel = 2 'Domain/IP reporting for detection name will report on name label with score greater than this
 BoolCacheRelatedHashLookups = True
+boolSiblings = True
 '--- End config items
 
 '----------------reconfigure
@@ -644,6 +646,7 @@ BoolURLWatchLlistRegex = ValueFromINI("vttl.ini", "VirusTotal", "UseRegexForURL"
 intDetectionNameCount = ValueFromINI("vttl.ini", "VirusTotal", "WebSamplesToCheck", intDetectionNameCount) 'Set greater than zero to enable reporting on detection names associated with domain/IP. set to zero to disable.
 intDetectionCategory = ValueFromINI("vttl.ini", "VirusTotal", "WebSampleCategory", intDetectionCategory) 'associated with domain/IP category to use: detected_downloaded_samples=0, detected_referrer_samples=1, detected_communicating_samples=2
 intHashPositiveThreashold = ValueFromINI("vttl.ini", "VirusTotal", "WebSamplePositiveThreshold", intHashPositiveThreashold) 'Positive detection threshold to perform hash lookups for IP/domain association. Will only report on detections above the threshold.
+boolSiblings = ValueFromINI("vttl.ini", "VirusTotal", "TrackSiblings", boolSiblings) 'IOC tracking for siblings
 BoolDebugTrace = ValueFromINI("vttl.ini", "Debug", "trace", BoolDebugTrace)
 boolSigCheckDebug = ValueFromINI("vttl.ini", "Debug", "sigcheck", boolSigCheckDebug)
 BoolWhoisDebug = ValueFromINI("vttl.ini", "Debug", "Whois", BoolWhoisDebug)' used to do additional messaging and logging to troubleshoot whois and some geolocation
@@ -1401,6 +1404,7 @@ if BoolCreateSpreadsheet = True then
     select case intVTListDataType
       case 1 'ip/domain
         LoadIPAuthorities 'populates Dictripe, DictArin, etc
+        loadFileExt 'used to identify file names and types for IOC output
 		if boolUseTrancoList = True and boolTrancoSQL = False then LoadTrancoList CurrentDirectory &"\top-1m.csv", dictTrancoList 'whitelist
         if cint(intDetectionNameCount) > 0 then'set modified for number of columns
           intaddDNameCount = round(intDetectionNameCount /2 +.1) 'round up to add additional column(s) for IP/Domain detection name association
@@ -1798,7 +1802,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "boolsubmitVT = False",BoolEchoLog 
 			  end if
 			end if
-		  next
+		  Next
+		  If isIPaddress(strData) = False Then strData = LCase(strData) 'lowercase domain names
 	  end if
     else'go through pending items
         strData = ""
@@ -2257,15 +2262,18 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           end if
           if isIpAddress(strData) = true then
             strCSVrowIP = strData
-          else
+          elseif ishash(strData) then
+            strCSVhash = strData
+          ElseIf strCSVrowDomain = "" then
             strCSVrowDomain = strData
           end if
-      		If objFSO.FileExists(strReportsPath & "\IOCs_" & UniqueString & ".log") = False Then
-      			logdata strReportsPath & "\IOCs_" & UniqueString & ".log", "ip,domain,hash", False
+      		If objFSO.FileExists(strReportsPath & "\IOCs_" & UniqueString & ".csv") = False Then
+      			logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", "ip,domain,hash", False
       		End If
-      		logdata strReportsPath & "\IOCs_" & UniqueString & ".log", strCSVrowIP & "," & strCSVrowDomain & ",", False
+      		logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & strCSVhash, False
       		strCSVrowIP= ""
       		strCSVrowDomain= ""
+      		strCSVhash = ""
         Next
 	  End if
 	  if DictHashAssociation.count > 0 then
@@ -2277,7 +2285,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             strCSVrowDomain = strData
             strCSVrowIP = ""
           end if
-        logdata strReportsPath & "\IOCs_" & UniqueString & ".log", strCSVrowIP & "," & strCSVrowDomain & "," & trackedHash, False
+        logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & trackedHash, False
       next
 	  end if
     DictHashAssociation.removeall
@@ -3505,8 +3513,8 @@ if instr(strFullAPIURL,"domain=") then
         else
           StrRBL_Results = StrRBL_Results & vbcrlf & StrTmpRBLOutput
         end if
-        if RBL_loop = 0 then strTmpZDBLlineE = "|X"
-		if RBL_loop = 1 then strTmpURIBLlineE = "|X"
+        if RBL_loop = 0 and boolEnableZDBL = True then strTmpZDBLlineE = "|X"
+		if RBL_loop = 1 and enableURIBL = True then strTmpURIBLlineE = "|X"
       else
         if RBL_loop = 0 and boolEnableZDBL = True then strTmpZDBLlineE = "|"              
       end if
@@ -3580,8 +3588,24 @@ if instr(strFullAPIURL,"domain=") then
  'get VT categories for domain
  strCategoryLineE = GetWebCategoryfromVT (strresponseText)
 
-end if
+  if boolSiblings = True then
+    'get sibling domains
+    sibDomains = getdata(strresponseText,"]","domain_siblings" & chr(34) & ": [")
 
+    if instr(sibDomains, chr(34)) > 0 then
+      if instr(sibDomains, chr(34) & ", " & chr(34)) > 0 then
+        'multiple siblings
+        arraySiblings = split(sibDomains, chr(34) & ", " & chr(34))
+        for each sibling in arraySiblings
+          strSibDomain = replace(sibling, chr(34), "")
+          DictTrackDomain strSibDomain
+        next
+      
+      end if
+      
+    end if
+  end if
+end if
 if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then
   if instr(strFullAPIURL,"ip=") then StrTmpDomainOrIP = "IP "
   if instr(strFullAPIURL,"domain=") then StrTmpDomainOrIP = "domain "
@@ -8692,7 +8716,13 @@ dictTLD.add ".yt",0
 dictTLD.add ".za",0
 dictTLD.add ".zm",0
 dictTLD.add ".zw",0
-end sub
+end Sub
+
+Sub loadFileExt
+dictFileExt.Add "rar", 0
+dictFileExt.Add "doc", 0
+dictFileExt.Add "application/x-dosexec", 0
+End Sub
 
 Sub LoadARIN_Dat
 DictArin.add "7", 1
@@ -12154,16 +12184,52 @@ ElseIf InStr(dictEntry, "http") > 0  Then
 	If boolLogURLs = True Then logdata strReportsPath & "\URLs_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, false
 ElseIf InStr(dictEntry, vblf) > 0 Then
 	'MsgBox dictEntry
-ElseIf Len(dictEntry) < 32 And Right(dictEntry,3) <> "_at" And dictEntry <> "duration" Then
-	if dictRecord.exists(dictEntry) = false then dictRecord.add dictEntry, ""
+ElseIf (InStr(dictEntry, ":") > 0 Or InStr(dictEntry, "!") > 0 ) and InStr(dictEntry, " ") = 0  Then 'If not a URL (no http) and contains a colon or excalamation point then possible detection name.
 	DetectNameWatchlist dictEntry 'check against detection name watchlist and populate strDnameWatchLineE
-	If InStr(dictEntry, ".") > 0 and InStr(dictEntry, " ") = 0  Then 'possible domain name
-		DictTrackDomain dictEntry
-	End if	
-ElseIf InStr(dictEntry, ".") > 0 and InStr(dictEntry, " ") = 0  Then 'possible domain name
-	DictTrackDomain dictEntry
+ElseIf InStr(dictEntry, " ") > 0  And Len(dictEntry) > 3 Or Left(dictEntry,7) = "In late"  Then
+	'ignore
+ElseIf Len(dictEntry) < 32 And Len(dictEntry) > 3 And Right(dictEntry,3) <> "_at" And dictEntry <> "duration" Then
+	if dictRecord.exists(dictEntry) = false then dictRecord.add dictEntry, ""
+
+
+	If InStr(dictEntry, ".") > 0 and isnotDetectionName(dictEntry) = True Then 'check if is not a detection name
+		'check if is a file name
+		DictTrackDomain dictEntry 'possible domain
+	Else 'possible detection name
+		DetectNameWatchlist dictEntry 'check against detection name watchlist and populate strDnameWatchLineE
+	End If
+
+
+	
 End if	
 End Sub
+
+
+Function isFileName(stringToTest)
+	TLDandVirusCheck = False
+	If InStr(stringToTest, ".") > 0 then
+		 nameParts = split(LCase(stringToTest), ".")
+		If dictFileExt.exists("." & nameParts(ubound(nameParts))) = True then 'Check if using common file extension
+			TLDandVirusCheck = True
+		End If
+	End If	
+	isFileName = TLDandVirusCheck
+End Function
+
+Function isnotDetectionName(stringToTest)
+	TLDandVirusCheck = False
+	If InStr(stringToTest, ".") > 0 then
+		 arrayTLDmalTest = split(LCase(stringToTest), ".")
+		If dictTLD.exists("." & arrayTLDmalTest(ubound(arrayTLDmalTest))) = True then 'Check if using TLD
+			TLDandVirusCheck = True
+		ElseIf dictGenericLabel.exists(arrayTLDmalTest(lbound(arrayTLDmalTest))) = false And  dictGenericLabel.exists(arrayTLDmalTest(ubound(arrayTLDmalTest))) = False then 'first item and last item are not generic labels
+			TLDandVirusCheck = True
+		End If
+	ElseIf dictGenericLabel.Exists(stringToTest) = False Then
+		TLDandVirusCheck  = True
+	End if	
+	isnotDetectionName = TLDandVirusCheck
+End Function
 
 Function HTTPget(strRequestURL, strCheckItem, strSection, strAPIheader, strApiKey, boolHeader)
 'returns HTTP body
@@ -12259,6 +12325,7 @@ Sub domainPassiveDNS(strPdnsIPaddress) 'set strRevDNS and pending items
 End Sub
 
 Sub DetectNameWatchlist(strUniqueDname)
+	strUniqueDname = LCase(strUniqueDname)
 	if dictDnameWatchList.exists(strUniqueDname) then
 		strDnameWatchLineE = concatenateItem(strDnameWatchLineE, strUniqueDname, "^")
 	end If
