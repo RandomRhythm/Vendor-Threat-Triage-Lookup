@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.1 - Support for including siblings in IOC output. Update Seclytics parser. Bugfix: DBL lookups occuring when should be disabled.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.2 - Support for checking hashes from domains against the malicious hash watchlist.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2264,6 +2264,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             strCSVrowIP = strData
           elseif ishash(strData) then
             strCSVhash = strData
+            if dictmalhash.exists(strData) Then
+              strDnameWatchLineE = concatenateItem(strDnameWatchLineE, dictmalhash.item(strData), "^")
+            end if
           ElseIf strCSVrowDomain = "" then
             strCSVrowDomain = strData
           end if
