@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.2 - Support for checking hashes from domains against the malicious hash watchlist.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.3 - Don't hang up looks by prompting about parsing failure. Add option to exclude GTMPDNS IP addresses from Seclytics lookups.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -432,7 +432,8 @@ Dim boolPulsedive
 Dim PulsediveAPIprompt
 Dim BoolSeclytics 'set to true to use Seclytics
 Dim sslOrg 'Pulsedive
-dim sslSubject 'Pulsedive
+Dim sslSubject 'Pulsedive
+Dim boolIncludeIP_GTMPDNS ' When querying Seclytics for an IP address include GTMPDNS IP addresses. Default value: False
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -560,6 +561,7 @@ PulsediveAPIprompt = True 'Prompt for Pulsedive API key
 SeclytRepReason = "" 'Seclytics Reputation and Reason
 SeclytFileRep = "" 'Seclytics Associated File Metadata
 SeclytFileCount = "" 'Seclytics File Count"
+boolIncludeIP_GTMPDNS = False ' When querying Seclytics for an IP address include GTMPDNS IP addresses. Default value: False
 DisplayVendor = "" 'Add column to display all of this vendor's detection names. Example: BitDefender
 intClippingLevel = 2 'Domain/IP reporting for detection name will report on name label with score greater than this
 BoolCacheRelatedHashLookups = True
@@ -10466,7 +10468,8 @@ intTmpPositives = getPositiveDetections(strTmpVTresults)
 if isnumeric(intTmpPositives) then
   UpdateVTPositives intVTCategory, intTmpPositives
 else
-  msgbox "Unable to get total number of positive detections from VirusTotal."
+  objShellComplete.popup "Unable to get total number of positive detections from VirusTotal.", 30
+  logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & "Unable to get total number of positive detections from VirusTotal: " & strTmpVTresults ,False 
 end if
 
 intHashlookupCount = intHashlookupCount + 1
@@ -10915,7 +10918,7 @@ Function MatchIpDwatchLIst(strIpDitem) 'strIpDwatchLineE
 Dim strIpDreturn: strIpDreturn = ""
 'msgbox "dictIPdomainWatchList.count=" & dictIPdomainWatchList.count 
 if dictIPdomainWatchList.count > 0 then 
-	if dictIPdomainWatchList.exists(strIpDitem) then 
+	if dictIPdomainWatchList.exists(strIpDitem) = True then 
 		'msgbox "strIpDitem=" & strIpDitem
 		if dictIPdomainWatchList.item(strIpDitem) <> "" then 
 			strIpDreturn = dictIPdomainWatchList.item(strIpDitem) & "/" & strIpDitem
@@ -12175,8 +12178,10 @@ Sub SeclytDictAdd(dictRecord, dictEntry)
 If InStr(dictEntry, "|") > 0 Then dictEntry = Replace(dictEntry, "|", "^")
 
 If isIPaddress(dictEntry) = True Then
-	DictTrackDomain dictEntry
-	If boolLogIPs = True Then  logdata strReportsPath & "\IPs_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, False 'Output IP addresses associated with the lookup items.
+	If (isIPaddress(strData) = false Or boolIncludeIP_GTMPDNS = True) Then
+		DictTrackDomain dictEntry
+		If boolLogIPs = True Then  logdata strReportsPath & "\IPs_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, False 'Output IP addresses associated with the lookup items.
+	End if
 ElseIf IsHash(dictEntry) = True Then
   hashTrack dictEntry, strdata, DictBlank ' passing blank dictionary since hash is already being logged 
 	If boolLogHashes = True Then logdata strReportsPath & "\Hashes_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, False
