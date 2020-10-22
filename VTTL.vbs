@@ -2930,12 +2930,18 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
     'end if
 loop  
 
+intItemCount = 0
 For each item in DicScannedItems
   if strScannedItems = "" then 
     strScannedItems = item
   else
     strScannedItems = strScannedItems & vbcrlf & item
   end if  
+  intItemCount = intItemCount +1
+  if intItemCount > 12 then
+    strScannedItems = strScannedItems & vbcrlf & "..."
+    exit for
+  end if
 next 
 
 
