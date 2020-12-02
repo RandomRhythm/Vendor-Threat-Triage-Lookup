@@ -1,5 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.4 - Rename WhoisPopulate to WhoisPopulator to give unique name to function that conflicted with WhoisPopulate sub
-
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.5 - Fall back to NirSoft whois command line if ARIN or RIPE are disabled
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
@@ -5137,9 +5136,9 @@ if instr(strIPcontact,".") > 0 or instr(strIPcontact,":") > 0 then
 	exit function
   end if
   
-  if DictArin.exists(left(strIPcontact, instr(strIPcontact,".") -1))  then 
+  if DictArin.exists(left(strIPcontact, instr(strIPcontact,".") -1)) And boolUseARIN = True then 
     strReturnContactResults = CheckARIN(strIPcontact)
-  elseif Dictripe.exists(left(strIPcontact, instr(strIPcontact,".") -1)) then
+  elseif Dictripe.exists(left(strIPcontact, instr(strIPcontact,".") -1)) And boolUseRIPE = True then
     strReturnContactResults = Checkripe(strIPcontact, False)
   else
     strReturnContactResults = WhoIsIP_Lookup(strIPcontact)
