@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.3 - Don't hang up looks by prompting about parsing failure. Add option to exclude GTMPDNS IP addresses from Seclytics lookups.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.4 - Rename WhoisPopulate to WhoisPopulator to give unique name to function that conflicted with WhoisPopulate sub
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1965,13 +1965,13 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       end if
 				Check_name_server PulsediveBody
 				If strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
-					strTmpIPContactLineE = WhoisPopulate (PulsediveBody) 'sets geolocation and whois contact
+					strTmpIPContactLineE = WhoisPopulator (PulsediveBody) 'sets geolocation and whois contact
 					if sslOrg = "" or sslSubject= "" then
             PulsediveSslPopulate PulsediveBody
 					end if
         
 				Else
-					WhoisPopulate PulsediveBody
+					WhoisPopulator PulsediveBody
 				End if	
 			Else
 				strTmpPulsediveLineE = ""
@@ -12345,7 +12345,7 @@ Sub DetectNameWatchlist(strUniqueDname)
 	end If
 End Sub
 
-Function WhoisPopulate(strWhoisText) 'currently only used by Pulsedive but should work with whoAPI
+Function WhoisPopulator(strWhoisText) 'currently used by Pulsedive but should work with whoAPI
 strWhoisText = lcase(strWhoisText)
 
       ' set city, region, and country code for spreadsheet output
@@ -12380,10 +12380,10 @@ strWhoisText = lcase(strWhoisText)
       wiPdns = GetData(strWhoisText, "}", Chr(34) & "dns" & Chr(34) & ":{" & Chr(34) & "a" & Chr(34) & ":")
       getDataSplit wiPdns, Chr(34), Chr(34), ",", GetRef("DictTrackDomain")
     End If  
-	  if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "results after WhoisPopulate but before moveSS: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE & "^" & "strTmpCClineE =" & strTmpCClineE , false
+	  if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "results after WhoisPopulator but before moveSS: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE & "^" & "strTmpCClineE =" & strTmpCClineE , false
 
       MoveSSLocationEntries 'check if country code is listed as country name
-      WhoisPopulate = tmpRegistrant
+      WhoisPopulator = tmpRegistrant
 end function
 
 Function getDataSplit(strLineToSplit, endOfStringChar, beginingStringMatch, splitChar, strFunctionToRun)' GetRef("FunctionName")
