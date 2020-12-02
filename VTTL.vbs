@@ -1,4 +1,5 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.5 - Fall back to NirSoft whois command line if ARIN or RIPE are disabled
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.6 - Respect boolDisableAlienVaultWhoIs value even if boolUseAlienVault = False
+
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
@@ -2107,12 +2108,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			AlienVaultValidation = AlienValidation(strAlienVaultReturn)
 			If boolIncludeAVHashCount = True Then AlienVaultHashCount =AlienHashCount( strAlienVaultReturn)
 			'MsgBox "debug: strTmpCClineE=" & strTmpCClineE
-			if strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
-				strTmpIPContactLineE = AlienVaultWhois (strAlienVaultReturn) 'sets geolocation and whois contact
-				if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "Alien Return: " & strTmpIPContactLineE, false
-			elseif strTmpCClineE = "|" or strTmpWCO_CClineE = "|" then
-				AlienVaultWhois strAlienVaultReturn
-			end if
+			
 			if boolAlienHostCheck = True and instr(strAlienVaultReturn, chr(34) & "url_list" & chr(34)) > 0 then
 				
 				if strDomainListOut = "" or dictURLWatchList.count > 0 or boolLogURLs = True then
@@ -2120,7 +2116,14 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 					ProcessAlienURLs strAlienHostURLs
 				end if
 			end if
-		end if
+		elseif boolDisableAlienVaultWhoIs = False Then
+			if strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
+				strTmpIPContactLineE = AlienVaultWhois (strAlienVaultReturn) 'sets geolocation and whois contact
+				if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "Alien Return: " & strTmpIPContactLineE, false
+			elseif strTmpCClineE = "|" or strTmpWCO_CClineE = "|" then
+				AlienVaultWhois strAlienVaultReturn
+			end if
+		End if
 
 		If BoolSeclytics = True Then 'set to true to use Seclytics
 			SeclytReturnBody = httpget("https://api.seclytics.com/ips/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
