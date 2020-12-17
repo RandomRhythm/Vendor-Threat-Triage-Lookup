@@ -26,7 +26,9 @@ VTTL Performs lookups for file hashes, IP addresses and domain names. Results ar
 Additional checks:
 * Reverse DNS
 * Reverse IP (lookup to document sample of associated domains)
-* Whois
+* Whois (often provided via APIs already listed)
+  * ARIN (Must enable in INI)
+  * RIPE (Must enable in INI)
 * Website category (from web proxy vendors)
 * Dynamic DNS
 * Tranco List
