@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.6 - Respect boolDisableAlienVaultWhoIs value even if boolUseAlienVault = False
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.7 - Better support for OTX date created
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -11375,7 +11375,8 @@ end if
 if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "whois Creation Date before being set: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE, false
 if strTmpWCO_CClineE = "" or strTmpWCO_CClineE = "|" or len(strTmpWCO_CClineE) < 4 then
   strTmpWCO_CClineE = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & "Creation Date" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "creation_date" & chr(34) & "}")
-  if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "whois Creation Date: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE, false
+  If strTmpWCO_CClineE = "" then strTmpWCO_CClineE = getdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & "Creation Date" & chr(34) & ", " & chr(34) & "value" & chr(34) & ": " & chr(34)) 'new format seen December 2020
+  If BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "whois Creation Date: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE, false
   strTmpWCO_CClineE = "|" & CleanupWhoisData(strTmpWCO_CClineE)
 
 else
