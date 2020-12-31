@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.7 - Better support for OTX date created
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.8 - Support for mutliple domain categories sourced from VirusTotal. Support additional column names for CSV spreadsheet import.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -9030,6 +9030,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
     select case strCellData
       case "Publisher"
         intPublisherLoc = inthArrayLoc
+      case "Publisher or Company"
+        intPublisherLoc = inthArrayLoc
       case "CertIssuer" 'Cylance Protect
         intPublisherLoc = inthArrayLoc
       case "Signer"
@@ -9062,6 +9064,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfProductLoc = inthArrayLoc        
       Case "ProductName" ' ShimCacheParser
         inthfProductLoc = inthArrayLoc
+      Case "Product Name"
+        inthfProductLoc = inthArrayLoc
       Case "Logical Size"
         inthfSizeLoc = inthArrayLoc 
       Case "Size" ' ShimCacheParser
@@ -9070,6 +9074,11 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfSizeLoc = inthArrayLoc 
       Case "CB Prevalence"
         inthfPrevalenceLoc = cint(inthArrayLoc)
+      Case "Prevalence"
+        inthfPrevalenceLoc = cint(inthArrayLoc)
+      Case "First Seen Name" ' Cb Protect
+        tmpDFS = ReturnSigCheckItem(ArraySigCheckData(IntSCArrayLoc),cint(inthArrayLoc)) 'load date first seen from import file
+        SetDateFirstSeen tmpDFS
 	  Case "# of Hosts"'crowdstrike process execution history
 		inthfPrevalenceLoc = cint(inthArrayLoc)
     'Network AMP CSV
@@ -9780,9 +9789,16 @@ elseif instr(strVTreturned, "category" & Chr(34) & ": " & Chr(34)) then
 end if
 if instr(strReturnVal, ", ") then
   strReturnVal = replace(strReturnVal, ", ", "^")
-end if
-if instr(strReturnVal, chr(34)) then  strReturnVal = replace(strReturnVal, chr(34), "")
-
+end If
+If instr(strReturnVal, chr(34)) then  strReturnVal = replace(strReturnVal, chr(34), "")
+tmpCategory = GetData(strVTreturned, chr(34), "Forcepoint ThreatSeeker category" & Chr(34) & ": " & Chr(34))
+strReturnVal = concatenateItem(strReturnVal,tmpCategory,"^")
+tmpCategory = GetData(strVTreturned, chr(34), "Dr.Web category" & Chr(34) & ": " & Chr(34))
+strReturnVal = concatenateItem(strReturnVal,tmpCategory,"^")
+tmpCategory = GetData(strVTreturned, chr(34), "sophos category" & Chr(34) & ": " & Chr(34))
+strReturnVal = concatenateItem(strReturnVal,tmpCategory, "^")
+tmpCategory = GetData(strVTreturned, chr(34), "Comodo Valkyrie Verdict category" & Chr(34) & ": " & Chr(34))
+strReturnVal = concatenateItem(strReturnVal,tmpCategory, "^")
 GetWebCategoryfromVT = strReturnVal
 end function
 
@@ -10018,7 +10034,7 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
   on error resume next
   strDateCreated = DateDiff("s", "01/01/1970 00:00:00", strDateCreated)
   if err.number <> 0 then 
-    objShellComplete.popup "date conversion issue: " &  strDateCreated & vbcrlf & strTmpWCO_CClineE, 20
+    objShellComplete.popup "date conversion issue: " &  strDateCreated & vbcrlf & strTmpWCO_CClineE, 20 'will not be saved to database
     logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & "Whois date conversion issue: " &  strDateCreated & "|" & strTmpWCO_CClineE ,False 
   on error goto 0
 
@@ -11122,7 +11138,9 @@ end Function
 Function AppendValuesList(strAggregate,strAppend,strSeparator)
     if strAggregate = "" then
       strAggregate = strAppend
-    else
+    ElseIf strAppend = "" Then
+		'do nothing and return strAggregate
+    Else
       strAggregate = strAggregate & strSeparator & strAppend
     end if
 AppendValuesList = strAggregate
