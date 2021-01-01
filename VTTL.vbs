@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.2.8 - Support for mutliple domain categories sourced from VirusTotal. Support additional column names for CSV spreadsheet import.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.0 - AlienVault OTX pulse output
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -434,6 +434,7 @@ Dim BoolSeclytics 'set to true to use Seclytics
 Dim sslOrg 'Pulsedive
 Dim sslSubject 'Pulsedive
 Dim boolIncludeIP_GTMPDNS ' When querying Seclytics for an IP address include GTMPDNS IP addresses. Default value: False
+Dim boolOutputPulses ' AlienVault OTX pulse output
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -519,6 +520,7 @@ boolAlienVaultNIDS = True ' Use AlienVault NIDS API. Requires API Key
 boolAlienVaultMalware = True 'Malware samples related to a domain or IP address
 boolIncludeAVHashCount = True 'Count of hashes
 boolAlienHostCheck = True ' Use AlienVault to get host names
+boolOutputPulses = True ' Log pulse name and description 
 boolEnableETIntelligence = False 'Emerging threats from Proofpoint
 BoolForceWhoisLocationLookup = True 'disable this if domain whois location information is not required. Domain location information is populated by whois and IP address location data is populated by GeoIP.
 intCIFlog = "1"  'set to 1 to disable CIF logging the query. Set to 0 to enable CIF logging the query.
@@ -11122,9 +11124,30 @@ Function AlienPulse(strAlienReturn)
 'or "pulse_info": {"count": 3
 
 AlienPulse = getdata(strAlienReturn, ",", "pulse_info" & chr(34) & ": {" & chr(34) & "count" & chr(34) & ": ")
-
+AlienPulseLogging strAlienReturn, strData
 end function
 
+Function AlienPulseLogging(strAlienReturn, strIOC)
+if boolOutputPulses = False then exit function
+if instr(strAlienReturn, "{" & chr(34) & "id" & chr(34)) < 1 then
+  exit function
+end if
+
+arrayPulses = split(strAlienReturn, "{" & chr(34) & "id" & chr(34))
+
+for each pulseData in arrayPulses
+  if instr(pulseData, chr(34) & "name" & chr(34)) > 0 then
+    pulseName = getdata(pulseData, chr(34), chr(34) & "name" & chr(34) & ": " & chr(34))
+    pulseDescription = getdata(pulseData, chr(34), chr(34) & "description" & chr(34) & ": " & chr(34))
+    if pulseName <> "" then
+      logdata strReportsPath & "\otx_pulses" & "_" & UniqueString & ".log", strIOC & "|" & pulseName & "|" & pulseDescription, false
+    
+    end if
+  end if
+next
+  
+
+end function
 
 Function AppendValues(strAggregate,strAppend) 'need to replace calls to this function to AppendValuesList and delete this one
     if strAggregate = "" then
