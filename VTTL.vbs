@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.1 - Support for importing domain/ip prevalence and sibling count. Fix SeclytFileRep truncation support. Update AlienVault OTX whois parsing.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.2 - Move and update AlienVault OTX sinkhole check.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -6310,15 +6310,7 @@ if strTmpSinkHole = "|" or strTmpSinkHole = "" then
 			End If
 		next
 	end if
-	'msgbox "Alien in string:" & instr(strTmpWhoisResponse, chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Name Servers" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "name_servers " & chr(34) & "}")
-	if instr(strTmpWhoisResponse, chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Name Servers" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "name_servers " & chr(34) & "}") > 0 then
-		'AlienVault name servers
-		strTmpNameServer = rgetdata(strTmpWhoisResponse, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Name Servers" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "name_servers " & chr(34) & "}")
-		'msgbox "strTmpNameServer=" & strTmpNameServer	
-		if strTmpNameServer <> "" then
-			SinkholeNSCheck ucase(strTmpNameServer)
-		end if
-	end if
+
   end if
 end function
 
@@ -11483,6 +11475,23 @@ if strTmpCNlineE = "|" and strTmpCClineE = "|" Then
 	end if
 end if
 
+if strTmpSinkHole = "|" or strTmpSinkHole = "" then
+	'msgbox "Alien in string:" & instr(strTmpWhoisResponse, chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Name Servers" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "name_servers " & chr(34) & "}")
+	if instr(strWhoisTmp, "Name Servers") > 0 then
+		'AlienVault name servers
+		arrayAlienNS = split(strWhoisTmp, "name_servers")
+		for each alienNS in arrayAlienNS
+	      if instr(alienNS, "Name Servers") > 0 Then
+	        alienNameServer = getdata(alienNS, chr(34), chr(34) & "value" & chr(34) & ": " & Chr(34))
+			
+	        'msgbox "strTmpNameServer=" & alienNameServer	
+	        if alienNameServer <> "" then
+	          SinkholeNSCheck ucase(alienNameServer)
+	        end If
+	    End if    
+		Next
+	end if
+end if
 
 MoveSSLocationEntries 'check if country code is listed as country name
 
