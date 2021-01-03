@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.0 - AlienVault OTX pulse output
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.1 - Support for importing domain/ip prevalence and sibling count. Fix SeclytFileRep truncation support. Update AlienVault OTX whois parsing.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -236,6 +236,7 @@ Dim strCBdigSig 'CB Digital Sig
 Dim strCBcompanyName 'CB Company Name
 Dim strCBproductName 'Product Name
 Dim strCBprevalence: strCBprevalence = 0 'Carbon Black Host Count
+Dim strSiblingsCount: strSiblingsCount = 0 'domain/ip sibling count provided by import SS
 Dim strCBFileSize ' Carbon Black file size
 DIm strCarBlackAPIKey
 Dim BoolEnableThreatGRID
@@ -246,6 +247,7 @@ Dim BoolDisableCBCachLookup
 Dim intPublisherLoc: intPublisherLoc = -1
 Dim intCompanyLoc: intCompanyLoc = -1
 Dim intMD5Loc
+Dim intDomainLoc
 Dim intHostLocation
 Dim inthfPathLoc 
 Dim dateTimeLoc: dateTimeLoc  = -1
@@ -435,6 +437,7 @@ Dim sslOrg 'Pulsedive
 Dim sslSubject 'Pulsedive
 Dim boolIncludeIP_GTMPDNS ' When querying Seclytics for an IP address include GTMPDNS IP addresses. Default value: False
 Dim boolOutputPulses ' AlienVault OTX pulse output
+Dim inthfSiblingLoc: inthfSiblingLoc = -1
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -829,6 +832,9 @@ else
          case "/a" 
             BoolEnCaseLookup = True
             AddQueueParameter("/a")
+         case "/p" 
+            boolIPDomainPrev = True
+            AddQueueParameter("/p")
          case "/dcb" 
             BoolEnableCarbonBlack = false
             AddQueueParameter("/dcb")
@@ -1319,12 +1325,13 @@ if BoolCreateSpreadsheet = True then
   'intVTListDataType 0=unknown, 1 domain/IP, 2=hash, 3=hash/domain/ip
 
   if intVTListDataType = 2 Then
-    if BoolSigCheckLookup = True then loadSigCheckData strSigCheckFilePath, false
+    if BoolSigCheckLookup = True then loadSigCheckData strSigCheckFilePath, False
     if BoolEnCaseLookup = True then loadEncaseData
     if BoolSigCheckLookup = False and BoolEnCaseLookup = False then
       BoolAddStats = False
     end if
   else
+    If boolIPDomainPrev = True Then loadSigCheckData strSigCheckFilePath, false
     BoolAddStats = False
   end if
   if BoolUseExcel = True then
@@ -1414,7 +1421,12 @@ if BoolCreateSpreadsheet = True then
           intaddDNameCount = round(intDetectionNameCount /2 +.1) 'round up to add additional column(s) for IP/Domain detection name association
           if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
         end if
-
+		If cint(inthfSiblingLoc) > -1 Then
+			strSiblingHead = "|Sibling Count"
+		End If
+		If cint(inthfPrevalenceLoc) > -1 Then
+			strPrevalenceHead = "|Prevalence"
+		End If
         if dictURLWatchList.count > 0 Then
           strTmpURLWatchListHead = "|URL Watch List"
         else
@@ -1504,7 +1516,7 @@ if BoolCreateSpreadsheet = True then
 			vtHead2 = ""
 		end if
             'write IP/domain header row
-        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
+        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
         if BoolCreateSpreadsheet = True then
           if cint(intDetectionNameCount) > 0 then 
             
@@ -1932,7 +1944,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       inLoopCounter = 0
     end if
 	If  ishash(strData) = False then
-	  if BoolUseCIF = True Then
+	  If boolIPDomainPrev = True Then 'inthfSiblingLoc/Sibling Count and inthfPrevalenceLoc/Prevalence
+	  	SSoutputDomainIP strData
+	  End If
+	  If BoolUseCIF = True Then
 		if instr(strCIFoutput, "for " & strData & ":") = 0 then
 			strTmpRequestResponse = SubmitCIF(strData)
 
@@ -2241,8 +2256,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytReturnBody = httpget("https://api.seclytics.com/hosts/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
-			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
+			'if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
+			if len(SeclytFileRep) > 32767 Then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
 			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
@@ -2700,7 +2716,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         if BoolSigCheckLookup = True and inthfSizeLoc > -1 then strCBFileSize = AddPipe(strCBFileSize) 'crowdstrike provides prevalence but not file size.
       else
         strCBprevalence = ""
-      end if
+      end If
+      If cint(inthfSiblingLoc) > -1 then '
+		strSiblingsCount = AddPipe(strSiblingsCount)
+	  End If	
       if cint(intHostLocation) > 0 then
         strCBhosts = AddPipe(strCBhosts)
       else
@@ -2737,7 +2756,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       select case intVTListDataType
         case 1
           'write row for domain & IP
-          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
+          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strCBprevalence & strSiblingsCount & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
         case 2
           If dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 		  'Add to adjusted malware score for custom list malware and update detection name if one was given in malhash.dat
@@ -2904,6 +2923,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         strFileSHA1 = "" 'Temporary hash value
         strFileIMP = "" 'Temporary hash value
        strCBprevalence = 0
+       strSiblingsCount = 0
        strCBFileSize = ""
        strTmpSigAssesslineE = ""
        strCuckooScore = ""
@@ -8894,25 +8914,29 @@ if objFSO.fileexists(OpenFilePath1) then
 			redim ArraySigCheckData(1)
 			loadSigCheckData strSigCheckFpath, true 'try reading as unicode
 			exit sub
-		end if
-        if (BoolHeaderLocSet = False and (instr(strSCData, "Publisher") > 0 and instr(strSCData,	"Company") > 0 and instr(strSCData, "MD5") > 0)) or _
-		(BoolHeaderLocSet = False and instr(strSCData, "File Name") > 0 and instr(strSCData,	"SHA256") > 0 and instr(strSCData, "# of Hosts") > 0) or _
-		(InStr(strSCData,	"SHA1") > 0 and instr(strSCData, "FullPath") > 0) or _
-		(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "CommonName") > 0) or _
-		(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "Path") > 0) or _
-		(BoolHeaderLocSet = False and instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Company") > 0) Then
-          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
-            boolSuppressNoHash = True
-          end if
-          'header row
-
-          SetHeaderLocations strSCData
-          BoolHeaderLocSet = True
-		  'msgbox "header location set"
+		end If
+		If BoolHeaderLocSet = false Then 'check if headers are known to us
+	        if ((instr(strSCData, "Publisher") > 0 and instr(strSCData,	"Company") > 0 and instr(strSCData, "MD5") > 0)) or _
+			(instr(strSCData, "File Name") > 0 and instr(strSCData,	"SHA256") > 0 and instr(strSCData, "# of Hosts") > 0) or _
+			(InStr(strSCData,	"SHA1") > 0 and instr(strSCData, "FullPath") > 0) or _
+			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "CommonName") > 0) or _
+			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "Path") > 0) or _
+			(InStr(strSCData,	"Domain") > 0 and (instr(strSCData, "Prevalence") > 0 or instr(strSCData, "Sibling Count") > 0)) or _
+			(instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Company") > 0) Then
+	          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
+	            boolSuppressNoHash = True
+	          end if
+	          'header row
+	
+	          SetHeaderLocations strSCData
+	          BoolHeaderLocSet = True
+			  'msgbox "header location set"
+			End if  
         elseIf BoolHeaderLocSet = True then
           if instr(strSCData, ",") then
             
-            if intMD5Loc <> "" then  saveCSVimportLocation strSCData, intMD5Loc, dicMD5Loc, intCSVRowLocation
+            If intDomainLoc <> "" Then saveCSVimportLocation strSCData, intDomainLoc, dicMD5Loc, intCSVRowLocation
+            If intMD5Loc <> "" then  saveCSVimportLocation strSCData, intMD5Loc, dicMD5Loc, intCSVRowLocation
             if intSHA1Loc <> "" then saveCSVimportLocation strSCData, intSHA1Loc, dicMD5Loc, intCSVRowLocation
             if intSHA256Loc <> "" then  saveCSVimportLocation strSCData, intSHA256Loc, dicMD5Loc, intCSVRowLocation
           else
@@ -9038,6 +9062,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         intPublisherLoc = inthArrayLoc
       case "Signer"
         intPublisherLoc = inthArrayLoc        
+      case "Domain"
+        intDomainLoc = inthArrayLoc
       case "Company"
         intCompanyLoc = inthArrayLoc
       Case "SHA1"
@@ -9078,6 +9104,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfPrevalenceLoc = cint(inthArrayLoc)
       Case "Prevalence"
         inthfPrevalenceLoc = cint(inthArrayLoc)
+      Case "Sibling Count"
+        inthfSiblingLoc = cint(inthArrayLoc)
       Case "First Seen Name" ' Cb Protect
         tmpDFS = ReturnSigCheckItem(ArraySigCheckData(IntSCArrayLoc),cint(inthArrayLoc)) 'load date first seen from import file
         SetDateFirstSeen tmpDFS
@@ -9126,6 +9154,18 @@ else
 end if
 end sub
 
+Sub SSoutputDomainIP(strSSDIP)
+IntSCArrayLoc = dicMD5Loc.item(strSSDIP)
+if IntSCArrayLoc = "" Then Exit Sub
+If cint(inthfPrevalenceLoc) > -1 then '
+	strCBprevalence = ReturnSigCheckItem(ArraySigCheckData(IntSCArrayLoc),inthfPrevalenceLoc)
+else
+	strCBprevalence = 1
+end if
+If cint(inthfSiblingLoc) > -1 then '"Sibling Count"
+	strSiblingsCount = ReturnSigCheckItem(ArraySigCheckData(IntSCArrayLoc),inthfSiblingLoc)
+End if
+End Sub
 
 sub SigCheckSSoutput(strSCSSO_hash)
 Dim IntSCArrayLoc
@@ -11129,7 +11169,7 @@ end function
 
 Function AlienPulseLogging(strAlienReturn, strIOC)
 if boolOutputPulses = False then exit function
-if instr(strAlienReturn, "{" & chr(34) & "id" & chr(34)) < 1 then
+if instr(strAlienReturn, "{" & chr(34) & "id" & chr(34)) < 1 Then
   exit function
 end if
 
@@ -11138,6 +11178,7 @@ arrayPulses = split(strAlienReturn, "{" & chr(34) & "id" & chr(34))
 for each pulseData in arrayPulses
   if instr(pulseData, chr(34) & "name" & chr(34)) > 0 then
     pulseName = getdata(pulseData, chr(34), chr(34) & "name" & chr(34) & ": " & chr(34))
+    if instr(pulseName, "Whitelisted") > -1 Or pulseName = "Listed on Alexa" Then Exit Function	'don't log whitelisted items
     pulseDescription = getdata(pulseData, chr(34), chr(34) & "description" & chr(34) & ": " & chr(34))
     if pulseName <> "" then
       logdata strReportsPath & "\otx_pulses" & "_" & UniqueString & ".log", strIOC & "|" & pulseName & "|" & pulseDescription, false
@@ -11387,7 +11428,7 @@ aWhoisReturn = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" 
 if aWhoisReturn = "" then aWhoisReturn = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Name" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "name" & chr(34) & "}")
 
 if aWhoisReturn = "" then aWhoisReturn = getdata(strWhoisTmp, chr(34), chr(34) & "asn" & chr(34) & ": " & chr(34) )
-
+if aWhoisReturn = "" then aWhoisReturn = getdata(strWhoisTmp, chr(34), chr(34) & " Org" & chr(34) & ", " & chr(34) & "value" & chr(34) & ": " & chr(34) )
 ' set city, region, and country code for spreadsheet output
 if strTmpCITlineE = "" or strTmpCITlineE = "|" then
 strTmpCITlineE = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & "City" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "city" & chr(34) & "}")
