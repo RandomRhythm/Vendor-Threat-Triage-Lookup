@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.2 - Move and update AlienVault OTX sinkhole check.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.3 - Add support for domain passive DNS via AlienVault OTX. Fix IPv6 AlienVault OTX check.
 
 'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2109,7 +2109,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				strAlienVaultReturn = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/IPv6/", strScanDataInfo, "/general")
 				if boolAlienVaultPassiveDNS = True and instr(strAlienVaultReturn, chr(34) & "passive_dns" & chr(34)) > 0 then ProcessAlienVaultPdns "https://otx.alienvault.com/api/v1/indicators/IPv6/", strScanDataInfo
 				if boolAlienVaultNIDS = True and strAlienVaultkey <> "" and instr(strAlienVaultReturn, chr(34) & "nids_list" & chr(34)) > 0 then ProcessAlienVaultNIDS "https://otx.alienvault.com/api/v1/indicators/IPv6/", strScanDataInfo
-				If boolAlienVaultMalware = True And InStr(strAlienVaultReturn, chr(34) & "FileHash-" > 0) Then AlienVaultMalwareSubmit "IPv6", strScanDataInfo
+				If boolAlienVaultMalware = True And InStr(strAlienVaultReturn, chr(34) & "FileHash-") > 0 Then AlienVaultMalwareSubmit "IPv6", strScanDataInfo
 				strAlienHostURL = "https://otx.alienvault.com/api/v1/indicators/IPv6/"
 			elseif isIPaddress(strScanDataInfo) = True then
 				strAlienVaultReturn = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/IPv4/", strScanDataInfo, "/general")
@@ -2237,7 +2237,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		  end if
 		  If boolUseAlienVault = True then 'process domain
 				strAlienVaultReturn = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/domain/", strData, "/general")
-				if BoolDebugTrace = True then  logdata strDomainreportsPath & "\AVault_Domain_" & strData & ".txt", strData & vbtab & strAlienVaultReturn,BoolEchoLog 
+				if BoolDebugTrace = True then  logdata strDomainreportsPath & "\AVault_Domain_" & strData & ".txt", strData & vbtab & strAlienVaultReturn,BoolEchoLog
+				if boolAlienVaultPassiveDNS = True and instr(strAlienVaultReturn, chr(34) & "passive_dns" & chr(34)) > 0 then ProcessAlienVaultPdns "https://otx.alienvault.com/api/v1/indicators/domain/", strScanDataInfo
 				KeywordSearch strAlienVaultReturn 'keyword search watch list processing
 				if boolAlienVaultNIDS = True and strAlienVaultkey <> "" and instr(strAlienVaultReturn, chr(34) & "nids_list" & chr(34)) > 0 then ProcessAlienVaultNIDS "https://otx.alienvault.com/api/v1/indicators/domain/", strScanDataInfo
 				If boolAlienVaultMalware = True And InStr(strAlienVaultReturn, chr(34) & "FileHash-") > 0 Then AlienVaultMalwareSubmit "domain", strScanDataInfo
@@ -2264,7 +2265,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
 			If strTmpIPlineE = "|" Or strTmpIPlineE = "" Then
 				SeclytPdns SeclytReturnBody
-				domainPassiveDNS strTmpIPlineE 'set strRevDNS and pending items
+				If strTmpIPlineE = "|" Or strTmpIPlineE = "" Then domainPassiveDNS strTmpIPlineE 'set strRevDNS and pending items
 			End If	
 		End If
 		  
@@ -11273,6 +11274,34 @@ end if
 end sub
 
 Sub AlienVaultPassiveDNS(strPdns)
+
+'name server processing
+If InStr(strPdns, "record_type" & Chr(34) & ": " & Chr(34) & "NS" & Chr(34)) > 0 Then
+	ArrayAns = Split(strPdns, "record_type" & Chr(34) & ": " & Chr(34) & "NS" & Chr(34))
+	For Each alienNSrecord In ArrayAns
+		aNSentry = rgetdata(alienNSrecord, "{", Chr(34) & "hostname" & Chr(34))
+		aNSvalue = GetData(aNSentry, Chr(34) , Chr(34) & "address" & Chr(34) & ": " & Chr(34))
+		if aNSvalue <> "" then
+          SinkholeNSCheck ucase(aNSvalue)
+        end If
+	Next
+
+End If
+
+If (strTmpIPlineE = "|" Or strTmpIPlineE = "") And instr(strPdns, "record_type" & Chr(34) & ": " & Chr(34) & "A" & Chr(34)) >1 Then 
+	arrayArecords = Split(strPdns, "record_type" & Chr(34) & ": " & Chr(34) & "A" & Chr(34))
+	For Each alienArecord In arrayArecords
+		If InStr(alienArecord, Chr(34) & strData & Chr(34)) > 0 And InStr(alienArecord, chr(34) & "address" & Chr(34) & ": " & Chr(34))Then
+			strTmpIPlineE = getdata(alienArecord, Chr(34), Chr(34) & "address" & Chr(34) & ": " & Chr(34))
+			If isIPaddress(strTmpIPlineE) = false Then strTmpIPlineE = ""
+			If strTmpIPlineE <> "|" and strTmpIPlineE <> "" Then 
+				domainPassiveDNS strTmpIPlineE 'set strRevDNS and pending items
+				Exit For
+			End If
+		End If
+	Next			
+End If
+
 pDnsCount = 0
 'msgbox "strDomainListOut=" & strDomainListOut
 if strDomainListOut = "" or strDomainListOut = "|" then
