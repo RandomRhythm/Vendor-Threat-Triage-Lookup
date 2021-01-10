@@ -1,6 +1,6 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.3 - Add support for domain passive DNS via AlienVault OTX. Fix IPv6 AlienVault OTX check.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.4 - Update pulse logging for AlienVault OTX. Fix Tranco usage logic around VirusTotal disable. Add title to finish message box. Rename strdata to strTmpData in several locations.
 
-'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -917,9 +917,9 @@ if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine 
-        if Left(strData, 1) <> "#" and instr(strData, vbtab) then
-          strTmpArrayDDNS = split(strData, vbtab)
+        strTmpData = objFile.ReadLine 
+        if Left(strTmpData, 1) <> "#" and instr(strTmpData, vbtab) then
+          strTmpArrayDDNS = split(strTmpData, vbtab)
           if DictDDNS.exists(strTmpArrayDDNS(0)) = False then _
           DictDDNS.add strTmpArrayDDNS(0), 1
         end if
@@ -942,9 +942,9 @@ if objFSO.fileexists(CurrentDirectory &"\cc.dat") then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine 
-        if instr(strData, "|") then
-          strTmpArrayDDNS = split(strData, "|")
+        strTmpData = objFile.ReadLine 
+        if instr(strTmpData, "|") then
+          strTmpArrayDDNS = split(strTmpData, "|")
           if DictCC.exists(ucase(strTmpArrayDDNS(0))) = False then _
           DictCC.add ucase(strTmpArrayDDNS(0)), strTmpArrayDDNS(1)
           if DictRevCC.exists(strTmpArrayDDNS(1)) = False then _
@@ -1099,12 +1099,12 @@ for intCountVendors = 0 to 13 'Count of vendor APIs
 	strDisableFile = CurrentDirectory & "\av.disable"
    end if
 
-strData = ""
+strTmpData = ""
   if objFSO.fileexists(strFile) then
     Set objFile = objFSO.OpenTextFile(strFile)
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine 
+        strTmpData = objFile.ReadLine 
         if intCountVendors = 5 then 
           StrBaseCBURL = objFile.ReadLine
         elseif intCountVendors = 7 then
@@ -1112,14 +1112,14 @@ strData = ""
         end if  
         on error goto 0
     end if
-    if strData <> "" then
-      strData = Decrypt(strData,strRandom)
-        strTempAPIKey = strData
-        strData = ""
+    if strTmpData <> "" then
+      strTmpData = Decrypt(strTmpData,strRandom)
+        strTempAPIKey = strTmpData
+        strTmpData = ""
     end if
   end if
 
-  if not objFSO.fileexists(strFile) and strData = "" and objFSO.fileexists(strDisableFile) = False Then
+  if not objFSO.fileexists(strFile) and strTmpData = "" and objFSO.fileexists(strDisableFile) = False Then
     
       strTempAPIKey = inputbox("Enter your " & strAPIproduct & " api key")
       if strTempAPIKey <> "" then
@@ -2207,9 +2207,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				if boolTrancoSQL = True then 
 					sSQL = "select T_Score from Tranco where T_Domain = ? " 
 					strTrancoLineE = "|" & ReturnSQLiteItem(sSQL, strScanDataInfo, "T_Score")
-					if strTrancoLineE <> "|" and boolSkipOnTrancoHit = True and BoolDisableVTlookup = False then
+					if strTrancoLineE <> "|" and boolSkipOnTrancoHit = True and BoolDisableVTlookup = True then
 						boolSkipDomain = True
-						strTmpVTTIlineE = strScanDataInfo & "|||||" 'set VTTL entries to be blank since we skipping the lookups
+						strTmpVTTIlineE = strScanDataInfo & "|||||" 'set VTTL entries to be blank since we are skipping the lookups
 					end if
 				elseif dictTrancoList.exists(strScanDataInfo) Then
 					strTrancoLineE = "|" & dictTrancoList.item(strScanDataInfo)
@@ -3032,7 +3032,7 @@ if objFSO.fileexists(CurrentDirectory & "\vtlist.que") = false then
     End If 
   End if
   if BoolRunSilent = False then _
-  Msgbox "The VTTL script has finished lookups and will exit. The following items were processed:" & vbcrlf & strScannedItems
+  Msgbox "The VTTL script has finished lookups and will exit. The following items were processed:" & vbcrlf & strScannedItems,,"VTTL - " & CurrentDirectory
 else
   if objFSO.fileexists(CurrentDirectory & "\vtlist.txt") = true then objFSO.deletefile(CurrentDirectory & "\vtlist.txt")
   objFSO.movefile CurrentDirectory & "\vtlist.que", CurrentDirectory & "\vtlist.txt"
@@ -6523,10 +6523,10 @@ for intCountdatfiles = 0 to 24
     Do While Not objFile.AtEndOfStream
       if not objFile.AtEndOfStream then 'read file
           On Error Resume Next
-          strData = objFile.ReadLine 
+          strTmpData = objFile.ReadLine 
           on error goto 0
-          if instr(strData,"|") then
-            arrayTmpDatf = split(strData,"|")
+          if instr(strTmpData,"|") then
+            arrayTmpDatf = split(strTmpData,"|")
             select case intCountdatfiles
               case 0
                 if DictMicrosoftEncyclopedia.exists(arrayTmpDatf(0)) = False then _
@@ -11171,7 +11171,7 @@ arrayPulses = split(strAlienReturn, "{" & chr(34) & "id" & chr(34))
 for each pulseData in arrayPulses
   if instr(pulseData, chr(34) & "name" & chr(34)) > 0 then
     pulseName = getdata(pulseData, chr(34), chr(34) & "name" & chr(34) & ": " & chr(34))
-    if instr(pulseName, "Whitelisted") > -1 Or pulseName = "Listed on Alexa" Then Exit Function	'don't log whitelisted items
+    if instr(pulseName, "Whitelisted") > 0 Or pulseName = "Listed on Alexa" Then Exit Function	'don't log whitelisted items
     pulseDescription = getdata(pulseData, chr(34), chr(34) & "description" & chr(34) & ": " & chr(34))
     if pulseName <> "" then
       logdata strReportsPath & "\otx_pulses" & "_" & UniqueString & ".log", strIOC & "|" & pulseName & "|" & pulseDescription, false
@@ -11735,9 +11735,9 @@ if objFSO.fileexists(strListPath) then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine
-          if dictToLoad.exists(lcase(strData)) = False then 
-			dictToLoad.add lcase(strData), ""
+        strTmpData = objFile.ReadLine
+          if dictToLoad.exists(lcase(strTmpData)) = False then 
+			dictToLoad.add lcase(strTmpData), ""
 		end if
         on error goto 0
     end if
@@ -11751,14 +11751,14 @@ if objFSO.fileexists(strListPath) then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine
-        if instr(strData, "|") then
-          strTmpArrayDDNS = split(strData, "|")
+        strTmpData = objFile.ReadLine
+        if instr(strTmpData, "|") then
+          strTmpArrayDDNS = split(strTmpData, "|")
           if dictToLoad.exists(lcase(strTmpArrayDDNS(0))) = False then _
           dictToLoad.add lcase(strTmpArrayDDNS(0)), strTmpArrayDDNS(1)
         else
-          if dictToLoad.exists(lcase(strData)) = False then _
-          dictToLoad.add lcase(strData), ""
+          if dictToLoad.exists(lcase(strTmpData)) = False then _
+          dictToLoad.add lcase(strTmpData), ""
         end if
         on error goto 0
     end if
@@ -11773,14 +11773,14 @@ if objFSO.fileexists(strListPath) then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine
-        if instr(strData, ",") then
-          strTmpArrayDDNS = split(strData, ",")
+        strTmpData = objFile.ReadLine
+        if instr(strTmpData, ",") then
+          strTmpArrayDDNS = split(strTmpData, ",")
           if dictToLoad.exists(lcase(strTmpArrayDDNS(1))) = False then _
           dictToLoad.add lcase(strTmpArrayDDNS(1)), strTmpArrayDDNS(0)
         else
-          if dictToLoad.exists(lcase(strData)) = False then _
-          dictToLoad.add lcase(strData), ""
+          if dictToLoad.exists(lcase(strTmpData)) = False then _
+          dictToLoad.add lcase(strTmpData), ""
         end if
         on error goto 0
     end if
@@ -12059,9 +12059,9 @@ if objFSO.fileexists(strTLDPath & "\two-level-tlds.txt") then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine 
+        strTmpData = objFile.ReadLine 
         on error goto 0
-          SecondLevelDict.add strData, 1
+          SecondLevelDict.add strTmpData, 1
     end if
   loop
 end if
@@ -12076,9 +12076,9 @@ if objFSO.fileexists(strTLDPath & "\tld.txt") then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine 
+        strTmpData = objFile.ReadLine 
         on error goto 0
-          dictAllTLD.add strData, 1
+          dictAllTLD.add strTmpData, 1
     end if
   loop
 end if
@@ -12090,9 +12090,9 @@ if objFSO.fileexists(strTLDPath & "\three-level-tlds.txt") then
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
-        strData = objFile.ReadLine 
+        strTmpData = objFile.ReadLine 
         on error goto 0
-          ThirdLevelDict.add strData, 1
+          ThirdLevelDict.add strTmpData, 1
     end if
   loop
 end if
@@ -12391,7 +12391,7 @@ Function HTTPget(strRequestURL, strCheckItem, strSection, strAPIheader, strApiKe
   on error resume next
     objHTTP.send 
     if err.number <> 0 then
-      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " " & strAPIheader  & "lookup failed with HTTP error while querying " & strCheckItem & " - " & err.description,False 
+      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " " & strAPIheader  & " lookup failed with HTTP error while querying " & strCheckItem & " - " & err.description,False 
       exit function 
     end if
   on error goto 0  
