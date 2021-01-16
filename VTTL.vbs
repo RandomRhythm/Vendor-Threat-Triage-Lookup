@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.4 - Update pulse logging for AlienVault OTX. Fix Tranco usage logic around VirusTotal disable. Add title to finish message box. Rename strdata to strTmpData in several locations.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.5 - Note invalid digital signature in VT return. Check for wrong VT return data. Don't lookup blank whois value in cache. Error handling for invalid IPv6 address in range check.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -3337,7 +3337,18 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 		'msgbox "boolVT_V3=" & boolVT_V3
 		if boolVT_V3 = True Then			
 			strDateTimeLineE = ParseVT_v3ScanDate(strresponseText)
+			If not ispipeorempty(strCBdigSig) Then
+        if instr(strresponseText, strScanDataInfo) = 0 then
+          logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " wrong hash data returned: " & strresponseText,False
+          strDateTimeLineE = "|Wrong hash data returned! Lookup hash again"
+        end if
+      end if
+			
 			If ispipeorempty(strCBdigSig) Then strCBdigSig = GetData(strresponseText, Chr(34), Chr(34) & "signers" & Chr(34) & ": " & Chr(34))
+			If not ispipeorempty(strCBdigSig) Then 'check for invalid signature and modify signature name to note it
+        VTtags = getdata(strresponseText, "],", "tags" & chr(34) & ": [")
+        if instr(VTtags, chr(34) & "invalid-signature" & chr(34)) then strCBdigSig = "(Invalid) " & strCBdigSig
+			end if
 	        If ispipeorempty(strCBcompanyName) Then strCBcompanyName = GetData(strresponseText, Chr(34), Chr(34) & "CompanyName" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBproductName) Then strCBproductName = GetData(strresponseText, Chr(34), Chr(34) & "product" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBFileSize) Then 
@@ -5207,7 +5218,14 @@ end function
 Function isHexInRange(ProvidedValue, BottomRange, UpperRange) 'used to check IPv6 range
 CompareVal1 = CLng("&H" & BottomRange)
 compareVal2 = CLng("&H" & UpperRange)
+on error resume next
 ProvidedHexValue = CLng("&H" & ProvidedValue)
+if err.number <> 0 then
+  isHexInRange = False
+  msgbox "value could not be converted to hex for checking IPv6: " & chr(34) & ProvidedValue & chr(34)
+  exit function
+end if
+on error goto 0
 if ProvidedHexValue >= CompareVal1 and ProvidedHexValue <= compareVal2 then
   isHexInRange = True
 else
@@ -9938,6 +9956,7 @@ end Function
 
 
 Function WhoisCacheLookup(strWhoisDomain)
+If strWhoisDomain = "" Then Exit function
 if booluseSQLite = true then
   Set cmd = createobject("ADODB.Command")
   cmd.ActiveConnection = oCNCT
