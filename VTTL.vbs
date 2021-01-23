@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.5 - Note invalid digital signature in VT return. Check for wrong VT return data. Don't lookup blank whois value in cache. Error handling for invalid IPv6 address in range check.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.6 - fix strSiblingsCount CSV output.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1423,6 +1423,8 @@ if BoolCreateSpreadsheet = True then
         end if
 		If cint(inthfSiblingLoc) > -1 Then
 			strSiblingHead = "|Sibling Count"
+		Else
+			strSiblingsCount = ""
 		End If
 		If cint(inthfPrevalenceLoc) > -1 Then
 			strPrevalenceHead = "|Prevalence"
@@ -2326,37 +2328,38 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       end if
       
 	  if intVTListDataType = 1 then' 0=unknown, 1 domain/IP, 2=hash, 3=hash/domain/ip
-		if enableZEN = True then strTmpZENlineE = addpipe(strTmpZENlineE)
-		
-		  strTmpCNlineE = addpipe(strTmpCNlineE)
-		  strTmpCClineE = addpipe(strTmpCClineE)
-		  strTmpRNlineE =  addpipe(strTmpRNlineE)
-		  strTmpRClineE = addpipe(strTmpRClineE)
-		  strTmpCITlineE = addpipe(strTmpCITlineE)
-		  strTmpIPlineE = addpipe(strTmpIPlineE)
-		  if EnableCBL = True then strTmpCBLlineE = addpipe(strTmpCBLlineE)
-		  if boolEnableZDBL = True and strTmpZDBLlineE = "" then strTmpZDBLlineE = addpipe(strTmpZDBLlineE)
-		  if EnableBarracuda = True then strTmpCudalineE = addpipe(strTmpCudalineE)
-		  if enableURIBL = True then strTmpURIBLlineE = addpipe(strTmpURIBLlineE)
-		  if enableSURBL = True then strTmpSURbLineE = addpipe(strTmpSURbLineE)
-		  if enableSORBS = True then strSORBSlineE  = addpipe(strSORBSlineE)
-		  if strDDNSLineE = "" then strDDNSLineE = "|"
-		  if boolUseQuad9 = True then strQuad9DNS = addpipe(strQuad9DNS)
-		  if boolAlienVaultNIDS = True then 
-			AlienNIDS = addpipe(AlienNIDS)
-			AlienNIDScount = addpipe(AlienNIDScount)
-			'Add deduplicated categories
-			for each strTmpCategory in dictNIDStmpCategory
-				if AlienNIDSCat = "" then
-					AlienNIDSCat = strTmpCategory
-				else
-					AlienNIDSCat = AlienNIDSCat & "^" & strTmpCategory
-				end if
-			next
-			AlienNIDSCat = addpipe(AlienNIDSCat)
-			dictNIDStmpCategory.RemoveAll
-		  end if
-	  end if
+
+      if enableZEN = True then strTmpZENlineE = addpipe(strTmpZENlineE)
+      
+        strTmpCNlineE = addpipe(strTmpCNlineE)
+        strTmpCClineE = addpipe(strTmpCClineE)
+        strTmpRNlineE =  addpipe(strTmpRNlineE)
+        strTmpRClineE = addpipe(strTmpRClineE)
+        strTmpCITlineE = addpipe(strTmpCITlineE)
+        strTmpIPlineE = addpipe(strTmpIPlineE)
+        if EnableCBL = True then strTmpCBLlineE = addpipe(strTmpCBLlineE)
+        if boolEnableZDBL = True and strTmpZDBLlineE = "" then strTmpZDBLlineE = addpipe(strTmpZDBLlineE)
+        if EnableBarracuda = True then strTmpCudalineE = addpipe(strTmpCudalineE)
+        if enableURIBL = True then strTmpURIBLlineE = addpipe(strTmpURIBLlineE)
+        if enableSURBL = True then strTmpSURbLineE = addpipe(strTmpSURbLineE)
+        if enableSORBS = True then strSORBSlineE  = addpipe(strSORBSlineE)
+        if strDDNSLineE = "" then strDDNSLineE = "|"
+        if boolUseQuad9 = True then strQuad9DNS = addpipe(strQuad9DNS)
+        if boolAlienVaultNIDS = True then 
+        AlienNIDS = addpipe(AlienNIDS)
+        AlienNIDScount = addpipe(AlienNIDScount)
+        'Add deduplicated categories
+        for each strTmpCategory in dictNIDStmpCategory
+          if AlienNIDSCat = "" then
+            AlienNIDSCat = strTmpCategory
+          else
+            AlienNIDSCat = AlienNIDSCat & "^" & strTmpCategory
+          end if
+        next
+        AlienNIDSCat = addpipe(AlienNIDSCat)
+        dictNIDStmpCategory.RemoveAll
+        end if
+      end if
 		'format Date time the same for easier sorting
 		strTmpCreationD = replace(strTmpWCO_CClineE, "|", "")
 		if isdate(strTmpCreationD) then
@@ -2924,7 +2927,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         strFileSHA1 = "" 'Temporary hash value
         strFileIMP = "" 'Temporary hash value
        strCBprevalence = 0
-       strSiblingsCount = 0
+       If cint(inthfSiblingLoc) > -1 then strSiblingsCount = 0
        strCBFileSize = ""
        strTmpSigAssesslineE = ""
        strCuckooScore = ""
