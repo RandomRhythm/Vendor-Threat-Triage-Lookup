@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.6 - fix strSiblingsCount CSV output.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.7 - Support for naming output CSV. Support for custom COM object for DNS lookups
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -438,6 +438,7 @@ Dim sslSubject 'Pulsedive
 Dim boolIncludeIP_GTMPDNS ' When querying Seclytics for an IP address include GTMPDNS IP addresses. Default value: False
 Dim boolOutputPulses ' AlienVault OTX pulse output
 Dim inthfSiblingLoc: inthfSiblingLoc = -1
+Dim boolDNScom: boolDNScom = True 'use COM object DnsClient
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -658,6 +659,12 @@ BoolDebugTrace = ValueFromINI("vttl.ini", "Debug", "trace", BoolDebugTrace)
 boolSigCheckDebug = ValueFromINI("vttl.ini", "Debug", "sigcheck", boolSigCheckDebug)
 BoolWhoisDebug = ValueFromINI("vttl.ini", "Debug", "Whois", BoolWhoisDebug)' used to do additional messaging and logging to troubleshoot whois and some geolocation
 strDebugPath = ValueFromINI("vttl.ini", "Debug", "path", strDebugPath)
+on error resume next
+set objDnsClient = wscript.createobject("DnsClientCOM.DnsQuery+comReverseLookup")
+if err.number <> 0 then
+  boolDNScom = False
+end if
+on error goto 0
 '----------------end reconfigure
 
 If len(strCAPEport) > 0 then strCAPEport = ":" & strCAPEport
@@ -755,9 +762,6 @@ strCachePath = CreateFolder(CurrentDirectory & "\cache")
 strTLDPath = CreateFolder(CurrentDirectory & "\tld")
 strReportsPath =  CreateFolder(CurrentDirectory & "\Reports")
 
-strStatsOutput = strReportsPath & "\VTTL_WithStats_" & udate(now) & ".csv"
-UniqueString = udate(now)
-strSSfilePath = strReportsPath & "\VTTL_" & UniqueString & ".csv"
 
 DIm objShellComplete
 Set objShellComplete = WScript.CreateObject("WScript.Shell") 
@@ -809,7 +813,8 @@ if boolUseMySQL = True then 'Experimental. Do not use
   Set cmdMySQL = createobject("ADODB.Command")
   boolMySQLcache = TableCheck
 end if
-
+strOutputName = ""
+boolFileName = False
 if BoolDebugTrace = True then logdata strDebugPath & "\SQL" & "" & ".txt", "boolSQLcache=" & boolSQLcache ,BoolEchoLog
 if WScript.Arguments.Count = 0 then
     BoolRunSilent = False
@@ -817,6 +822,7 @@ else
     ' all command-line arguments
      For Each strArg in objArgs
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "_Parameter" & ".txt", "strArg=" & strArg ,BoolEchoLog
+
        select case lcase(strArg)
           case "/s"  
             BoolRunSilent = True 
@@ -841,7 +847,8 @@ else
          case "/dxf" 
             boolUseXforce = false
             AddQueueParameter("/dxf")
-
+         case "/n"
+            boolFileName = True
          case "/dms" 
           boolEnableMalShare = False
           AddQueueParameter("/dms")
@@ -850,21 +857,25 @@ else
           boolUseThreatCrowd = False
           AddQueueParameter("/dtc")   
          case "/dav"
-			boolUseAlienVault = False
-			AddQueueParameter "/dav"
-		 case "/det"
+          boolUseAlienVault = False
+          AddQueueParameter "/dav"
+         case "/det"
           boolEnableETIntelligence = False
           AddQueueParameter("/det")
           boolCheckProofpointIDS = False
-		 Case "/dtg"
+         Case "/dtg"
           BoolUseThreatGRID = False
           BoolUseThreatGRID_IP = False
           BoolEnableThreatGRID = False
           AddQueueParameter("/dtg")
          Case "/dtia"
-			BoolEnableTIA = False
+          BoolEnableTIA = False
 		 case else
-          
+       if boolFileName = True and left(strArg, 1) <> "/" Then
+        strOutputName = strArg
+       else 'file name was not provided as the next argument so discarding the file name config
+        boolFileName = False
+
           if strSigCheckFilePath = "" then
             if objFSO.fileexists(strArg) then
               strSigCheckFilePath = lcase(strArg)
@@ -874,10 +885,15 @@ else
           else
             msgbox "invalid argument: " & strArg
           end if
+        end if
       end select
      Next
-     
 end if
+
+strStatsOutput = strReportsPath & "\VTTL_WithStats_" & strOutputName & "_" & udate(now) & ".csv"
+UniqueString = udate(now)
+strSSfilePath = strReportsPath & "\VTTL_" & strOutputName & "_" & UniqueString & ".csv"
+
 if BoolEnCaseLookup = True and BoolSigCheckLookup = True then
   StrQuestion = msgbox("The script can only import using certain formats such as EnCase/NetAMP (tab) or SigCheck/Autorunsc (CSV) data. Do you want to perform lookups against EnCase/NetAMP?",4,"VTTL Question")
   if StrQuestion = 7 then'no
@@ -2230,7 +2246,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter=" & inLoopCounter,False 
           end if
 		  if boolUseQuad9 = True then
-			 strQuad9DNS = nslookup_Return(strScanDataInfo & " " & "9.9.9.9")
+			 strQuad9DNS = nslookup_Return(strScanDataInfo, "9.9.9.9")
 			if strQuad9DNS = "" then
 				strQuad9DNS = "|nxdomain"
 			else
@@ -5133,12 +5149,17 @@ Set objHTTP_GIP = Nothing
 End Function
 
 
-Function nslookup_Return(strServerName)
+Function nslookup_Return(strServerName, strNS)
+if boolDNScom = True then
+  nslookup_Return = objDnsClient.dnsNameQuery(strServerName, strNS, "")
+  exit function
+end if
 Set sh = WScript.CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
   CurrentDirectory = GetFilePath(wscript.ScriptFullName)
-
-  ExecQuery = "nslookup " & strServerName  & " | findstr /C:" & chr(34) & "Name:" & chr(34) & ">" & chr(34) & strCachePath & "\ns.txt" & chr(34)   
+  strNsQuery = strServerName
+if strNS <> "" then strNsQuery = strServerName & " " & strNS
+  ExecQuery = "nslookup " & strNS  & " | findstr /C:" & chr(34) & "Name:" & chr(34) & ">" & chr(34) & strCachePath & "\ns.txt" & chr(34)   
 
                 ErrRtn = sh.run ("%comspec% /c " &  ExecQuery,0 ,True)
 
@@ -7623,7 +7644,7 @@ IPSinkholeCheck strIPRevLookup, "87.106.18.141", "|1and1 Internet AG Sinkhole"
 
 ' End Emerging Threats rules
  
- strRevDNS = "|" & nslookup_Return(strIPRevLookup & " " & DNSserverIP)
+ strRevDNS = "|" & nslookup_Return(strIPRevLookup, DNSserverIP)
  if strTmpSinkHole = "|" and instr(lcase(strRevDNS), "sinkhole") or instr(lcase(strRevDNS), "snkhole") then 'only update if a sinkhole isn't already known. DNS sinkhole will provide more information that IP sinkhole.
   strTmpSinkHole = "|X"
  end if
