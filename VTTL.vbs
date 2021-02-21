@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.7 - Support for naming output CSV. Support for custom COM object for DNS lookups
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.8 - Bug fixes and added features
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -413,7 +413,9 @@ Dim intSigDateRange
 Dim strCAPEport
 Dim UniqueString
 Dim boolLogURLs 'Output URLs associated with the lookup items.
+Dim boolLogReferenceURLs 'Out URLs to reference material
 Dim boolLogIPs 'Output IP addresses associated with the lookup items.
+Dim boolLogIOCs 'Log potential IOCs
 Dim boolEnableCuckooV2 'Perform API queries for hashes against Cuckoo v2
 Dim strCuckooV2IPAddress 'Cuckoo v2 host or IP address
 Dim strCuckooPort 'Cuckoo v2 port
@@ -439,6 +441,13 @@ Dim boolIncludeIP_GTMPDNS ' When querying Seclytics for an IP address include GT
 Dim boolOutputPulses ' AlienVault OTX pulse output
 Dim inthfSiblingLoc: inthfSiblingLoc = -1
 Dim boolDNScom: boolDNScom = True 'use COM object DnsClient
+Dim boolStaticIntel: boolStaticIntel = True 'use static intel from https://github.com/stamparm/maltrail
+Dim boolProxyFeed
+Dim boolMultiFeed
+Dim boolAttackerFeed
+Dim boolMalwareFeed
+Dim boolAddURLsToWatchlistFromIntel
+Dim objDnsClient 'COM object for DNS lookups
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -475,6 +484,8 @@ strDatabasePath = "vttl.db" 'Default is vttl.db which will exist in current dire
 boolOutputHosts = False 'Set to True to have the script import/export Carbon Black host names associated with a hash
 boolNoCrLf = True 'Remove carriage return and line feed from cell entries.
 boolLogURLs = True 'Log URLs associated with an IP/Domain
+boolLogReferenceURLs = True 'Log reference URLs
+boolLogIOCs = True 'Log associated IOCs
 boolLogHashes = True 'Output URLs and hashes associated with the lookup items. (outputs from VirusTotal and Seclytics)
 boolLogIPs = True 'Output IP addresses associated with the lookup items.
 '--- Intenal checks
@@ -483,7 +494,8 @@ BoolDDNS_Checks = True 'Dynamic DNS check
 boolUseTrancoList = True 'Check domains against https://tranco-list.eu
 boolSkipOnTrancoHit = True 'Skip VirusTotal lookups when domain match against https://tranco-list.eu
 sysinternalsWhois = False 'Use command line sysinternals whois tool for whois lookups
-boolWhoisCache = False 'Cache whois results 
+boolWhoisCache = False 'Cache whois results
+staticIntelPath = "" 'path to static intelligence https://github.com/stamparm/maltrail
 '--- VirusTotal custom checks
 intDetectionNameCount = 1 'Set greater than zero to enable reporting on detection names associated with domain/IP. set to zero to disable.
 intDetectionCategory = 2 'associated with domain/IP category to use: detected_downloaded_samples=0, detected_referrer_samples=1, detected_communicating_samples=2
@@ -505,6 +517,12 @@ zenDNS = ""
 uriblDNS = ""
 surblDNS =  ""
 abuseatDNS = ""
+'--- Feed vendors
+boolProxyFeed = True
+boolMultiFeed = True
+boolAttackerFeed = True
+boolMalwareFeed = True
+boolAddURLsToWatchlistFromIntel = False
 '--- API vendor lookup config section
 boolUseRIPE = True ' Réseaux IP Européens (RIPE NCC) API
 boolUseARIN = True 'American Registry for Internet Numbers (ARIN) API
@@ -595,6 +613,13 @@ intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) '
 strDatabasePath = ValueFromINI("vttl.ini", "main", "database_location", strDatabasePath)
 BoolDisableVTlookup = ValueFromINI("vttl.ini", "vendor", "disable_VirusTotal", BoolDisableVTlookup) 'load value from INI
 boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault) 'load value from INI
+
+boolProxyFeed = ValueFromINI("vttl.ini", "vendor", "ProxyFeed", boolProxyFeed) 'load value from INI
+boolMultiFeed = ValueFromINI("vttl.ini", "vendor", "MultiFeed", boolMultiFeed) 'load value from INI
+boolAttackerFeed = ValueFromINI("vttl.ini", "vendor", "AttackerFeed", boolAttackerFeed) 'load value from INI
+boolMalwareFeed = ValueFromINI("vttl.ini", "vendor", "MalwareFeed", boolMalwareFeed) 'load value from INI
+boolAddURLsToWatchlistFromIntel = ValueFromINI("vttl.ini", "vendor", "WatchIntelURLs", boolAddURLsToWatchlistFromIntel) 'load value from INI
+
 boolDisableAlienVaultWhoIs = ValueFromINI("vttl.ini", "vendor_AlienVault", "disable_whois", boolDisableAlienVaultWhoIs) 'Disable whois lookups with AlienVault OTX. Default is False.
 boolAlienVaultPassiveDNS = ValueFromINI("vttl.ini", "vendor_AlienVault", "enable_passiveDNS", boolAlienVaultPassiveDNS) 'Use AlienVault passive DNS lookup API. Default is True. populates hosted domain column
 boolIncludeAVHashCount = ValueFromINI("vttl.ini", "vendor_AlienVault", "enable_HashCount", boolIncludeAVHashCount) 'Add CSV output column for hash count
@@ -645,6 +670,8 @@ enableFreeGeoIP = ValueFromINI("vttl.ini", "vendor", "useFreeGeoIP", enableFreeG
 boolLogURLs = ValueFromINI("vttl.ini", "vendor", "LogURLs", boolLogURLs)
 boolLogHashes = ValueFromINI("vttl.ini", "vendor", "LogHashes", boolLogHashes)
 boolLogIPs = ValueFromINI("vttl.ini", "vendor", "LogIPs", boolLogIPs)
+boolLogIOCs = ValueFromINI("vttl.ini", "vendor", "LogIOCs", boolLogIOCs)
+boolLogReferenceURLs= ValueFromINI("vttl.ini", "vendor", "LogReferenceURLs", boolLogReferenceURLs)
 boolUseTrancoList = ValueFromINI("vttl.ini", "vendor", "TrancoList", boolUseTrancoList) 'Check domains against https://tranco-list.eu
 boolSkipOnTrancoHit = ValueFromINI("vttl.ini", "vendor", "SkipLookupsOnTrancoMatch", boolSkipOnTrancoHit)
 BoolSeclytics = ValueFromINI("vttl.ini", "vendor", "useSeclytics", BoolSeclytics)
@@ -759,9 +786,18 @@ strHashReportsPath = CreateFolder(CurrentDirectory & "\Debug\Hash_Reports")
 strMetaReportsPath = CreateFolder(CurrentDirectory & "\Debug\Meta_Reports")
 strAlienVaultreportsPath = CreateFolder(CurrentDirectory & "\Debug\AlienVault")
 strCachePath = CreateFolder(CurrentDirectory & "\cache")
+strIntelPath = CreateFolder(CurrentDirectory & "\cache\intel")
 strTLDPath = CreateFolder(CurrentDirectory & "\tld")
 strReportsPath =  CreateFolder(CurrentDirectory & "\Reports")
-
+if staticIntelPath = "" then
+  if objFSO.folderexists(CurrentDirectory & "\static") then
+    staticIntelPath = CurrentDirectory & "\static"
+  elseif objFSO.folderexists(CurrentDirectory & "\trails") then
+    if objFSO.folderexists(CurrentDirectory & "\trails\static") then
+      staticIntelPath = CurrentDirectory & "\trails\static"
+    end if
+  end if
+end if
 
 DIm objShellComplete
 Set objShellComplete = WScript.CreateObject("WScript.Shell") 
@@ -923,9 +959,62 @@ end if
 
 
 'Check and save dynamic DNS dat
-if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") = false then
-  Dload_DDNS "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "\DDNS.dat"
-end if
+dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat", "this is a listdynamic dns providers", True, False
+'download intelligence
+'dload_list "https://sslbl.abuse.ch/blacklist/sslipblacklist.rules", "cache\intel\sslipblacklist.rules", "SSLBL" 'rules files not currently supported
+'dload_list "https://rules.emergingthreats.net/open/suricata/rules/emerging-dns.rules", "cache\intel\emerging-dns.rules", "Emerging Threats" 'rules files not currently supported
+'dload_list "https://rules.emergingthreats.net/open/suricata/rules/botcc.rules", "cache\intel\botcc.rules", "CnC Server" 'rules files not currently supported
+'dload_list "http://cinsscore.com/list/ci-badguys.txt", "cache\intel\ciarmy.txt", "1" 'noisy
+
+'proxy
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_7d.ipset", "cache\intel\socks_proxy_7d.txt", "socks-proxy.net", boolProxyFeed, False
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_1d.ipset", "cache\intel\sslproxies_1d.txt", "sslproxies_1d", boolProxyFeed, False
+dload_list "https://www.dan.me.uk/torlist/", "cache\intel\tor.txt", "1", boolProxyFeed, False
+
+'multi feeds
+dload_list "https://reputation.alienvault.com/reputation.generic", "cache\intel\alienvault_ip.txt", "1", boolMultiFeed, False
+dload_list "https://openphish.com/feed.txt", "cache\intel\openphish.txt", "http://", boolMultiFeed, False
+dload_list "https://www.turris.cz/greylist-data/greylist-latest.csv", "cache\intel\turris(bad reputation).csv", "1", boolMultiFeed, False
+
+'attacker feeds
+dload_list "http://ipnoise.now.im/blacklist.txt", "cache\intel\ipnoise(known attacker).txt", "ipnoise", boolAttackerFeed, false
+dload_list "https://blocklist.greensnow.co/greensnow.txt", "cache\intel\greensnow(known attacker).txt", "1", boolAttackerFeed, False
+dload_list "https://iplists.firehol.org/files/dshield_top_1000.ipset", "cache\intel\dshield_top_1000(known attacker).txt", "known attacker", boolAttackerFeed, False
+dload_list "https://lists.blocklist.de/lists/all.txt", "cache\intel\blocklist.de(known attacker).txt", "1", boolAttackerFeed, False
+dload_list "http://danger.rulez.sk/projects/bruteforceblocker/blist.php", "cache\intel\bruteforceblocker.txt", "1", boolAttackerFeed, False
+dload_list "https://www.cruzit.com/xxwbl2txt.php", "cache\intel\cruzit(known attacker).txt", "ipaddress", boolAttackerFeed, False
+dload_list "https://iplists.firehol.org/files/gpf_comics.ipset", "cache\intel\gpf_comics(known attacker).txt", "gpf_comics", boolAttackerFeed, False
+dload_list "https://myip.ms/files/blacklist/htaccess/latest_blacklist.txt", "cache\intel\myip(crawler).txt", "ADDRESSES DATABASE", boolAttackerFeed, False
+dload_list "https://report.cs.rutgers.edu/DROP/attackers", "cache\intel\rutgers(known attacker).txt", "1", boolAttackerFeed, False
+dload_list "https://sblam.com/blacklist.txt", "cache\intel\sblam(html spam).txt", "sblam.com", boolAttackerFeed, False
+
+'malware feeds
+dload_list "http://tracker.viriback.com/dump.php", "cache\intel\viriback(malware).csv", "1", boolMalwareFeed, False
+dload_list "https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt", "cache\intel\maltrail-static-trails.txt", "(static)", boolMalwareFeed, False
+dload_list "https://www.talosintelligence.com/documents/ip-blacklist", "cache\intel\talosintelligence.txt", "1", boolMalwareFeed, False
+dload_list "http://vxvault.net/URL_List.php", "cache\intel\vxvault(malware).txt", "VX Vault", boolMalwareFeed, False
+dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False
+dload_list "https://cybercrime-tracker.net/ccpmgate.php", "cache\intel\pony.txt", "/gate.php", boolMalwareFeed, False
+dload_list "https://raw.githubusercontent.com/Hestat/minerchk/master/hostslist.txt", "cache\intel\cryptomining.txt", ".com", boolMalwareFeed, False
+dload_list "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt", "cache\intel\feodotracker.txt", "Botnet C2", boolMalwareFeed, False
+dload_list "https://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt", "cache\intel\emergingthreats-ip.txt", "1", boolMalwareFeed, False
+dload_list "https://cybercrime-tracker.net/all.php", "cache\intel\cybercrime-tracker(malware).txt", "cp.php?m=login", boolMalwareFeed, False
+dload_list "https://kriskintel.com/feeds/ktip_malicious_Ips.txt", "cache\intel\kriskintel_ip.txt", "kriskintel.com", boolMalwareFeed, False
+dload_list "https://kriskintel.com/feeds/ktip_malicious_domains.txt", "cache\intel\ktip_malicious_domains.txt", "kriskintel.com", boolMalwareFeed, False
+dload_list "https://data.netlab.360.com/feeds/dga/virut.txt", "cache\intel\virut_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/tofsee.txt", "cache\intel\tofsee_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/suppobox.txt", "cache\intel\suppobox_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/necurs.txt", "cache\intel\necurs_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/locky.txt", "cache\intel\locky_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/gameover.txt", "cache\intel\gameover_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/cryptolocker.txt", "cache\intel\cryptolocker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/conficker.txt", "cache\intel\conficker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/chinad.txt", "cache\intel\chinad_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://data.netlab.360.com/feeds/dga/bigviktor.txt", "cache\intel\bigviktor_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset", "cache\intel\bitcoin_nodes_1d.txt", "1", boolMalwareFeed, false
+dload_list "https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv", "cache\intel\blackbook(malware).csv", "Malware", boolMalwareFeed, false
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "cache\intel\botscout_1d.txt", "botscout_1d", boolMalwareFeed, false
+
 
 'load dynamic DNS dat
 if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") then
@@ -983,8 +1072,8 @@ LoadWatchlist CurrentDirectory &"\DNwatchlist.txt", dictDnameWatchList
 LoadWatchlist CurrentDirectory & "\KWordwatchlist.txt", dictKWordWatchList
 LoadWatchlist CurrentDirectory &"\URLwatchlist.txt", dictURLWatchList
 
-
-
+if staticIntelPath <> "" And boolStaticIntel = True then TraverseIntelFolders objFso.GetFolder(staticIntelPath) 'load static intelligence
+if boolProxyFeed =True or boolMultiFeed = True or boolAttackerFeed = True or boolMalwareFeed = True then TraverseIntelFolders objFso.GetFolder(strIntelPath) 'load intelligence feeds
 LoadEncyclopedia_Cache 'populates encyclopedia dictionaries DictMicrosoftEncyclopedia
 
 
@@ -2275,7 +2364,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytReturnBody = httpget("https://api.seclytics.com/hosts/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
-			'if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
+			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
 			if len(SeclytFileRep) > 32767 Then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
@@ -2310,11 +2399,13 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             end if
           ElseIf strCSVrowDomain = "" then
             strCSVrowDomain = strData
-          end if
-      		If objFSO.FileExists(strReportsPath & "\IOCs_" & UniqueString & ".csv") = False Then
+          End if
+      	If boolLogIOCs = True Then
+      		If objFSO.FileExists(strReportsPath & "\IOCs_" & UniqueString & ".csv") = False Then 'write header row
       			logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", "ip,domain,hash", False
       		End If
-      		logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & strCSVhash, False
+      		logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & strCSVhash, false
+      	End If	
       		strCSVrowIP= ""
       		strCSVrowDomain= ""
       		strCSVhash = ""
@@ -2329,7 +2420,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             strCSVrowDomain = strData
             strCSVrowIP = ""
           end if
-        logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & trackedHash, False
+        If boolLogIOCs = True Then logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & trackedHash, False
       next
 	  end if
     DictHashAssociation.removeall
@@ -2765,7 +2856,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  End if 
 	  If BoolSeclytics = True Or intVTListDataType = 1 Then
 		if dictURLWatchList.count > 0 then strURLWatchLineE = addPipe(strURLWatchLineE)
-		if dictIPdomainWatchList.count > 0 then strIpDwatchLineE = addPipe(strIpDwatchLineE)
+		if dictIPdomainWatchList.count > 0 then 
+			if len(strIpDwatchLineE) > 32767 then SeclytRepReason = truncateCell(strIpDwatchLineE)
+			strIpDwatchLineE = addPipe(strIpDwatchLineE)
+		End if	
 	  End If
 	  If boolPulsedive = True Then
 	  	strTmpPulsediveLineE = AddPipe(strTmpPulsediveLineE)
@@ -2957,6 +3051,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        strTmpPulsediveLineE = ""
        sslOrg = ""
        sslSubject = ""
+       strTmpVTTIlineE = ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
 	  
 	  if boolNoCrLf = True then 
@@ -3136,7 +3231,7 @@ if BoolDisableVTlookup = False then
 	  strDateLookupTrack = Now 'set the date time when last lookup was performed for rate limit delay
       if err.number <> 0 then
         if intVTErrorCount > 3 then
-          objShellComplete.popup "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again.  If problems persist check connectivity", 30
+          objShellComplete.popup "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again.  If problems persist check connectivity", 30, "VTTL - " & CurrentDirectory
 		  if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Error #" & err.number & " - " & err.description,BoolEchoLog 
           intVTErrorCount = 0
         else
@@ -3166,7 +3261,7 @@ if BoolDisableVTlookup = False then
 	  strDateLookupTrack = Now 'set the date time when last lookup was performed for rate limit delay      
 
 	  if err.number <> 0 then
-          objShellComplete.popup "HTTP GET: " & strVT_APIurl & vbcrlf & "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again.  If problems persist check connectivity", 30
+          objShellComplete.popup "HTTP GET: " & strVT_APIurl & vbcrlf & "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again.  If problems persist check connectivity", 30, "VTTL - " & CurrentDirectory
 		  inLoopCounter = inLoopCounter + 1
 		  If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter=" & inLoopCounter,False 
 		  VT_Submit
@@ -3181,12 +3276,12 @@ if BoolDisableVTlookup = False then
     if objHTTP.status = 200 & objHTTP.responseText = "" Then
     	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 200 status code with no data.",False 
     ElseIf objHTTP.status = 403 Then
-		objShellComplete.popup "403 HTTP status code was returned. This indicates a problem that needs manually corrected with the query string we are passing VirusTotal.", 16
+		objShellComplete.popup "403 HTTP status code was returned. This indicates a problem that needs manually corrected with the query string we are passing VirusTotal.", 16, "VTTL - " & CurrentDirectory
       logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 403 status code. Possible problem with the query string.",False 
 
 	ElseIf objHTTP.status = 203 then
       if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup - VirusTotal returned 203 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
-      objShellComplete.popup "203 HTTP status code was returned. Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity", 16
+      objShellComplete.popup "203 HTTP status code was returned. Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity", 16, "VTTL - " & CurrentDirectory
       logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 203 status code. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
       inLoopCounter = inLoopCounter + 1
       If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & "Error resubmit inLoopCounter=" & inLoopCounter,False
@@ -3195,7 +3290,7 @@ if BoolDisableVTlookup = False then
       exit sub
 	ElseIf objHTTP.status = 204 then
       if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup - VirusTotal returned 204 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
-      objShellComplete.popup "204 HTTP status code was returned. You have exceed the API request rate limit." & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity",16
+      objShellComplete.popup "204 HTTP status code was returned. You have exceed the API request rate limit." & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity",16, "VTTL - " & CurrentDirectory
       logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 204 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
 	  wscript.sleep 15001
 	  inLoopCounter = inLoopCounter + 1
@@ -3255,7 +3350,7 @@ if instr(strFullAPIURL,"ip=") then
         strTmpVTPositvLineE = ParseVTforPositives(strresponseText)       
       end if
 elseif instr(strFullAPIURL,"domain=") then
-      strIpDwatchLineE = MatchIpDwatchLIst(strScanDataInfo)
+      strIpDwatchLineE = MatchIpDwatchList(strScanDataInfo)
 	  strTmpURLs = strresponseText
       if BoolDebugTrace = True then logdata strDebugPath & "\VT_CC" & "" & ".txt", "len(strTmpCNlineE):" & len(strTmpCNlineE) ,BoolEchoLog 
       if BoolDebugTrace = True then logdata strDebugPath & "\VT_CC" & "" & ".txt", "len(strTmpCClineE):" & len(strTmpCClineE) ,BoolEchoLog 
@@ -3730,7 +3825,7 @@ if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then
 			if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt",strTmpIPurl <> "",BoolEchoLog
 			if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt",strTmpIPurl <> "",BoolEchoLog
 			if strTmpIPurl <> "" Then
-				strURLWatchLineE = MatchURLwatchList(strURLWatchLineE, strTmpIPurl)
+				strURLWatchLineE = MatchURLwatchList(strURLWatchLineE, strTmpIPurl) 'need to truncate text to end of URL comma
 				if boolLogURLs = True then logdata strReportsPath & "\URLs_" & UniqueString & ".log",strTmpIPurl, false
 			end if
 			if strTmpIPurl <> "" and left(arrayIPresults(intCountArrayIP), 1) <> "0" then 'only grab positive detections
@@ -3761,14 +3856,14 @@ if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then
 						
 						DetectionNameSSlineE = DetectionNameSSline(strTmpIPurl, intPositiveDetectSection) 'spreadsheet line output
 					end if
-				 elseif intPositiveDetectSection =3 then
+				 elseif intPositiveDetectSection =2 then
 				   if not DicHashComm.Exists(strTmpIPurl) then _
 				   hashTrack strTmpIPurl, strdata, DicHashComm end If 'add to dictionary if not already there
 				   
 				   if cint(intDetectionNameCount) > intHashlookupCount and intTmpHashPositives > intHashPositiveThreashold and intDetectionCategory = 2 then 
 						DetectionNameSSlineE = DetectionNameSSline(strTmpIPurl, intPositiveDetectSection) 'spreadsheet line output for IP/Domain detection names
 				   end if
-				 elseif intPositiveDetectSection = 2 then
+				 elseif intPositiveDetectSection = 3 then
 				   if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt","DIcHashes.Exists(strTmpIPurl)=" & DIcHashes.Exists(strTmpIPurl), False
 				   if not DIcHashes.Exists(strTmpIPurl) then 
             hashTrack strTmpIPurl, strdata, DIcHashes
@@ -3969,7 +4064,7 @@ if EchoOn = True then wscript.echo TextToWrite
       fsoLogData.CreateTextFile TextFileName, True
       if err.number <> 0 and err.number <> 53 then 
         logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Error logging to " & TextFileName & " - " & err.description,False 
-        objShellComplete.popup err.number & " " & err.description & vbcrlf & TextFileName,,"Logging error", 30
+        objShellComplete.popup err.number & " " & err.description & vbcrlf & TextFileName,,"Logging error", 30, "VTTL - " & CurrentDirectory
         exit function
       end if
       on error goto 0
@@ -3992,7 +4087,7 @@ if TextFileName <> "" then
   objStream.SaveToFile TextFileName, 2
   if err.number <> 0 then msgbox err.number & " - " & err.message & " Problem writing to " & TextFileName
   if err.number <> 0 then 
-    objShellComplete.popup "problem writting text: " & TextToWrite, 30
+    objShellComplete.popup "problem writting text: " & TextToWrite, 30, "VTTL - " & CurrentDirectory
     logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " problem writting text: " & TextToWrite,False 
   end if
   on error goto 0
@@ -4968,7 +5063,7 @@ if boolEnableTIAqueue = False then exit sub
 if outQueue.Count > 0 and lookupQueue.Count > 0 then
 	strTmpTIAItems = lookupQueue.Peek
 	strTmpRowOut = outQueue.Peek
-	objShellComplete.popup "lookupQueue.Count = " & lookupQueue.Count,10
+	objShellComplete.popup "lookupQueue.Count = " & lookupQueue.Count,10, "VTTL - " & CurrentDirectory
 	if boolQueued = True and lookupQueue.Count = 1 then 
 		if BoolDebugTrace = True then logdata strDebugPath & "\VT_TIAapi" & "" & ".txt", "already looked this one up recently: " & strTmpTIAItems,BoolEchoLog 
 		boolQueued = False 'reset so we don't get stuck in a loop
@@ -4999,7 +5094,7 @@ if outQueue.Count > 0 and lookupQueue.Count > 0 then
 				end if
 			else   'Item is still in the TIA server's queue
 				boolSuccess = False
-				objShellComplete.popup "Item still in queue: " & strTmpTIAItem, 10
+				objShellComplete.popup "Item still in queue: " & strTmpTIAItem, 10, "VTTL - " & CurrentDirectory
 				if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", outQueue.count & " items in the queue. Item still in queue: " & strTmpTIAItem,False 
 				
 				if BoolDebugTrace = True then logdata strDebugPath & "\VT_TIAapi" & "" & ".txt", outQueue.count & " items in the queue. Item still in queue: " & strTmpTIAItem,BoolEchoLog 
@@ -5159,7 +5254,7 @@ Set fso = CreateObject("Scripting.FileSystemObject")
   CurrentDirectory = GetFilePath(wscript.ScriptFullName)
   strNsQuery = strServerName
 if strNS <> "" then strNsQuery = strServerName & " " & strNS
-  ExecQuery = "nslookup " & strNS  & " | findstr /C:" & chr(34) & "Name:" & chr(34) & ">" & chr(34) & strCachePath & "\ns.txt" & chr(34)   
+  ExecQuery = "nslookup " & strNsQuery  & " | findstr /C:" & chr(34) & "Name:" & chr(34) & ">" & chr(34) & strCachePath & "\ns.txt" & chr(34)   
 
                 ErrRtn = sh.run ("%comspec% /c " &  ExecQuery,0 ,True)
 
@@ -5629,7 +5724,7 @@ elseif len(StrHashValue) = 40 then 'sha1
 elseif len(StrHashValue) = 64 then 'sha256
   strReturnHashType = "SHA256"
 else
-  objShellComplete.popup "Error! Length of hash doesn't match supported hashes. Will use unknown folder. Len=" & len(StrHashValue) & vbCrLf & StrHashValue, 10
+  objShellComplete.popup "Error! Length of hash doesn't match supported hashes. Will use unknown folder. Len=" & len(StrHashValue) & vbCrLf & StrHashValue, 10, "VTTL - " & CurrentDirectory
 
   strReturnHashType = "unknown"
 end if
@@ -6054,9 +6149,15 @@ end if
 End function
 
 
-Function Dload_DDNS(strURLDownload,strDownloadName)
+Function dload_list(strURLDownload,strDownloadName, checkString, boolUseFeed, boolIgnoreSSL)
+if objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True Or boolUseFeed = False Then 
+	If objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True And boolUseFeed = false Then objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
+	Exit Function 'need to check age of intelligence and update
+End if	
 Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
-
+If boolIgnoreSSL = True Then
+	objHTTP.SetOption 2, 13056
+End If
 Dim strReturnInfo
 
   objHTTP.open "GET", strURLDownload, False
@@ -6069,12 +6170,12 @@ on error resume next
   end if
 on error goto 0  
 strReturnInfo = False
-if instr(objHTTP.responseText,"this is a listdynamic dns providers") then
-  LogData CurrentDirectory & strDownloadName,objHTTP.responseText, false
+if instr(objHTTP.responseText,checkString) then
+  LogData CurrentDirectory & "\" & strDownloadName,objHTTP.responseText, false
   strReturnInfo = True
 end if
 
-Dload_DDNS = strReturnInfo
+dload_list = strReturnInfo
 Set objHTTP = Nothing
 end Function
 
@@ -8042,7 +8143,7 @@ Sub ParseLooseIOC(strIOCreport)
 if BoolDebugTrace = True then logdata strDebugPath & "\VT_cuckoo" & "" & ".txt", Date & " " & Time & " - Starting IOC Parse", False
 if instr(strIOCreport, "sha1" & chr(34) & ": ") = 0 then
     logdata strDebugPath & "\Cucoo_error.log", Date & " " & Time & " bad return from cuckoo: " & strIOCreport,False 
-    objShellComplete.popup "bad return from cuckoo: " & strIOCreport
+    objShellComplete.popup "bad return from cuckoo: " & strIOCreport, "VTTL - " & CurrentDirectory
     exit sub
 end if
 arrayTmpSplit = split(strIOCreport, "sha1" & chr(34) & ": ")
@@ -8183,7 +8284,7 @@ elseif instr(strSearchResults, CHr(34) & "data"  & chr(34) & ":") then 'extended
   next
 else
   
-   objShellComplete.popup "error processing CAPE results: " & strSearchResults, 16
+   objShellComplete.popup "error processing CAPE results: " & strSearchResults, 16, "VTTL - " & CurrentDirectory
    logdata strDebugPath & "\CAPE_error.log", Date & " " & Time & " bad return from CAPE: " & strSearchResults,False 
   exit function
 end if
@@ -8201,7 +8302,7 @@ for each strIDstring in strIDs
         strTmpString = SearchCuckoo("/api/tasks/get/iocs/" & strIDstring & "/detailed/", "")
     end if
     if instr(strSearchResults, "Page not found at ") then
-          objShellComplete.popup "error performing IOC lookup" & vbcrlf & "filereport/" & strIDstring & "/json/", 16
+          objShellComplete.popup "error performing IOC lookup" & vbcrlf & "filereport/" & strIDstring & "/json/", 16, "VTTL - " & CurrentDirectory
           LogData CurrentDirectory & "\IOC_match.txt", strTmpHash & "|error",False  
     end if
     strdomains = GetData(strSearchResults,"], ", "hosts" & chr(34) & ": [")
@@ -9850,7 +9951,7 @@ sSQL = "INSERT INTO PublisherDomains(PublisherName, PubDomains) VALUES(?, ?)"
     if err.number = -2147467259 then
       'UNIQUE constraint failed
     elseif err.number <> 0 then 
-      objShellComplete.popup "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Problem writting to PublisherDomains:" & vbcrlf & strPublisher & "|" & strTmpPubDomains, 30
+      objShellComplete.popup "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Problem writting to PublisherDomains:" & vbcrlf & strPublisher & "|" & strTmpPubDomains, 30, "VTTL - " & CurrentDirectory
     end if
     on error goto 0
     Set cmd = Nothing
@@ -9951,7 +10052,7 @@ if datediff("s", strWAPIdateTrack,now) > intWhoAPILimit then
       CheckWhoAPI = strWhoIsIP_return
     elseIf instr(objHTTP.responseText, chr(34) & "Query high usage limit exceeded." & chr(34)) or _
     instr(objHTTP.responseText, chr(34) & "No more than " & chr(34)) and instr(objHTTP.responseText, chr(34) & "request per minute is allowed." & chr(34)) then
-      objShellComplete.popup "quota hit! Are you running multiple WhoAPI queries?", 14
+      objShellComplete.popup "quota hit! Are you running multiple WhoAPI queries?", 14, "VTTL - " & CurrentDirectory
       logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " WhoAPI lookup quota limit hit",False 
       if boolwhoisdebug = True then msgbox "WhoAPI lookup quota limit hit"
     elseIf instr(objHTTP.responseText, chr(34) & "status" & chr(34) & ":12,") then
@@ -10112,8 +10213,8 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
   on error resume next
   strDateCreated = DateDiff("s", "01/01/1970 00:00:00", strDateCreated)
   if err.number <> 0 then 
-    objShellComplete.popup "date conversion issue: " &  strDateCreated & vbcrlf & strTmpWCO_CClineE, 20 'will not be saved to database
-    logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & "Whois date conversion issue: " &  strDateCreated & "|" & strTmpWCO_CClineE ,False 
+    objShellComplete.popup "date conversion issue: " &  strDateCreated & vbcrlf & strTmpWCO_CClineE, 10, "VTTL - " & CurrentDirectory 'will not be saved to database
+    logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & "Whois date conversion issue for " & strWhoisDomain & ": " &  strDateCreated & "|" & strTmpWCO_CClineE ,False 
   on error goto 0
 
   end if
@@ -10570,8 +10671,8 @@ intTmpPositives = getPositiveDetections(strTmpVTresults)
 if isnumeric(intTmpPositives) then
   UpdateVTPositives intVTCategory, intTmpPositives
 else
-  objShellComplete.popup "Unable to get total number of positive detections from VirusTotal.", 30
-  logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & "Unable to get total number of positive detections from VirusTotal: " & strTmpVTresults ,False 
+  objShellComplete.popup "Unable to get total number of positive detections from VirusTotal for hash " & strVThashItem & ".", 30, "VTTL - " & CurrentDirectory
+  logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & "Unable to get total number of positive detections from VirusTotal for hash " & strVThashItem & ": " & strTmpVTresults ,False 
 end if
 
 intHashlookupCount = intHashlookupCount + 1
@@ -10932,7 +11033,7 @@ if BoolDebugTrace = True then logdata strDebugPath & "\VT_time" & "" & ".txt",Da
   strDateLookupTrack = Now 'set the date time when last lookup was performed for rate limit delay
   if err.number <> 0 then
 	if intVTErrorCount > 3 then
-	  objShellComplete.popup "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again.  If problems persist check connectivity", 30
+	  objShellComplete.popup "Error #" & err.number & " - " & err.description & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again.  If problems persist check connectivity", 30, "VTTL - " & CurrentDirectory
 	  if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Error #" & err.number & " - " & err.description,BoolEchoLog 
 	  intVTErrorCount = 0
 	else
@@ -10947,7 +11048,7 @@ if BoolDebugTrace = True then logdata strDebugPath & "\VT_time" & "" & ".txt",Da
 
 if objHTTP.status = 204 then
   if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup - VirusTotal returned 204 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
-  objShellComplete.popup "204 HTTP status code was returned. You have exceed the API request rate limit." & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity", 16
+  objShellComplete.popup "204 HTTP status code was returned. You have exceed the API request rate limit." & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity", 16, "VTTL - " & CurrentDirectory
   logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VTHashLookup - VirusTotal returned 204 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
   'wscript.sleep 30000
   inLoopCounter = inLoopCounter + 1
@@ -10995,11 +11096,7 @@ if dictURLWatchList.count = 0 then exit function
 for each WatchItem in dictURLWatchList
 	'msgbox "WatchItem=" & WatchItem
   if BoolURLWatchLlistRegex = True then
-    Set re = new regexp  'Create the RegExp object 'more info at https://msdn.microsoft.com/en-us/library/ms974570.aspx
-
-    re.Pattern = WatchItem
-    re.IgnoreCase = true
-    WLRegXresult = re.Test(strWLcheck)
+    WLRegXresult = RegularExpressionMatch(strWLcheck, WatchItem)
 	'msgbox "regex match=" & WLRegXresult & " for " & WatchItem
     if WLRegXresult = True then
       WLreturnValue = concatenateItem(strWLstoredResults, WatchItem, "   " )
@@ -11031,10 +11128,21 @@ if dictIPdomainWatchList.count > 0 then
 	end if
 end if
 
-MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, strIpDreturn, "^") 
-end function
+MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, strIpDreturn, "^")
+
+base32check = RegularExpressionMatch(strIpDitem, "[A-Z2-7]{63}\.")
+If base32check = True Then MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, "base32", "^")
+End function
 
 
+Function RegularExpressionMatch(strText2regex, regex2check)
+Set re = new regexp  'Create the RegExp object 'more info at https://msdn.microsoft.com/en-us/library/ms974570.aspx
+    re.Pattern = regex2check
+    re.IgnoreCase = true
+    WLRegXresult = re.Test(strtext2regex)
+	'msgbox "regex match=" & WLRegXresult & " for " & WatchItem
+    RegularExpressionMatch = WLRegXresult
+End Function
 
 
 Function CheckTIA(strVendorName, strDetectionName)
@@ -11608,8 +11716,16 @@ Function pullAlienVault(strAlienURL, strCheckItem, strSection)
     end if
   on error goto 0  
 
-
   if BoolDebugTrace = True then logdata strAlienVaultreportsPath & "\AlienV_" & replace(strData, ":",".") & ".txt", objHTTP.responseText & vbcrlf & vbcrlf,BoolEchoLog 
+  
+  If InStr(objHTTP.responseText, "{" & Chr(34) & "detail" & Chr(34) & ": " & Chr(34) & "Over throttling limit" & Chr(34) & "}") > 0 Then '{"detail": "Over throttling limit"}
+  	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " AlienVault lookup returned Over throttling limit while querying " & strCheckItem,false
+  	'over lookup limit
+  	WScript.Sleep(300000) 'sleep for five minutes
+  	pullAlienVault = pullAlienVault(strAlienURL, strCheckItem, strSection)
+  	Exit Function
+  End If  	  	
+  
   if len(objHTTP.responseText) > 0 then
     pullAlienVault = objHTTP.responseText
   end if
@@ -11843,7 +11959,7 @@ End Function
 
 Function LogHashes(dictHashlist, strHashListName, strQueriedItem)
 if boolLogHashes = False then exit function
-if dictHashlist.Count > 0 then	
+if dictHashlist.Count > 0  And boolLogIOCs = True then	
  for each listedHash in dictHashlist
 	logdata strReportsPath & "\Hashes_" & strHashListName & "_" & UniqueString & ".log", strQueriedItem & "|" & listedHash, False
  next 
@@ -12072,7 +12188,7 @@ if instr(strDTtoProcess, chr(34)) > 1 then
     strDTtoProcess =  FormatDateTime(strDTtoProcess)
 
     if err.number <> 0 then 
-      objShellComplete.popup "FormatDateTime error: " & strDTtoProcess, 20
+      objShellComplete.popup "FormatDateTime error: " & strDTtoProcess, 20, "VTTL - " & CurrentDirectory
       logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " " & strTimeSource & " FormatDateTime error: " & strDTtoProcess & strTmpWCO_CClineE ,False 
     end if
     on error goto 0
@@ -12360,8 +12476,14 @@ ElseIf IsHash(dictEntry) = True Then
 ElseIf InStr(dictEntry, "@")> 0 Then 'email address
 	'not collecting email addresses
 ElseIf InStr(dictEntry, "http") > 0  Then
-	strURLWatchLineE = MatchURLwatchList(strURLWatchLineE, dictEntry)
-	If boolLogURLs = True Then logdata strReportsPath & "\URLs_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, false
+	If InStr(dictEntry, "otx.alienvault.com") > 0 Or InStr(dictEntry, "otx.alienvault.com") > 0 Or InStr(dictEntry, "www.phishtank.com") > 0  Or InStr(dictEntry, "urlquery.net") > 0 Or _
+	  InStr(dictEntry, "threatcrowd.org") > 0 Or InStr(dictEntry, "vxvault.net") > 0 Or InStr(dictEntry, "community.bluelive.com") > 0  Or InStr(dictEntry, "malc0de.com") > 0 Or _
+	  InStr(dictEntry, "hybrid-analysis.com") > 0 Or InStr(dictEntry, "sandbox.pikker.ee") > 0 Or InStr(dictEntry, "www.sophos.com") > 0  Or InStr(dictEntry, "malc0de.com") > 0Then
+		If boolLogReferenceURLs = True Then logdata strReportsPath & "\references_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, False
+	Else
+		strURLWatchLineE = MatchURLwatchList(strURLWatchLineE, dictEntry)
+		If boolLogURLs = True Then logdata strReportsPath & "\URLs_Seclytic" & "_" & UniqueString & ".log", strData & "|" & dictEntry, False
+	End if
 ElseIf InStr(dictEntry, vblf) > 0 Then
 	'MsgBox dictEntry
 ElseIf (InStr(dictEntry, ":") > 0 Or InStr(dictEntry, "!") > 0 ) and InStr(dictEntry, " ") = 0  Then 'If not a URL (no http) and contains a colon or excalamation point then possible detection name.
@@ -12644,6 +12766,138 @@ strHashTrack = LCase(strHashTrack)
  if dictTrackObject.exists(strHashTrack) = false then
   dictTrackObject.add strHashTrack, secondaryIOC
  end if
-
-
 end sub
+
+
+
+'------------------load static intelligence---------------------------------------
+Function TraverseIntelFolders(fldr)
+  loadAllIntel fldr
+  For Each sf In fldr.SubFolders
+    TraverseIntelFolders sf
+  Next
+End Function
+
+
+Sub loadAllIntel(strIntelFolderPath)
+set objFolder = objFSO.GetFolder(strIntelFolderPath)
+Set colFiles = objFolder.Files
+For Each objFile in colFiles
+    LoadThreatIntel objFile.Path
+Next
+End sub
+
+Sub processIntelCSV(strIntelCSVrow, tmpReportName)
+intIntelLocation = -1
+intIntelDescription = -1 
+Select Case tmpReportName
+	Case "maltrail-static-trails"
+		intIntelLocation = 0
+		intIntelDescription =1
+	Case "blackbook(malware)"
+		intIntelLocation = 0
+		intIntelDescription =1
+	Case "viriback(malware)"
+		intIntelLocation = 1
+		intIntelDescription =0
+	Case "turris(bad reputation)"
+		intIntelLocation = 0
+		intIntelDescription =2		
+End Select		
+If InStr(strIntelCSVrow, Chr(34) & "," & Chr(34)) > 0 Then
+	arrayIntelCSV = Split(strIntelCSVrow, Chr(34) & "," & Chr(34))
+ElseIf InStr(strIntelCSVrow, ",") > 0 Then
+	arrayIntelCSV = Split(strIntelCSVrow, ",")
+Else
+	Exit Sub
+End If
+tmpIntelDesc = ""
+tmpIntelIOC = ""
+If UBound(arrayIntelCSV) >= intIntelLocation And intIntelLocation > -1 Then
+	tmpIntelIOC = arrayIntelCSV(intIntelLocation)
+End If
+If UBound(arrayIntelCSV) >= intIntelDescription And intIntelDescription > -1 Then
+	tmpIntelDesc = arrayIntelCSV(intIntelDescription)  & " (" & tmpReportName & ")"
+	tmpIntelDesc = Replace(tmpIntelDesc, ",", ":")
+Else
+	tmpIntelDesc = tmpReportName
+End If
+If tmpIntelIOC <> "" Then addThreatIntel tmpIntelIOC, tmpIntelDesc
+End Sub
+
+Sub LoadThreatIntel(strListPath)
+boolProcessCSV = False
+reportName = GetFilePath(strListPath) & "\"
+reportName = Replace(strListPath, reportName, "")
+If Len(strListPath) > 4 Then
+If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" Then Exit Sub
+If Right(strListPath, 4) <> ".csv" Then boolProcessCSV = True
+reportName = Replace(reportName, ".txt", "")
+End If
+
+if objFSO.fileexists(strListPath) then
+  Set objFile = objFSO.OpenTextFile(strListPath)
+  Do While Not objFile.AtEndOfStream
+    if not objFile.AtEndOfStream then 'read file
+        On Error Resume Next
+        strTmpData = objFile.ReadLine
+                on error goto 0
+        If boolProcessCSV = True Then
+        	processIntelCSV strTmpData,  reportName
+        Else	
+        	addThreatIntel strTmpData,  reportName
+        End If	
+    end if
+  loop
+end if
+end Sub
+
+Sub addThreatIntel(strIOC2Process, tmpIntelDesc)
+tmpIOC2Process = strIOC2Process
+If Len(tmpIOC2Process) > 0 Then 'ignore blank lines
+	If Left(tmpIOC2Process, 1) <> "#" And Left(tmpIOC2Process, 1) <> "/" Then 'Ignore pound sign and forward slash
+		If (Left(tmpIOC2Process, 8) = "https://" Or Left(tmpIOC2Process, 7) = "http://") And boolAddURLsToWatchlistFromIntel = True Then
+			aggregateDict dictURLWatchList, truncateIOC(tmpIOC2Process), tmpIntelDesc
+			tmpIOC2Process = Replace(tmpIOC2Process, "https://", "") 'remote https
+			tmpIOC2Process = Replace(tmpIOC2Process, "http://", "") 'remote https
+		End If
+
+		If InStr(tmpIOC2Process, ":") > 0 Then tmpIOC2Process = Left(tmpIOC2Process, InStr(tmpIOC2Process, ":") -1) 'truncate at colon
+		If InStr(tmpIOC2Process, "/") > 0 Then tmpIOC2Process = Left(tmpIOC2Process, InStr(tmpIOC2Process, "/") -1) 'truncate at forward slash
+		tmpIOC2Process = truncateIOC(tmpIOC2Process)
+		        		
+		If instr(tmpIOC2Process, "[") > 0 Or instr(tmpIOC2Process, "{") > 0 Then 'regex
+			
+		ElseIf IsHash(tmpIOC2Process) Then
+			aggregateDict DictMalHash, tmpIOC2Process, tmpIntelDesc
+		ElseIf isIPaddress(tmpIOC2Process) Then
+			aggregateDict dictIPdomainWatchList, tmpIOC2Process, tmpIntelDesc
+		ElseIf InStr(tmpIOC2Process, ".") > 0 then 'domain name
+			aggregateDict dictIPdomainWatchList, tmpIOC2Process, tmpIntelDesc
+		End If
+	ElseIf Left(tmpIOC2Process, 1) = "/" And boolAddURLsToWatchlistFromIntel = True Then 'partial URI
+		aggregateDict dictURLWatchList, truncateIOC(tmpIOC2Process), tmpIntelDesc
+	'else 'todo - check if a hash exists in comments
+	
+	End if	
+
+End if
+End Sub
+
+Function truncateIOC(strTmpIOC)
+returnTmpIOC = strTmpIOC
+If InStr(returnTmpIOC, " ") > 0 Then returnTmpIOC = Left(returnTmpIOC, InStr(returnTmpIOC, " ") -1) 'truncate at space
+If InStr(returnTmpIOC, ",") > 0 Then returnTmpIOC = Left(returnTmpIOC, InStr(returnTmpIOC, ",") -1) 'truncate at comma
+If InStr(returnTmpIOC, vbTab) > 0 Then returnTmpIOC = Left(returnTmpIOC, InStr(returnTmpIOC, vbTab) -1) 'truncate at tab
+truncateIOC = returnTmpIOC
+End Function
+
+Sub aggregateDict(dictObject, strKeyvalue, strKeypairValue)
+	If dictObject.Exists(strKeyvalue) = False Then 
+		dictObject.Add strKeyvalue, strKeypairValue
+	ElseIf dictObject(strKeyvalue) <> strKeypairValue Then
+		whatamI = dictObject(strKeyvalue)
+		dictObject(strKeyvalue) =  AppendValuesList(dictObject(strKeyvalue),strKeypairValue,"^")
+	End If	
+End Sub
+'-----------------end load static intelligence------------
