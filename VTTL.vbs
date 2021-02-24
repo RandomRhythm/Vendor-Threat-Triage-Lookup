@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.8 - Bug fixes and added features
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.9 - Replace "|" in whois name with " - ". Enhance DDNS intel loading. Move DDNS check. Fix logic to run reverse DNS check when IP provided by Seclytics. Boolean AddIpResolutionsToQueue to prevent PDNS from being added to lookup queue.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -448,6 +448,7 @@ Dim boolAttackerFeed
 Dim boolMalwareFeed
 Dim boolAddURLsToWatchlistFromIntel
 Dim objDnsClient 'COM object for DNS lookups
+Dim AddIpResolutionsToQueue 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -488,6 +489,7 @@ boolLogReferenceURLs = True 'Log reference URLs
 boolLogIOCs = True 'Log associated IOCs
 boolLogHashes = True 'Output URLs and hashes associated with the lookup items. (outputs from VirusTotal and Seclytics)
 boolLogIPs = True 'Output IP addresses associated with the lookup items.
+AddIpResolutionsToQueue = True 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -1027,7 +1029,13 @@ if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") then
           strTmpArrayDDNS = split(strTmpData, vbtab)
           if DictDDNS.exists(strTmpArrayDDNS(0)) = False then _
           DictDDNS.add strTmpArrayDDNS(0), 1
-        end if
+        ElseIf Left(strTmpData, 1) <> "#" And strTmpData <> "" Then
+        	 If InStr(strTmpData,"#") > 0 Then strTmpData = Left(strTmpData, InStr(strTmpData,"#") -1)
+        	 If InStr(strTmpData," ") > 0 Then strTmpData = Left(strTmpData, InStr(strTmpData," ") -1)
+        	 if DictDDNS.exists(strTmpData) = False then
+        	 	DictDDNS.add strTmpData, ""
+        	End If
+        End if
         on error goto 0
     end if
   loop
@@ -2341,7 +2349,37 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			else
 				strQuad9DNS = "|"
 			end if
-		  end if
+		  end If
+  
+		  'Check dynamic DNS
+		  If BoolDDNS_Checks = True then
+		    if instr(strData, ".") then
+		      ArrayTmpDDNS = split(strData, ".")
+		      for ddnsloop = 0 to 1
+		        if ddnsloop = 0 then
+		          strTmpDDNS = ArrayTmpDDNS(ubound(ArrayTmpDDNS)-1) & "." & ArrayTmpDDNS(ubound(ArrayTmpDDNS))
+		        elseif ubound(ArrayTmpDDNS) > 2 then
+		          strTmpDDNS = ArrayTmpDDNS(ubound(ArrayTmpDDNS)-2) & "." & ArrayTmpDDNS(ubound(ArrayTmpDDNS)-1) & "." & ArrayTmpDDNS(ubound(ArrayTmpDDNS))
+		        else
+		          exit for
+		        end if
+		
+		        if DictDDNS.exists(strTmpDDNS) = True then
+		
+		          strDDNSLineE = "|X"
+		          if strDDNS_Output = "" then
+		            strDDNS_Output = strTmpDDNS
+		          else
+		            strDDNS_Output = strDDNS_Output & vbCrLf & strTmpDDNS
+		          end if
+		          exit for
+		        else
+		          strDDNSLineE = "|"
+		        end if
+		      next
+		    end if
+		  end If
+  
 		  If boolUseAlienVault = True then 'process domain
 				strAlienVaultReturn = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/domain/", strData, "/general")
 				if BoolDebugTrace = True then  logdata strDomainreportsPath & "\AVault_Domain_" & strData & ".txt", strData & vbtab & strAlienVaultReturn,BoolEchoLog
@@ -2372,7 +2410,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
 			If strTmpIPlineE = "|" Or strTmpIPlineE = "" Then
 				SeclytPdns SeclytReturnBody
-				If strTmpIPlineE = "|" Or strTmpIPlineE = "" Then domainPassiveDNS strTmpIPlineE 'set strRevDNS and pending items
+				If strTmpIPlineE <> "|" And strTmpIPlineE <> "" Then domainPassiveDNS strTmpIPlineE 'set strRevDNS and pending items
 			End If	
 		End If
 		  
@@ -3682,35 +3720,7 @@ if instr(strFullAPIURL,"domain=") then
     next
   end if
   
-  'Check dynamic DNS
 
-  If BoolDDNS_Checks = True then
-    if instr(strData, ".") then
-      ArrayTmpDDNS = split(strData, ".")
-      for ddnsloop = 0 to 1
-        if ddnsloop = 0 then
-          strTmpDDNS = ArrayTmpDDNS(ubound(ArrayTmpDDNS)-1) & "." & ArrayTmpDDNS(ubound(ArrayTmpDDNS))
-        elseif ubound(ArrayTmpDDNS) > 2 then
-          strTmpDDNS = ArrayTmpDDNS(ubound(ArrayTmpDDNS)-2) & "." & ArrayTmpDDNS(ubound(ArrayTmpDDNS)-1) & "." & ArrayTmpDDNS(ubound(ArrayTmpDDNS))
-        else
-          exit for
-        end if
-
-        if DictDDNS.exists(strTmpDDNS) = True then
-
-          strDDNSLineE = "|X"
-          if strDDNS_Output = "" then
-            strDDNS_Output = strTmpDDNS
-          else
-            strDDNS_Output = strDDNS_Output & vbCrLf & strTmpDDNS
-          end if
-          exit for
-        else
-          strDDNSLineE = "|"
-        end if
-      next
-    end if
-  end if
   
  'Perform x-force lookups 
  if boolUseXforce = True then 
@@ -12326,7 +12336,7 @@ Sub whoIsPopulate(strTmpWhoIs)
         end if  
         if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "results after cache query: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE & "^" & "strTmpCClineE =" & strTmpCClineE & "^" & "strTmpRequestResponse =" & strTmpRequestResponse, false
         if BoolWhoisDebug = True then msgbox "strTmpRequestResponse=" & strTmpRequestResponse & vbcrlf & "len=" & len(strTmpRequestResponse) & vbcrlf & "null=" & isnull(strTmpRequestResponse)
-        
+        strTmpRequestResponse = Replace(strTmpRequestResponse, "|", " - ")
 		if boolDisableAlienVaultWhoIs = False Then
 			strAlienWho = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/domain/", strTmpWhoIs, "/whois")
 			if strTmpRequestResponse = "" or strTmpRequestResponse = "|" or isnull(strTmpRequestResponse) = True then 
@@ -12619,7 +12629,7 @@ Sub domainPassiveDNS(strPdnsIPaddress) 'set strRevDNS and pending items
           if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Have not scanned IP address" ,BoolEchoLog 
           if not DicPendingItems.Exists(strPdnsIPaddress) then
             if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Adding IP address to pending items" ,BoolEchoLog 
-            DicPendingItems.Add strPdnsIPaddress, DicPendingItems.Count 
+            If AddIpResolutionsToQueue = True Then DicPendingItems.Add strPdnsIPaddress, DicPendingItems.Count 
             
           end if
           boolPendingItems = True
