@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.3.9 - Replace "|" in whois name with " - ". Enhance DDNS intel loading. Move DDNS check. Fix logic to run reverse DNS check when IP provided by Seclytics. Boolean AddIpResolutionsToQueue to prevent PDNS from being added to lookup queue.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.0 - Fix VirusTotal scoring for communicating hashes. Replace pipe if contained in whois results. Get AlienVault OTX pulse date.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -3866,7 +3866,7 @@ if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then
 						
 						DetectionNameSSlineE = DetectionNameSSline(strTmpIPurl, intPositiveDetectSection) 'spreadsheet line output
 					end if
-				 elseif intPositiveDetectSection =2 then
+				 elseif intPositiveDetectSection =3 then
 				   if not DicHashComm.Exists(strTmpIPurl) then _
 				   hashTrack strTmpIPurl, strdata, DicHashComm end If 'add to dictionary if not already there
 				   
@@ -11332,6 +11332,12 @@ arrayPulses = split(strAlienReturn, "{" & chr(34) & "id" & chr(34))
 for each pulseData in arrayPulses
   if instr(pulseData, chr(34) & "name" & chr(34)) > 0 then
     pulseName = getdata(pulseData, chr(34), chr(34) & "name" & chr(34) & ": " & chr(34))
+    pulse_Modified = getdata(pulseData, chr(34), chr(34) & "modified" & chr(34) & ": " & chr(34))
+    If pulse_Modified = "" Then pulse_Modified = getdata(pulseData, chr(34), chr(34) & "created" & chr(34) & ": " & chr(34))
+    If instr(pulse_Modified, "T") > 0 Then pulse_Modified = left(pulse_Modified, instr(pulse_Modified, "T") -1)
+	If isdate(Replace(pulse_Modified, "T", " ")) Then
+		PulseAge = DateDiff("d",pulse_Modified, Now)
+	End If	
     if instr(pulseName, "Whitelisted") > 0 Or pulseName = "Listed on Alexa" Then Exit Function	'don't log whitelisted items
     pulseDescription = getdata(pulseData, chr(34), chr(34) & "description" & chr(34) & ": " & chr(34))
     if pulseName <> "" then
@@ -12336,7 +12342,7 @@ Sub whoIsPopulate(strTmpWhoIs)
         end if  
         if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "results after cache query: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE & "^" & "strTmpCClineE =" & strTmpCClineE & "^" & "strTmpRequestResponse =" & strTmpRequestResponse, false
         if BoolWhoisDebug = True then msgbox "strTmpRequestResponse=" & strTmpRequestResponse & vbcrlf & "len=" & len(strTmpRequestResponse) & vbcrlf & "null=" & isnull(strTmpRequestResponse)
-        strTmpRequestResponse = Replace(strTmpRequestResponse, "|", " - ")
+        If InStr(strTmpRequestResponse, "|") > 0 Then strTmpRequestResponse = Replace(strTmpRequestResponse, "|", " - ")
 		if boolDisableAlienVaultWhoIs = False Then
 			strAlienWho = pullAlienVault("https://otx.alienvault.com/api/v1/indicators/domain/", strTmpWhoIs, "/whois")
 			if strTmpRequestResponse = "" or strTmpRequestResponse = "|" or isnull(strTmpRequestResponse) = True then 
