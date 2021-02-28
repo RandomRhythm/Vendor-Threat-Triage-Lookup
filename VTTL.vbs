@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.0 - Fix VirusTotal scoring for communicating hashes. Replace pipe if contained in whois results. Get AlienVault OTX pulse date.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.1 - MalwareBazaar recent malware samples
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1016,7 +1016,10 @@ dload_list "https://data.netlab.360.com/feeds/dga/bigviktor.txt", "cache\intel\b
 dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset", "cache\intel\bitcoin_nodes_1d.txt", "1", boolMalwareFeed, false
 dload_list "https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv", "cache\intel\blackbook(malware).csv", "Malware", boolMalwareFeed, false
 dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "cache\intel\botscout_1d.txt", "botscout_1d", boolMalwareFeed, false
-
+'Malware hash feeds
+dload_list "https://bazaar.abuse.ch/export/txt/md5/recent/", "cache\intel\bazaar_md5.txt", "bazaar.abuse.ch", boolMalwareFeed, True
+dload_list "https://bazaar.abuse.ch/export/txt/sha1/recent/", "cache\intel\bazaar_sha1.txt", "bazaar.abuse.ch", boolMalwareFeed, True
+dload_list "https://bazaar.abuse.ch/export/txt/sha256/recent/", "cache\intel\bazaar_sha256.txt", "bazaar.abuse.ch", boolMalwareFeed, True
 
 'load dynamic DNS dat
 if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") then
@@ -12847,7 +12850,7 @@ reportName = GetFilePath(strListPath) & "\"
 reportName = Replace(strListPath, reportName, "")
 If Len(strListPath) > 4 Then
 If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" Then Exit Sub
-If Right(strListPath, 4) <> ".csv" Then boolProcessCSV = True
+If Right(strListPath, 4) = ".csv" Then boolProcessCSV = True
 reportName = Replace(reportName, ".txt", "")
 End If
 
