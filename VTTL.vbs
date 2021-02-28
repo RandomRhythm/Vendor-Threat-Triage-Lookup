@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.1 - MalwareBazaar recent malware samples
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.2 - Set IntTmpAdjustedMalScore to zero when VirusTotal has trusted tag.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -449,6 +449,7 @@ Dim boolMalwareFeed
 Dim boolAddURLsToWatchlistFromIntel
 Dim objDnsClient 'COM object for DNS lookups
 Dim AddIpResolutionsToQueue 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
+Dim TrustedBinary: TrustedBinary = false 'boolean for Microsoft Software Catalogue and other trusted sources (VirusTotal only right now)
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -2776,7 +2777,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           end if
         end if
       end if
-
+      
       if strDFSlineE = "" then 
         if strDateTimeLineE <> "" then 
           strDFSlineE = "|" & strDateTimeLineE
@@ -2927,7 +2928,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             end if
             if Dictwhitehash.item(lcase(strdata)) <> "" and strDetectNameLineE = "|" then strDetectNameLineE = "|" & Dictwhitehash.item(lcase(strdata))
           end if
-          if boolDisableSQL_IQ = False and boolSQLcache = True and ishash(strdata) = True then SQL_Intelligence_Query lcase(strdata)           
+          if boolDisableSQL_IQ = False and boolSQLcache = True and ishash(strdata) = True then SQL_Intelligence_Query lcase(strdata) 
+          if TrustedBinary = True then IntTmpAdjustedMalScore = 0 'whitelisted file          
           'write row for hash lookups
           strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strMimeTypeLineE & strFileTypeLineE & strPE_TimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
       end select 
@@ -3094,6 +3096,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        sslSubject = ""
        strTmpVTTIlineE = ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
+       TrustedBinary = False
 	  
 	  if boolNoCrLf = True then 
 		strTmpSSline = replace(strTmpSSline,vbCr, "")
@@ -3504,6 +3507,9 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
         VTtags = getdata(strresponseText, "],", "tags" & chr(34) & ": [")
         if instr(VTtags, chr(34) & "invalid-signature" & chr(34)) then strCBdigSig = "(Invalid) " & strCBdigSig
 			end if
+		if instr(VTtags, chr(34) & "trusted" & chr(34)) then
+        TrustedBinary = True
+      end if
 	        If ispipeorempty(strCBcompanyName) Then strCBcompanyName = GetData(strresponseText, Chr(34), Chr(34) & "CompanyName" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBproductName) Then strCBproductName = GetData(strresponseText, Chr(34), Chr(34) & "product" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBFileSize) Then 
