@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.2 - Set IntTmpAdjustedMalScore to zero when VirusTotal has trusted tag.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.3 - Improved whois date stamp parsing. Load boolean static intelligence from INI.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -622,7 +622,7 @@ boolMultiFeed = ValueFromINI("vttl.ini", "vendor", "MultiFeed", boolMultiFeed) '
 boolAttackerFeed = ValueFromINI("vttl.ini", "vendor", "AttackerFeed", boolAttackerFeed) 'load value from INI
 boolMalwareFeed = ValueFromINI("vttl.ini", "vendor", "MalwareFeed", boolMalwareFeed) 'load value from INI
 boolAddURLsToWatchlistFromIntel = ValueFromINI("vttl.ini", "vendor", "WatchIntelURLs", boolAddURLsToWatchlistFromIntel) 'load value from INI
-
+boolStaticIntel = ValueFromINI("vttl.ini", "vendor", "StaticIntel", boolStaticIntel ) 'use static intel from https://github.com/stamparm/maltrail
 boolDisableAlienVaultWhoIs = ValueFromINI("vttl.ini", "vendor_AlienVault", "disable_whois", boolDisableAlienVaultWhoIs) 'Disable whois lookups with AlienVault OTX. Default is False.
 boolAlienVaultPassiveDNS = ValueFromINI("vttl.ini", "vendor_AlienVault", "enable_passiveDNS", boolAlienVaultPassiveDNS) 'Use AlienVault passive DNS lookup API. Default is True. populates hosted domain column
 boolIncludeAVHashCount = ValueFromINI("vttl.ini", "vendor_AlienVault", "enable_HashCount", boolIncludeAVHashCount) 'Add CSV output column for hash count
@@ -10205,15 +10205,28 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
   end if
   if mid(strDateCreated, 5,1) = "." and mid(strDateCreated, 8,1) = "." then
     strDateCreated = replace(strDateCreated, ".", "/")
-  end if
+  end If
 
+  if mid(strDateCreated, 20,1) = "." And mid(strDateCreated, 24,1) = "-"  And mid(strDateCreated, 27,1) = ":"  Then '2015-09-03 10:53:18.000-04:00
+  	strDateCreated = Left(strDateCreated, 19) 'truncate time stamp/timezone
+  End If
   if instr(strDateCreated, ", ") > 2 then
 	'remove weekday: Wed, 15 Jan 2014 00:00:00 GMT (AlienVault)
 	strDateCreated = right(strDateCreated, len(strDateCreated) - instr(strDateCreated, ", ") -1) 
-
-	
-
   end if
+
+  if instr(strDateCreated, " #") > 1 Then
+    strDateCreated = left(strDateCreated, instr(strDateCreated, " #") -1)
+    If Len(strDateCreated) = 8 Then
+    	strDateCreated = left(strDateCreated,4) & "/" & Mid(strDateCreated, 5,2) & "/" & Mid(strDateCreated, 7,2)
+    End If
+  end if 
+  If Mid(strDateCreated, 3,1) = "." And Mid(strDateCreated, 5,1) = "." Then '20.4.1998 08:29:00
+	strDateCreated = left(strDateCreated,2) & "/" & Mid(strDateCreated, 4,1) & "/" & mid(strDateCreated, 6)
+  End If
+  If instr(strDateCreated, "\t") > 0 then '\t\t27-Jul-2020 22:19:29
+	strDateCreated = Replace(strDateCreated, "\t", "")
+  End If	
 	if right(strDateCreated, 4)  = " GMT" then
 		strDateCreated = left(strDateCreated, len(strDateCreated) - 4)
 		'msgbox strDateCreated
@@ -10233,7 +10246,7 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
   strDateCreated = DateDiff("s", "01/01/1970 00:00:00", strDateCreated)
   if err.number <> 0 then 
     objShellComplete.popup "date conversion issue: " &  strDateCreated & vbcrlf & strTmpWCO_CClineE, 10, "VTTL - " & CurrentDirectory 'will not be saved to database
-    logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & "Whois date conversion issue for " & strWhoisDomain & ": " &  strDateCreated & "|" & strTmpWCO_CClineE ,False 
+    logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Whois date conversion issue for " & strWhoisDomain & ": " &  strDateCreated & "|" & strTmpWCO_CClineE ,False 
   on error goto 0
 
   end if
