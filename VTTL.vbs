@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.3 - Improved whois date stamp parsing. Load boolean static intelligence from INI.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.4 - Support updating feeds based on age
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -962,7 +962,7 @@ end if
 
 
 'Check and save dynamic DNS dat
-dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat", "this is a listdynamic dns providers", True, False
+if objFSO.fileexists(CurrentDirectory & "\DDNS.dat") = False Then dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat", "this is a listdynamic dns providers", True, false, 24
 'download intelligence
 'dload_list "https://sslbl.abuse.ch/blacklist/sslipblacklist.rules", "cache\intel\sslipblacklist.rules", "SSLBL" 'rules files not currently supported
 'dload_list "https://rules.emergingthreats.net/open/suricata/rules/emerging-dns.rules", "cache\intel\emerging-dns.rules", "Emerging Threats" 'rules files not currently supported
@@ -970,57 +970,59 @@ dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat"
 'dload_list "http://cinsscore.com/list/ci-badguys.txt", "cache\intel\ciarmy.txt", "1" 'noisy
 
 'proxy
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_7d.ipset", "cache\intel\socks_proxy_7d.txt", "socks-proxy.net", boolProxyFeed, False
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_1d.ipset", "cache\intel\sslproxies_1d.txt", "sslproxies_1d", boolProxyFeed, False
-dload_list "https://www.dan.me.uk/torlist/", "cache\intel\tor.txt", "1", boolProxyFeed, False
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_7d.ipset", "cache\intel\socks_proxy_7d.txt", "socks-proxy.net", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_1d.ipset", "cache\intel\sslproxies_1d.txt", "sslproxies_1d", boolProxyFeed, False, 24
+dload_list "https://www.dan.me.uk/torlist/", "cache\intel\tor.txt", "1", boolProxyFeed, False, 24
 
 'multi feeds
-dload_list "https://reputation.alienvault.com/reputation.generic", "cache\intel\alienvault_ip.txt", "1", boolMultiFeed, False
-dload_list "https://openphish.com/feed.txt", "cache\intel\openphish.txt", "http://", boolMultiFeed, False
-dload_list "https://www.turris.cz/greylist-data/greylist-latest.csv", "cache\intel\turris(bad reputation).csv", "1", boolMultiFeed, False
+dload_list "https://reputation.alienvault.com/reputation.generic", "cache\intel\alienvault_ip.txt", "1", boolMultiFeed, False, 24
+dload_list "https://openphish.com/feed.txt", "cache\intel\openphish.txt", "http://", boolMultiFeed, False, 24
+dload_list "https://www.turris.cz/greylist-data/greylist-latest.csv", "cache\intel\turris(bad reputation).csv", "1", boolMultiFeed, False, 24
 
 'attacker feeds
-dload_list "http://ipnoise.now.im/blacklist.txt", "cache\intel\ipnoise(known attacker).txt", "ipnoise", boolAttackerFeed, false
-dload_list "https://blocklist.greensnow.co/greensnow.txt", "cache\intel\greensnow(known attacker).txt", "1", boolAttackerFeed, False
-dload_list "https://iplists.firehol.org/files/dshield_top_1000.ipset", "cache\intel\dshield_top_1000(known attacker).txt", "known attacker", boolAttackerFeed, False
-dload_list "https://lists.blocklist.de/lists/all.txt", "cache\intel\blocklist.de(known attacker).txt", "1", boolAttackerFeed, False
-dload_list "http://danger.rulez.sk/projects/bruteforceblocker/blist.php", "cache\intel\bruteforceblocker.txt", "1", boolAttackerFeed, False
-dload_list "https://www.cruzit.com/xxwbl2txt.php", "cache\intel\cruzit(known attacker).txt", "ipaddress", boolAttackerFeed, False
-dload_list "https://iplists.firehol.org/files/gpf_comics.ipset", "cache\intel\gpf_comics(known attacker).txt", "gpf_comics", boolAttackerFeed, False
-dload_list "https://myip.ms/files/blacklist/htaccess/latest_blacklist.txt", "cache\intel\myip(crawler).txt", "ADDRESSES DATABASE", boolAttackerFeed, False
-dload_list "https://report.cs.rutgers.edu/DROP/attackers", "cache\intel\rutgers(known attacker).txt", "1", boolAttackerFeed, False
-dload_list "https://sblam.com/blacklist.txt", "cache\intel\sblam(html spam).txt", "sblam.com", boolAttackerFeed, False
+dload_list "http://ipnoise.now.im/blacklist.txt", "cache\intel\ipnoise(known attacker).txt", "ipnoise", boolAttackerFeed, false, 24
+dload_list "https://blocklist.greensnow.co/greensnow.txt", "cache\intel\greensnow(known attacker).txt", "1", boolAttackerFeed, False, 24
+dload_list "https://iplists.firehol.org/files/dshield_top_1000.ipset", "cache\intel\dshield_top_1000(known attacker).txt", "known attacker", boolAttackerFeed, False, 24
+dload_list "https://lists.blocklist.de/lists/all.txt", "cache\intel\blocklist.de(known attacker).txt", "1", boolAttackerFeed, False, 24
+dload_list "http://danger.rulez.sk/projects/bruteforceblocker/blist.php", "cache\intel\bruteforceblocker.txt", "1", boolAttackerFeed, False, 24
+dload_list "https://www.cruzit.com/xxwbl2txt.php", "cache\intel\cruzit(known attacker).txt", "ipaddress", boolAttackerFeed, False, 24
+dload_list "https://iplists.firehol.org/files/gpf_comics.ipset", "cache\intel\gpf_comics(known attacker).txt", "gpf_comics", boolAttackerFeed, False, 24
+dload_list "https://myip.ms/files/blacklist/htaccess/latest_blacklist.txt", "cache\intel\myip(crawler).txt", "ADDRESSES DATABASE", boolAttackerFeed, False, 24
+dload_list "https://report.cs.rutgers.edu/DROP/attackers", "cache\intel\rutgers(known attacker).txt", "1", boolAttackerFeed, False, 24
+dload_list "https://sblam.com/blacklist.txt", "cache\intel\sblam(html spam).txt", "sblam.com", boolAttackerFeed, False, 24
 
 'malware feeds
-dload_list "http://tracker.viriback.com/dump.php", "cache\intel\viriback(malware).csv", "1", boolMalwareFeed, False
-dload_list "https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt", "cache\intel\maltrail-static-trails.txt", "(static)", boolMalwareFeed, False
-dload_list "https://www.talosintelligence.com/documents/ip-blacklist", "cache\intel\talosintelligence.txt", "1", boolMalwareFeed, False
-dload_list "http://vxvault.net/URL_List.php", "cache\intel\vxvault(malware).txt", "VX Vault", boolMalwareFeed, False
-dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False
-dload_list "https://cybercrime-tracker.net/ccpmgate.php", "cache\intel\pony.txt", "/gate.php", boolMalwareFeed, False
-dload_list "https://raw.githubusercontent.com/Hestat/minerchk/master/hostslist.txt", "cache\intel\cryptomining.txt", ".com", boolMalwareFeed, False
-dload_list "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt", "cache\intel\feodotracker.txt", "Botnet C2", boolMalwareFeed, False
-dload_list "https://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt", "cache\intel\emergingthreats-ip.txt", "1", boolMalwareFeed, False
-dload_list "https://cybercrime-tracker.net/all.php", "cache\intel\cybercrime-tracker(malware).txt", "cp.php?m=login", boolMalwareFeed, False
-dload_list "https://kriskintel.com/feeds/ktip_malicious_Ips.txt", "cache\intel\kriskintel_ip.txt", "kriskintel.com", boolMalwareFeed, False
-dload_list "https://kriskintel.com/feeds/ktip_malicious_domains.txt", "cache\intel\ktip_malicious_domains.txt", "kriskintel.com", boolMalwareFeed, False
-dload_list "https://data.netlab.360.com/feeds/dga/virut.txt", "cache\intel\virut_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/tofsee.txt", "cache\intel\tofsee_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/suppobox.txt", "cache\intel\suppobox_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/necurs.txt", "cache\intel\necurs_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/locky.txt", "cache\intel\locky_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/gameover.txt", "cache\intel\gameover_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/cryptolocker.txt", "cache\intel\cryptolocker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/conficker.txt", "cache\intel\conficker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/chinad.txt", "cache\intel\chinad_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://data.netlab.360.com/feeds/dga/bigviktor.txt", "cache\intel\bigviktor_dga_(malware).txt", "netlab 360", boolMalwareFeed, True
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset", "cache\intel\bitcoin_nodes_1d.txt", "1", boolMalwareFeed, false
-dload_list "https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv", "cache\intel\blackbook(malware).csv", "Malware", boolMalwareFeed, false
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "cache\intel\botscout_1d.txt", "botscout_1d", boolMalwareFeed, false
+dload_list "http://tracker.viriback.com/dump.php", "cache\intel\viriback(malware).csv", "1", boolMalwareFeed, False, 24
+dload_list "https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt", "cache\intel\maltrail-static-trails.txt", "(static)", boolMalwareFeed, False, 24
+dload_list "https://www.talosintelligence.com/documents/ip-blacklist", "cache\intel\talosintelligence.txt", "1", boolMalwareFeed, False, 24
+dload_list "http://vxvault.net/URL_List.php", "cache\intel\vxvault(malware).txt", "VX Vault", boolMalwareFeed, False, 24
+dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24
+dload_list "https://cybercrime-tracker.net/ccpmgate.php", "cache\intel\pony.txt", "/gate.php", boolMalwareFeed, False, 24
+dload_list "https://raw.githubusercontent.com/Hestat/minerchk/master/hostslist.txt", "cache\intel\cryptomining.txt", ".com", boolMalwareFeed, False, 24
+dload_list "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt", "cache\intel\feodotracker.txt", "Botnet C2", boolMalwareFeed, False, 24
+dload_list "https://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt", "cache\intel\emergingthreats-ip.txt", "1", boolMalwareFeed, False, 24
+dload_list "https://cybercrime-tracker.net/all.php", "cache\intel\cybercrime-tracker(malware).txt", "cp.php?m=login", boolMalwareFeed, False, 24
+dload_list "https://kriskintel.com/feeds/ktip_malicious_Ips.txt", "cache\intel\kriskintel_ip.txt", "Feed last refreshed", boolMalwareFeed, False, 24
+dload_list "https://kriskintel.com/feeds/ktip_malicious_domains.txt", "cache\intel\ktip_malicious_domains.txt", "Feed last refreshed", boolMalwareFeed, False, 24
+dload_list "https://data.netlab.360.com/feeds/dga/virut.txt", "cache\intel\virut_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/tofsee.txt", "cache\intel\tofsee_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/suppobox.txt", "cache\intel\suppobox_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/necurs.txt", "cache\intel\necurs_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/locky.txt", "cache\intel\locky_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/gameover.txt", "cache\intel\gameover_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/cryptolocker.txt", "cache\intel\cryptolocker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/conficker.txt", "cache\intel\conficker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/chinad.txt", "cache\intel\chinad_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://data.netlab.360.com/feeds/dga/bigviktor.txt", "cache\intel\bigviktor_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset", "cache\intel\bitcoin_nodes_1d.txt", "1", boolMalwareFeed, false, 24
+dload_list "https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv", "cache\intel\blackbook(malware).csv", "Malware", boolMalwareFeed, false, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "cache\intel\botscout_1d.txt", "botscout_1d", boolMalwareFeed, False, 24
+dload_list "https://feeds.alphasoc.net/ryuk.txt", "cache\intel\AlphaSOC_RyukC2.txt", "AlphaSOC, Inc.", boolMalwareFeed, false, 24
+
 'Malware hash feeds
-dload_list "https://bazaar.abuse.ch/export/txt/md5/recent/", "cache\intel\bazaar_md5.txt", "bazaar.abuse.ch", boolMalwareFeed, True
-dload_list "https://bazaar.abuse.ch/export/txt/sha1/recent/", "cache\intel\bazaar_sha1.txt", "bazaar.abuse.ch", boolMalwareFeed, True
-dload_list "https://bazaar.abuse.ch/export/txt/sha256/recent/", "cache\intel\bazaar_sha256.txt", "bazaar.abuse.ch", boolMalwareFeed, True
+dload_list "https://bazaar.abuse.ch/export/txt/md5/recent/", "cache\intel\bazaar_md5.txt", "bazaar.abuse.ch", boolMalwareFeed, True, 24
+dload_list "https://bazaar.abuse.ch/export/txt/sha1/recent/", "cache\intel\bazaar_sha1.txt", "bazaar.abuse.ch", boolMalwareFeed, True, 24
+dload_list "https://bazaar.abuse.ch/export/txt/sha256/recent/", "cache\intel\bazaar_sha256.txt", "bazaar.abuse.ch", boolMalwareFeed, True, 24
 
 'load dynamic DNS dat
 if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") then
@@ -5264,8 +5266,11 @@ End Function
 
 
 Function nslookup_Return(strServerName, strNS)
-if boolDNScom = True then
+if boolDNScom = True Then
+On Error Resume Next
   nslookup_Return = objDnsClient.dnsNameQuery(strServerName, strNS, "")
+  If err.number <> 0 Then logdata strDebugPath & "\VTTL_Error.log", Date & " " & Time & " " & err.message,False 
+  On Error GoTo 0
   exit function
 end if
 Set sh = WScript.CreateObject("WScript.Shell")
@@ -6168,11 +6173,20 @@ end if
 End function
 
 
-Function dload_list(strURLDownload,strDownloadName, checkString, boolUseFeed, boolIgnoreSSL)
-if objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True Or boolUseFeed = False Then 
-	If objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True And boolUseFeed = false Then objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
-	Exit Function 'need to check age of intelligence and update
-End if	
+Function dload_list(strURLDownload,strDownloadName, checkString, boolUseFeed, boolIgnoreSSL, fileAgeThreshold)
+if objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = False and boolUseFeed = False Then Exit Function
+If objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True Then
+	Set f = objFSO.GetFile(CurrentDirectory & "\" & strDownloadName)
+	ageInHours = DateDiff("h", f.DateLastModified, Now)
+	If ageInHours < fileAgeThreshold Then
+		If boolUseFeed = False Then objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
+		Exit Function
+	Else 'file is old and needs updated
+		objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
+	End If
+End If	
+If boolUseFeed = False Then Exit Function
+
 Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
 If boolIgnoreSSL = True Then
 	objHTTP.SetOption 2, 13056
