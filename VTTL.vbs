@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.5 - Expose output encoding as variable / INI setting. If using AlienVault then populate geolocation even if contact info is already populated. Further error handling for whosip external lookup.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.6 - Support using COM object for RBL lookups. Testpoint for surbl.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -3727,6 +3727,7 @@ if instr(strFullAPIURL,"domain=") then
         end if
         if RBL_loop = 0 and boolEnableZDBL = True then strTmpZDBLlineE = "|X"
 		if RBL_loop = 1 and enableURIBL = True then strTmpURIBLlineE = "|X"
+		'loop 2 is for strTmpSURbLineE which is set via the RBL_Lookup function
       else
         if RBL_loop = 0 and boolEnableZDBL = True then strTmpZDBLlineE = "|"              
       end if
@@ -4701,15 +4702,26 @@ else
   TempReverseIP = strIP & strRBL'domain
   strIPorDomain = "domain"
 end if
-CurrentDirectory = GetFilePath(wscript.ScriptFullName)
 
-ExecQuery = "cmd.exe /c nslookup " & TempReverseIP & " " & strDNSServer & ">" & chr(34) & strCachePath & "\rbl.txt" & chr(34)   
-ErrRtn = sh_rbl.run (ExecQuery,0 ,True)
+if boolDNScom = True Then
+'On Error Resume Next
+  dataresults = objDnsClient.dnsNameQuery(TempReverseIP, strDNSServer, "")
+  If err.number <> 0 Then logdata strDebugPath & "\VTTL_Error.log", Date & " " & Time & " " & err.message,False 
+  On Error GoTo 0
 
-set readfilePath = fso_rbl.OpenTextFile(strCachePath & "\rbl.txt", 1, false)
-if not readfilePath.AtEndOfStream then dataresults = readfilepath.readall
-readfilePath.close
-set readfilePath =  Nothing
+else
+
+  CurrentDirectory = GetFilePath(wscript.ScriptFullName)
+
+  ExecQuery = "cmd.exe /c nslookup " & TempReverseIP & " " & strDNSServer & ">" & chr(34) & strCachePath & "\rbl.txt" & chr(34)   
+  ErrRtn = sh_rbl.run (ExecQuery,0 ,True)
+  set readfilePath = fso_rbl.OpenTextFile(strCachePath & "\rbl.txt", 1, false)
+  if not readfilePath.AtEndOfStream then dataresults = readfilepath.readall
+  readfilePath.close
+  set readfilePath =  Nothing
+end if
+
+
 strRBLL_return = ""
 if instr(dataresults, "127.0.0.2") <> 0 Then
   strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
@@ -4830,7 +4842,10 @@ elseif instr(strRBL,".multi.surbl.org") > 0 then 'http://www.surbl.org/guideline
 	strTmpSURbLineE = "Malware^Abuse^CrackedSite"	
   elseif instr(dataresults, "127.0.0.216") <> 0 Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
-	strTmpSURbLineE = "Malware^Phishing^Abuse^CrackedSite"	
+	strTmpSURbLineE = "Malware^Phishing^Abuse^CrackedSite"
+  elseif instr(dataresults, "127.0.0.254") <> 0 Then
+    strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
+	strTmpSURbLineE = "testpoint"	
   end if
 
 elseif instr(strRBL, ".dnsbl.sorbs.net") > 0 then
