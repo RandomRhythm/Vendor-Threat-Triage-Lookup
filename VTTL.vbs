@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.4 - Support updating feeds based on age
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.5 - Expose output encoding as variable / INI setting. If using AlienVault then populate geolocation even if contact info is already populated. Further error handling for whosip external lookup.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -450,6 +450,7 @@ Dim boolAddURLsToWatchlistFromIntel
 Dim objDnsClient 'COM object for DNS lookups
 Dim AddIpResolutionsToQueue 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
 Dim TrustedBinary: TrustedBinary = false 'boolean for Microsoft Software Catalogue and other trusted sources (VirusTotal only right now)
+Dim boolOutputUnicode
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -491,6 +492,7 @@ boolLogIOCs = True 'Log associated IOCs
 boolLogHashes = True 'Output URLs and hashes associated with the lookup items. (outputs from VirusTotal and Seclytics)
 boolLogIPs = True 'Output IP addresses associated with the lookup items.
 AddIpResolutionsToQueue = True 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
+boolOutputUnicode = False 'Default output encoding is utf-8. You may need utf-16 depending on what data gets imported into the script
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -521,10 +523,10 @@ uriblDNS = ""
 surblDNS =  ""
 abuseatDNS = ""
 '--- Feed vendors
-boolProxyFeed = True
-boolMultiFeed = True
-boolAttackerFeed = True
-boolMalwareFeed = True
+boolProxyFeed = false
+boolMultiFeed = false
+boolAttackerFeed = false
+boolMalwareFeed = False
 boolAddURLsToWatchlistFromIntel = False
 '--- API vendor lookup config section
 boolUseRIPE = True ' Réseaux IP Européens (RIPE NCC) API
@@ -613,10 +615,10 @@ boolCacheDomain = ValueFromINI("vttl.ini", "main", "DomainCache", boolWhoisCache
 BoolUseExcel = ValueFromINI("vttl.ini", "main", "enable_Excel", BoolUseExcel) 'load value from INI
 sleepOnSkippedVT = ValueFromINI("vttl.ini", "main", "SleepOnCachedLookup", sleepOnSkippedVT) 'load value from INI to sleep if VirusTotal results came from cache
 intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) 'Number of days from first time seeing the hash that you want to refresh the cache data (get updated results) for processed items. Default value is 10
-strDatabasePath = ValueFromINI("vttl.ini", "main", "database_location", strDatabasePath)
+strDatabasePath = ValueFromINI("vttl.ini", "main", "database_location", strDatabasePath) 'Path to VTTL database
+boolOutputUnicode = ValueFromINI("vttl.ini", "main", "output_unicode", boolOutputUnicode) 'Encoding to use for log/file output
 BoolDisableVTlookup = ValueFromINI("vttl.ini", "vendor", "disable_VirusTotal", BoolDisableVTlookup) 'load value from INI
 boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault) 'load value from INI
-
 boolProxyFeed = ValueFromINI("vttl.ini", "vendor", "ProxyFeed", boolProxyFeed) 'load value from INI
 boolMultiFeed = ValueFromINI("vttl.ini", "vendor", "MultiFeed", boolMultiFeed) 'load value from INI
 boolAttackerFeed = ValueFromINI("vttl.ini", "vendor", "AttackerFeed", boolAttackerFeed) 'load value from INI
@@ -2255,7 +2257,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				end if
 			end if
 		elseif boolDisableAlienVaultWhoIs = False Then
-			if strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
+			if strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" Or strTmpCNlineE = "|" and strTmpCClineE = "|" then
 				strTmpIPContactLineE = AlienVaultWhois (strAlienVaultReturn) 'sets geolocation and whois contact
 				if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "Alien Return: " & strTmpIPContactLineE, false
 			elseif strTmpCClineE = "|" or strTmpWCO_CClineE = "|" then
@@ -4071,7 +4073,6 @@ end if
 end sub
 
 
-
 function LogData(TextFileName, TextToWrite,EchoOn)
 Set fsoLogData = CreateObject("Scripting.FileSystemObject")
 if TextFileName = "" then
@@ -4091,28 +4092,19 @@ if EchoOn = True then wscript.echo TextToWrite
       on error goto 0
   End If
 if TextFileName <> "" then
-
+  outEncoding = TristateFalse
+  if boolOutputUnicode = True then outEncoding = TristateTrue
   on error resume next
-  Set WriteTextFile = fsoLogData.OpenTextFile(TextFileName,ForAppending, False)
+  Set WriteTextFile = fsoLogData.OpenTextFile(TextFileName,ForAppending, False, outEncoding)
   WriteTextFile.WriteLine TextToWrite
   WriteTextFile.Close
   if err.number <> 0 then 
-    on error goto 0
-    
-  Dim objStream
-  Set objStream = CreateObject("ADODB.Stream")
-  objStream.CharSet = "utf-16"
-  objStream.Open
-  objStream.WriteText TextToWrite
-  on error resume next
-  objStream.SaveToFile TextFileName, 2
-  if err.number <> 0 then msgbox err.number & " - " & err.message & " Problem writing to " & TextFileName
-  if err.number <> 0 then 
-    objShellComplete.popup "problem writting text: " & TextToWrite, 30, "VTTL - " & CurrentDirectory
-    logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " problem writting text: " & TextToWrite,False 
-  end if
+
+    Set WriteTextFile = fsoLogData.OpenTextFile(replace(TextFileName, ".", "_unicode.", 1, 1),ForAppending, False, TristateTrue)
+    WriteTextFile.WriteLine TextToWrite
+    WriteTextFile.Close
   on error goto 0
-  Set objStream = nothing
+  
   end if
 end if
 Set fsoLogData = Nothing
@@ -5664,8 +5656,14 @@ Set fso_WhoIsIP = CreateObject("Scripting.FileSystemObject")
 CurrentDirectory = GetFilePath(wscript.ScriptFullName)
 
 ExecQuery = "cmd.exe /c whosip " & strWhoIsIPaddress  & ">" & chr(34) & strCachePath & "\WhoIsIP.txt" & chr(34)   
+             On Error Resume Next
               ErrRtn = sh_WhoIsIP.run ("%comspec% /c " &  ExecQuery,0 ,True)
               if ErrRtn <> 0 then BooWhoIsIPLookup = False
+              If err.number <> 0 Then 
+              	BooWhoIsIPLookup = false
+              	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " whosip lookup failed with error - " & err.description,False 
+              End If
+              On Error GoTo 0
              set readfilePath = fso_WhoIsIP.OpenTextFile(strCachePath & "\WhoIsIP.txt", 1, false)
 if not readfilePath.AtEndOfStream then dataresults = readfilepath.readall
 readfilePath.close
