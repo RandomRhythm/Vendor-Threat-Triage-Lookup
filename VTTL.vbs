@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.6 - Support using COM object for RBL lookups. Testpoint for surbl.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.7 - BooWhoIsIPLookup value now loads from INI.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -499,6 +499,7 @@ BoolDDNS_Checks = True 'Dynamic DNS check
 boolUseTrancoList = True 'Check domains against https://tranco-list.eu
 boolSkipOnTrancoHit = True 'Skip VirusTotal lookups when domain match against https://tranco-list.eu
 sysinternalsWhois = False 'Use command line sysinternals whois tool for whois lookups
+BooWhoIsIPLookup = True 'Use NirSoft whosip external lookup tool
 boolWhoisCache = False 'Cache whois results
 staticIntelPath = "" 'path to static intelligence https://github.com/stamparm/maltrail
 '--- VirusTotal custom checks
@@ -651,6 +652,7 @@ boolEnablePassiveTotal = ValueFromINI("vttl.ini", "vendor", "EnablePassiveTotal"
 boolEnableETIntelligence = ValueFromINI("vttl.ini", "vendor", "UseETIntelligence", boolEnableETIntelligence)
 BoolUseCIF = ValueFromINI("vttl.ini", "vendor", "UseCIF", BoolUseCIF)
 sysinternalsWhois = ValueFromINI("vttl.ini", "vendor", "SysinternalsWhois", sysinternalsWhois)
+BooWhoIsIPLookup =  ValueFromINI("vttl.ini", "vendor", "NirSoft_WhosIP", BooWhoIsIPLookup)
 BoolDNS_BLchecks = ValueFromINI("vttl.ini", "vendor", "enable_BlockLists", BoolDNS_BLchecks) 'Perform DNS block list checks
 boolDisableDomain_BLchecks = ValueFromINI("vttl.ini", "vendor", "disable_DomainBlockLists", boolDisableDomain_BLchecks) 'Disables uribl and surbl. Default value is True
 cudaDNS = ValueFromINI("vttl.ini", "DNS_Server", "Barracuda", cudaDNS)
@@ -741,7 +743,7 @@ boolRescan = False
 BoolUseThreatGRID = False
 BoolUseCIF = False
 
-BooWhoIsIPLookup = True
+
 
 boolSHA256csvLookup = False
 boolEchoError = True
