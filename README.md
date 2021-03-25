@@ -27,8 +27,10 @@ Additional checks:
 * Reverse DNS
 * Reverse IP (lookup to document sample of associated domains)
 * Whois (often provided via APIs already listed)
-  * ARIN (Must enable in INI)
-  * RIPE (Must enable in INI)
+  * ARIN Web API
+  * RIPE Web API
+  * Sysinternals Whois (external command line tool)
+  * NirSoft WhosIP (external command line tool)
 * Website category (from web proxy vendors)
 * Dynamic DNS
 * Tranco List
