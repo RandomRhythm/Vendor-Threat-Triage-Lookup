@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.7 - BooWhoIsIPLookup value now loads from INI.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.7 - AlienVault OTX whois will now work based on configuration 
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2258,7 +2258,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 					ProcessAlienURLs strAlienHostURLs
 				end if
 			end if
-		elseif boolDisableAlienVaultWhoIs = False Then
+		End if
+		If boolDisableAlienVaultWhoIs = False Then
 			if strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" Or strTmpCNlineE = "|" and strTmpCClineE = "|" then
 				strTmpIPContactLineE = AlienVaultWhois (strAlienVaultReturn) 'sets geolocation and whois contact
 				if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "Alien Return: " & strTmpIPContactLineE, false
