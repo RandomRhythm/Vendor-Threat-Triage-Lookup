@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.7 - AlienVault OTX whois will now work based on configuration 
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.8 - Ip/domain watchlist now works when you aren't using VirusTotal. Support intel age from FireHOL. If no Cr in dload_list results then replace Lf with CrLf.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -333,7 +333,7 @@ Dim intHashPositiveThreashold 'used to limit hash lookups for hash IP/domain ass
 Dim dictURLWatchList: set dictURLWatchList = CreateObject("Scripting.Dictionary")
 Dim strURLWatchLineE 
 Dim BoolURLWatchLlistRegex
-Dim dictIPdomainWatchList: set dictIPdomainWatchList = CreateObject("Scripting.Dictionary")
+Dim dictIPdomainWatchList: set dictIPdomainWatchList = CreateObject("Scripting.Dictionary") 'used in function MatchIpDwatchLIst
 Dim strIpDwatchLineE
 dim ArrayDnameLineE()'dim array used for storing detection names associated with domain/IP
 Dim strWhoAPIRUL: strWhoAPIRUL = "http://api.whoapi.com/?"
@@ -451,6 +451,7 @@ Dim objDnsClient 'COM object for DNS lookups
 Dim AddIpResolutionsToQueue 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
 Dim TrustedBinary: TrustedBinary = false 'boolean for Microsoft Software Catalogue and other trusted sources (VirusTotal only right now)
 Dim boolOutputUnicode
+Dim intIntelAge 'how far the intel should go back. Different than refresh time period
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -529,6 +530,7 @@ boolMultiFeed = false
 boolAttackerFeed = false
 boolMalwareFeed = False
 boolAddURLsToWatchlistFromIntel = False
+intIntelAge = 30 'Days how far the intel should go back. 1, 7, 30, or use zero to grab most recent. Default is 30. Use 31 or greater to grab lists that are no longer updated. Different than refresh time period
 '--- API vendor lookup config section
 boolUseRIPE = True ' Réseaux IP Européens (RIPE NCC) API
 boolUseARIN = True 'American Registry for Internet Numbers (ARIN) API
@@ -974,9 +976,29 @@ if objFSO.fileexists(CurrentDirectory & "\DDNS.dat") = False Then dload_list "ht
 'dload_list "http://cinsscore.com/list/ci-badguys.txt", "cache\intel\ciarmy.txt", "1" 'noisy
 
 'proxy
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_7d.ipset", "cache\intel\socks_proxy_7d.txt", "socks-proxy.net", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_1d.ipset", "cache\intel\sslproxies_1d.txt", "sslproxies_1d", boolProxyFeed, False, 24
+if intIntelAge < 1 then
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
+elseif intIntelAge >= 30 then
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_30d.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_30d.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_30d.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
+elseif intIntelAge >= 7 then
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_7d.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_7d.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_7d.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
+elseif intIntelAge >= 1 then
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_1d.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_1d.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
+end if
+if intIntelAge > 30 then 'intel no longer updated/free license
+dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/maxmind_proxy_fraud.ipset", "cache\intel\MaxMindproxies.txt", "MaxMind", boolProxyFeed, False, 43800
+dload_list "https://github.com/firehol/blocklist-ipsets/blob/master/proxylists_30d.ipset", "cache\intel\proxylists.txt", "www.proxylists.net", boolProxyFeed, False, 43800 'open proxy
+end if
 dload_list "https://www.dan.me.uk/torlist/", "cache\intel\tor.txt", "1", boolProxyFeed, False, 24
+dload_list "https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt", "cache\intel\ejrv_vpn.txt", "update", boolProxyFeed, False, 43800 'VPN list
 
 'multi feeds
 dload_list "https://reputation.alienvault.com/reputation.generic", "cache\intel\alienvault_ip.txt", "1", boolMultiFeed, False, 24
@@ -1020,7 +1042,6 @@ dload_list "https://data.netlab.360.com/feeds/dga/chinad.txt", "cache\intel\chin
 dload_list "https://data.netlab.360.com/feeds/dga/bigviktor.txt", "cache\intel\bigviktor_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
 dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset", "cache\intel\bitcoin_nodes_1d.txt", "1", boolMalwareFeed, false, 24
 dload_list "https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv", "cache\intel\blackbook(malware).csv", "Malware", boolMalwareFeed, false, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "cache\intel\botscout_1d.txt", "botscout_1d", boolMalwareFeed, False, 24
 dload_list "https://feeds.alphasoc.net/ryuk.txt", "cache\intel\AlphaSOC_RyukC2.txt", "AlphaSOC, Inc.", boolMalwareFeed, false, 24
 
 'Malware hash feeds
@@ -2043,10 +2064,11 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		'MalShare
 		if BoolUseMalShare = True then
           MalShareHashLookup  strScanDataInfo       
-        end If
-    elseif BoolDisableVTlookup = True and IsHash(strData) = False Then    
-        whoIsPopulate strScanDataInfo
-	End If
+    end If
+  elseif BoolDisableVTlookup = True and IsHash(strData) = False Then    
+      whoIsPopulate strScanDataInfo
+      strIpDwatchLineE = MatchIpDwatchLIst(strData) 'watchlist
+  End If
 	
 	If IsHash(strData) = True Then
 		If BoolSeclytics = True Then 'set to true to use Seclytics
@@ -2058,8 +2080,6 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			if len(SeclytFileRep) > 32767 then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileDate SeclytReturnBody 'Populate first seen date
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
-			
-
 		End If
 	End If
 	
@@ -2903,10 +2923,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		SeclytFileRep = AddPipe(SeclytFileRep)'Seclytics Associated File Metadata
 		SeclytFileCount = AddPipe(SeclytFileCount)'Seclytics File Count"
 	  End if 
-	  If BoolSeclytics = True Or intVTListDataType = 1 Then
+	  If BoolSeclytics = True Or intVTListDataType = 1 Then  '0=unknown, 1 domain/IP, 2=hash, 3=hash/domain/ip
 		if dictURLWatchList.count > 0 then strURLWatchLineE = addPipe(strURLWatchLineE)
 		if dictIPdomainWatchList.count > 0 then 
-			if len(strIpDwatchLineE) > 32767 then SeclytRepReason = truncateCell(strIpDwatchLineE)
+			if len(strIpDwatchLineE) > 32767 then strIpDwatchLineE = truncateCell(strIpDwatchLineE)
 			strIpDwatchLineE = addPipe(strIpDwatchLineE)
 		End if	
 	  End If
@@ -6220,7 +6240,9 @@ on error resume next
 on error goto 0  
 strReturnInfo = False
 if instr(objHTTP.responseText,checkString) then
-  LogData CurrentDirectory & "\" & strDownloadName,objHTTP.responseText, false
+  fileDownloaded = objHTTP.responseText
+  if instr(fileDownloaded, vbLf) > 0 and instr(fileDownloaded, vbCr) = 0 then fileDownloaded = replace(fileDownloaded, vblf, vbCrLf)
+  LogData CurrentDirectory & "\" & strDownloadName,fileDownloaded, false
   strReturnInfo = True
 end if
 
@@ -12939,7 +12961,7 @@ If Len(tmpIOC2Process) > 0 Then 'ignore blank lines
 		ElseIf IsHash(tmpIOC2Process) Then
 			aggregateDict DictMalHash, tmpIOC2Process, tmpIntelDesc
 		ElseIf isIPaddress(tmpIOC2Process) Then
-			aggregateDict dictIPdomainWatchList, tmpIOC2Process, tmpIntelDesc
+			aggregateDict dictIPdomainWatchList, tmpIOC2Process, tmpIntelDesc 'used in function MatchIpDwatchLIst
 		ElseIf InStr(tmpIOC2Process, ".") > 0 then 'domain name
 			aggregateDict dictIPdomainWatchList, tmpIOC2Process, tmpIntelDesc
 		End If
