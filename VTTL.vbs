@@ -452,6 +452,7 @@ Dim AddIpResolutionsToQueue 'Passive DNS can provide IP addresses for the domain
 Dim TrustedBinary: TrustedBinary = false 'boolean for Microsoft Software Catalogue and other trusted sources (VirusTotal only right now)
 Dim boolOutputUnicode
 Dim intIntelAge 'how far the intel should go back. Different than refresh time period
+Dim boolReverseDNS'Perform reverse DNS lookups
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -502,6 +503,7 @@ boolSkipOnTrancoHit = True 'Skip VirusTotal lookups when domain match against ht
 sysinternalsWhois = False 'Use command line sysinternals whois tool for whois lookups
 BooWhoIsIPLookup = True 'Use NirSoft whosip external lookup tool
 boolWhoisCache = False 'Cache whois results
+boolReverseDNS = True 'Perform reverse DNS lookups
 staticIntelPath = "" 'path to static intelligence https://github.com/stamparm/maltrail
 '--- VirusTotal custom checks
 intDetectionNameCount = 1 'Set greater than zero to enable reporting on detection names associated with domain/IP. set to zero to disable.
@@ -620,6 +622,7 @@ sleepOnSkippedVT = ValueFromINI("vttl.ini", "main", "SleepOnCachedLookup", sleep
 intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) 'Number of days from first time seeing the hash that you want to refresh the cache data (get updated results) for processed items. Default value is 10
 strDatabasePath = ValueFromINI("vttl.ini", "main", "database_location", strDatabasePath) 'Path to VTTL database
 boolOutputUnicode = ValueFromINI("vttl.ini", "main", "output_unicode", boolOutputUnicode) 'Encoding to use for log/file output
+boolReverseDNS = ValueFromINI("vttl.ini", "main", "reverseDNS", boolReverseDNS) 'Perform reverse DNS lookups
 BoolDisableVTlookup = ValueFromINI("vttl.ini", "vendor", "disable_VirusTotal", BoolDisableVTlookup) 'load value from INI
 boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault) 'load value from INI
 boolProxyFeed = ValueFromINI("vttl.ini", "vendor", "ProxyFeed", boolProxyFeed) 'load value from INI
@@ -2151,7 +2154,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           strDataType = "ip="
         
         'set strTmpIPlineE and strRevDNS
-        subReverseDNSwithSinkhole strData, "8.8.8.8"
+        if boolReverseDNS = True then subReverseDNSwithSinkhole strData, "8.8.8.8"
 
         if boolsubmitVT = True then
           VT_Submit 
@@ -3450,7 +3453,7 @@ elseif instr(strFullAPIURL,"domain=") then
 		domainPassiveDNS strTmpVTSips 'set strRevDNS and pending items
 
         if strRevDNS = "|" Then 'Reverse lookup for domain name
-          subReverseDNSCachewithSinkhole strScanDataInfo
+          if boolReverseDNS = True Then subReverseDNSCachewithSinkhole strScanDataInfo
         end if
 
       else'no IP address found/never looked up by virustotal
@@ -12702,7 +12705,7 @@ End Sub
 
 Sub domainPassiveDNS(strPdnsIPaddress) 'set strRevDNS and pending items
         if strPdnsIPaddress = "" Or strPdnsIPaddress = "|" Then exit sub 'reverselookup IP address for the domain we are checking
-        If strRevDNS = "|" Or strRevDNS = "" Then 'Reverse lookup
+        If (strRevDNS = "|" Or strRevDNS = "") and boolReverseDNS = True Then 'Reverse lookup
           subReverseDNSwithSinkhole strPdnsIPaddress, "8.8.8.8"
         end if
         if not DicScannedItems.Exists(strPdnsIPaddress) then
