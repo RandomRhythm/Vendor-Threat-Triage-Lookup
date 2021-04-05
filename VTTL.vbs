@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.4.8 - Ip/domain watchlist now works when you aren't using VirusTotal. Support intel age from FireHOL. If no Cr in dload_list results then replace Lf with CrLf.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.0 - Starting lookups prompt is now a popup. Error handling for external nslookup.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1912,7 +1912,7 @@ inLoopCounter = 0
 intCountPendItems = 0
 
 
-If BoolRunSilent = False and strSigCheckFilePath = "" then Msgbox "starting lookups"
+If BoolRunSilent = False and strSigCheckFilePath = "" then objShellComplete.popup "Starting lookups", 25, "VTTL - " & CurrentDirectory
 Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAItems = True
     if BoolSkipedVTlookup = true and sleepOnSkippedVT = True then 'If true a cached VT result was pulled
 		inLoopCounter = inLoopCounter +1
@@ -5313,7 +5313,10 @@ Set fso = CreateObject("Scripting.FileSystemObject")
 if strNS <> "" then strNsQuery = strServerName & " " & strNS
   ExecQuery = "nslookup " & strNsQuery  & " | findstr /C:" & chr(34) & "Name:" & chr(34) & ">" & chr(34) & strCachePath & "\ns.txt" & chr(34)   
 
+on error resume next
                 ErrRtn = sh.run ("%comspec% /c " &  ExecQuery,0 ,True)
+                if err.number <> 0 then logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " nslookup lookup failed with error " & Chr(34) & err.number & Chr(34) & " - " & err.description,False 
+on error goto 0
 
                Set ObjNSfile = FSO.GetFile(strCachePath & "\ns.txt")
 if ObjNSfile.Size <> 0 then
@@ -5702,7 +5705,7 @@ ExecQuery = "cmd.exe /c whosip " & strWhoIsIPaddress  & ">" & chr(34) & strCache
               if ErrRtn <> 0 then BooWhoIsIPLookup = False
               If err.number <> 0 Then 
               	BooWhoIsIPLookup = false
-              	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " whosip lookup failed with error - " & err.description,False 
+              	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " whosip lookup failed with error " & Chr(34) & err.number & Chr(34)& " - " & err.description,False 
               End If
               On Error GoTo 0
              set readfilePath = fso_WhoIsIP.OpenTextFile(strCachePath & "\WhoIsIP.txt", 1, false)
