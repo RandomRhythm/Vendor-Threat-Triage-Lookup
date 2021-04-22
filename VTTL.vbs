@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.0 - Starting lookups prompt is now a popup. Error handling for external nslookup.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.1 - Prevent matching on botnet keyword for MITRE T1329 via Seclytics
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2301,6 +2301,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			if len(SeclytFileRep) > 32767 then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			SeclytASN SeclytReturnBody 'populate IP owner field
+			SeclytReturnBody = replace(SeclytReturnBody, ". Additionally botnets are available for rent or purchase.", ". Additionally b.o.t.nets are available for rent or purchase.") 'prevent matching on botnet keyword for MITRE T1329 via Seclytics
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
 			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
 		End If
