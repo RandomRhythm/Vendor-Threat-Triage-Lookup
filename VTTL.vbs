@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.1 - Prevent matching on botnet keyword for MITRE T1329 via Seclytics
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.2 - Add threatview.io CobaltStrike as feed. Spreadsheet column alignment fix for geolocation due to redaction containing pipe. Added logic for preparser validation to differentiate domains that look like hashes.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1046,6 +1046,7 @@ dload_list "https://data.netlab.360.com/feeds/dga/bigviktor.txt", "cache\intel\b
 dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset", "cache\intel\bitcoin_nodes_1d.txt", "1", boolMalwareFeed, false, 24
 dload_list "https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv", "cache\intel\blackbook(malware).csv", "Malware", boolMalwareFeed, false, 24
 dload_list "https://feeds.alphasoc.net/ryuk.txt", "cache\intel\AlphaSOC_RyukC2.txt", "AlphaSOC, Inc.", boolMalwareFeed, false, 24
+dload_list "https://threatview.io/Downloads/High-Confidence-CobaltStrike-C2%20-Feeds.txt", "cache\intel\ThreatView_CobaltStrike.csv", "Threatview[.]io", boolMalwareFeed, false, 24
 
 'Malware hash feeds
 dload_list "https://bazaar.abuse.ch/export/txt/md5/recent/", "cache\intel\bazaar_md5.txt", "bazaar.abuse.ch", boolMalwareFeed, True, 24
@@ -1114,8 +1115,10 @@ LoadWatchlist CurrentDirectory &"\DNwatchlist.txt", dictDnameWatchList
 LoadWatchlist CurrentDirectory & "\KWordwatchlist.txt", dictKWordWatchList
 LoadWatchlist CurrentDirectory &"\URLwatchlist.txt", dictURLWatchList
 
+'addThreatIntel and processIntelCSV
 if staticIntelPath <> "" And boolStaticIntel = True then TraverseIntelFolders objFso.GetFolder(staticIntelPath) 'load static intelligence
 if boolProxyFeed =True or boolMultiFeed = True or boolAttackerFeed = True or boolMalwareFeed = True then TraverseIntelFolders objFso.GetFolder(strIntelPath) 'load intelligence feeds
+
 LoadEncyclopedia_Cache 'populates encyclopedia dictionaries DictMicrosoftEncyclopedia
 
 
@@ -4493,7 +4496,10 @@ Dim sTemp
 Dim iLen
 Dim iCtr
 Dim sChar
-
+if instr(TestString, ".") > 0 then
+  IsHash = false
+  exit function
+end if
 sTemp = TestString
 iLen = Len(sTemp)
 If iLen > 31 Then 'md5 length is 32
@@ -5390,7 +5396,8 @@ if instr(strWhoisCleanReturn,"                         ") then _
  strWhoisCleanReturn = replace(strWhoisCleanReturn,"                         ","")
 
 'remove space from begenning and end
-strWhoisCleanReturn = RemoveTLS(strWhoisCleanReturn) 
+strWhoisCleanReturn = RemoveTLS(strWhoisCleanReturn)
+If InStr(strWhoisCleanReturn, "|") Then strWhoisCleanReturn = Replace(strWhoisCleanReturn, "|", " ")
 CleanupWhoisData = strWhoisCleanReturn
 end function
 
@@ -12894,6 +12901,9 @@ Select Case tmpReportName
 	Case "blackbook(malware)"
 		intIntelLocation = 0
 		intIntelDescription =1
+  Case "ThreatView_CobaltStrike"
+		intIntelLocation = 0
+		intIntelDescription =3
 	Case "viriback(malware)"
 		intIntelLocation = 1
 		intIntelDescription =0
@@ -12930,6 +12940,7 @@ If Len(strListPath) > 4 Then
 If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" Then Exit Sub
 If Right(strListPath, 4) = ".csv" Then boolProcessCSV = True
 reportName = Replace(reportName, ".txt", "")
+reportName = Replace(reportName, ".csv", "")
 End If
 
 if objFSO.fileexists(strListPath) then
