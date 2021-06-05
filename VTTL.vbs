@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.2 - Add threatview.io CobaltStrike as feed. Spreadsheet column alignment fix for geolocation due to redaction containing pipe. Added logic for preparser validation to differentiate domains that look like hashes.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.3 - Boolean boolDeepIOCmatch to disable/enable detecting related IOCs. Support CrowdResponse CSV merger
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -453,6 +453,7 @@ Dim TrustedBinary: TrustedBinary = false 'boolean for Microsoft Software Catalog
 Dim boolOutputUnicode
 Dim intIntelAge 'how far the intel should go back. Different than refresh time period
 Dim boolReverseDNS'Perform reverse DNS lookups
+Dim boolDeepIOCmatch ' Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -495,6 +496,7 @@ boolLogHashes = True 'Output URLs and hashes associated with the lookup items. (
 boolLogIPs = True 'Output IP addresses associated with the lookup items.
 AddIpResolutionsToQueue = True 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
 boolOutputUnicode = False 'Default output encoding is utf-8. You may need utf-16 depending on what data gets imported into the script
+boolDeepIOCmatch = True 'Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -623,6 +625,7 @@ intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) '
 strDatabasePath = ValueFromINI("vttl.ini", "main", "database_location", strDatabasePath) 'Path to VTTL database
 boolOutputUnicode = ValueFromINI("vttl.ini", "main", "output_unicode", boolOutputUnicode) 'Encoding to use for log/file output
 boolReverseDNS = ValueFromINI("vttl.ini", "main", "reverseDNS", boolReverseDNS) 'Perform reverse DNS lookups
+boolDeepIOCmatch = ValueFromINI("vttl.ini", "main", "deepIOCmatch", boolDeepIOCmatch)
 BoolDisableVTlookup = ValueFromINI("vttl.ini", "vendor", "disable_VirusTotal", BoolDisableVTlookup) 'load value from INI
 boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault) 'load value from INI
 boolProxyFeed = ValueFromINI("vttl.ini", "vendor", "ProxyFeed", boolProxyFeed) 'load value from INI
@@ -2458,7 +2461,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       'end if
       
       'Process related IOCs against watchlists
-      If dictCountDomains.count > 0 Then
+      If dictCountDomains.count > 0 and boolDeepIOCmatch = True Then
       	For Each trackedDomain In dictCountDomains
       		strIpDwatchLineE = MatchIpDwatchLIst(trackedDomain) 'watch list
       		if isIpAddress(trackedDomain) = True then
@@ -9136,10 +9139,11 @@ if objFSO.fileexists(OpenFilePath1) then
 			loadSigCheckData strSigCheckFpath, true 'try reading as unicode
 			exit sub
 		end If
-		If BoolHeaderLocSet = false Then 'check if headers are known to us
+		If BoolHeaderLocSet = false Then 'check if headers are known to us 
 	        if ((instr(strSCData, "Publisher") > 0 and instr(strSCData,	"Company") > 0 and instr(strSCData, "MD5") > 0)) or _
 			(instr(strSCData, "File Name") > 0 and instr(strSCData,	"SHA256") > 0 and instr(strSCData, "# of Hosts") > 0) or _
 			(InStr(strSCData,	"SHA1") > 0 and instr(strSCData, "FullPath") > 0) or _
+			(InStr(strSCData,	"md5") > 0 and instr(strSCData, "name") > 0 and instr(strSCData, "size") > 0) or _
 			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "CommonName") > 0) or _
 			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "Path") > 0) or _
 			(InStr(strSCData,	"Domain") > 0 and (instr(strSCData, "Prevalence") > 0 or instr(strSCData, "Sibling Count") > 0)) or _
@@ -9262,7 +9266,7 @@ ReturnSigCheckItem = strSigCheckItem
 End Function
 
 
-Sub SetHeaderLocations(StrHeaderText)
+Sub SetHeaderLocations(StrHeaderText) 'csv merger
 if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
   if BoolDebugTrace = True then logdata strDebugPath & "\sigcheck" & "" & ".txt", "Header text:" & StrHeaderText ,BoolEchoLog
   if instr(StrHeaderText, ",") then 
@@ -9282,16 +9286,25 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
       case "CertIssuer" 'Cylance Protect
         intPublisherLoc = inthArrayLoc
       case "Signer"
-        intPublisherLoc = inthArrayLoc        
+        intPublisherLoc = inthArrayLoc     
+      case "cert_signer"'CrowdResponse
+        intPublisherLoc = inthArrayLoc
       case "Domain"
         intDomainLoc = inthArrayLoc
       case "Company"
         intCompanyLoc = inthArrayLoc
+      case "companyname" 'crowdresponse
+        intCompanyLoc = inthArrayLoc
       Case "SHA1"
+        intSHA1Loc = inthArrayLoc
+      Case "sha1" 'crowdresponse
         intSHA1Loc = inthArrayLoc
       Case "IMP"
         intIMPLoc = inthArrayLoc
       Case "MD5"
+        intMD5Loc = inthArrayLoc
+        intRealMD5Loc = inthArrayLoc
+      Case "md5"
         intMD5Loc = inthArrayLoc
         intRealMD5Loc = inthArrayLoc
       Case chr(34) & "MD5" & Chr(34)
@@ -9305,6 +9318,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfPathLoc = inthArrayLoc
       Case "File Name"'crowdstrike process execution history
         inthfPathLoc = inthArrayLoc		
+      Case "name"'crowdresponse
+        inthfPathLoc = inthArrayLoc		
       Case "FullPath" 'ShimCacheParser
         inthfPathLoc = inthArrayLoc	
       Case "CommonName" 'Cylance Protect
@@ -9313,11 +9328,15 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfProductLoc = inthArrayLoc        
       Case "ProductName" ' ShimCacheParser
         inthfProductLoc = inthArrayLoc
+      Case "productname" ' CrowdResponse
+        inthfProductLoc = inthArrayLoc
       Case "Product Name"
         inthfProductLoc = inthArrayLoc
       Case "Logical Size"
         inthfSizeLoc = inthArrayLoc 
       Case "Size" ' ShimCacheParser
+        inthfSizeLoc = inthArrayLoc 
+      Case "size" ' crowdresponse
         inthfSizeLoc = inthArrayLoc 
       Case "FileSize" ' Cylance Protect
         inthfSizeLoc = inthArrayLoc 
@@ -9332,6 +9351,9 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         SetDateFirstSeen tmpDFS
 	  Case "# of Hosts"'crowdstrike process execution history
 		inthfPrevalenceLoc = cint(inthArrayLoc)
+	  Case "sha256" 'crowdresponse
+	  	intSHA256Loc = inthArrayLoc
+	  	'boolSHA256csvLookup = True
     'Network AMP CSV
       Case "SHA256"
         if boolNetAMPCSV = True then
