@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.3 - Boolean boolDeepIOCmatch to disable/enable detecting related IOCs. Support CrowdResponse CSV merger
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.4 - Fix JSON parsing for PassiveTotal/RiskIQ
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -9968,16 +9968,16 @@ end Function
 
 Function grabDomains(strPTdata)
 Dim strReturnDomains
-if instr(strPTdata, chr(34) & "contactEmail" &  chr(34) & ": ") then
-arrayPTsplit = split(strPTdata, chr(34) & "contactEmail" &  chr(34) & ": ") 
+if instr(strPTdata, chr(34) & "contactEmail" &  chr(34) & ":") then
+arrayPTsplit = split(strPTdata, chr(34) & "contactEmail" &  chr(34) & ":") 
 intDomainCount = 0
 for each strPTsection in arrayPTsplit
 if instr(strPTsection, chr(34) & "domain" & chr(34) & ":") then'Whois
       if strReturnDomains = "" then
-        strReturnDomains = getdata(strPTsection, chr(34), chr(34) & "domain" & chr(34) & ": " & chr(34))
+        strReturnDomains = getdata(strPTsection, chr(34), chr(34) & "domain" & chr(34) & ":" & chr(34))
         intDomainCount = intDomainCount +1
       else
-        strReturnDomains = strReturnDomains & "^" & getdata(strPTsection, chr(34), chr(34) & "domain" & chr(34) & ": " & chr(34))
+        strReturnDomains = strReturnDomains & "^" & getdata(strPTsection, chr(34), chr(34) & "domain" & chr(34) & ":" & chr(34))
         intDomainCount = intDomainCount +1
       end if
       if intDomainCount > 2 then exit for
@@ -9985,7 +9985,7 @@ end if
 next
 end if
 grabDomains = strReturnDomains
-end function
+end Function
 
 
 Function CreateFolder(strFolderPath)
