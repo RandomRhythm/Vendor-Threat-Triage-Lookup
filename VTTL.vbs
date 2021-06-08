@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.5 - Move loading threat intelligence after checking vtlist.txt input file
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.6 - Load domains for threatview[.]io/Downloads/High-Confidence-CobaltstrikeC2_IP_feed.txt
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -12774,6 +12774,9 @@ Select Case tmpReportName
   Case "ThreatView_CobaltStrike"
 		intIntelLocation = 0
 		intIntelDescription =3
+  Case "ThreatView_CobaltStrike2"
+		intIntelLocation = 2
+		intIntelDescription =3
 	Case "viriback(malware)"
 		intIntelLocation = 1
 		intIntelDescription =0
@@ -12824,7 +12827,8 @@ if objFSO.fileexists(strListPath) then
         	processIntelCSV strTmpData,  reportName
         Else	
         	addThreatIntel strTmpData,  reportName
-        End If	
+        End If
+        if reportName = "ThreatView_CobaltStrike" then processIntelCSV strTmpData,  "ThreatView_CobaltStrike2" 'also grab domains from CSV
     end if
   loop
 end if
