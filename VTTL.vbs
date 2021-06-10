@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.6 - Load domains for threatview[.]io/Downloads/High-Confidence-CobaltstrikeC2_IP_feed.txt
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.7 - Handle blank prevalence in combined CSV input
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2654,7 +2654,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             end if
           else
             strTmpSigAssesslineE = "|Previously Identified Signer"
-            if strCBprevalence > 0 then
+            if strCBprevalence = "" then
+              DictDSigNames.item(strCBdigSig) = clng(DictDSigNames.item(strCBdigSig)) + 1
+            elseif strCBprevalence > 0 then
               DictDSigNames.item(strCBdigSig) = clng(DictDSigNames.item(strCBdigSig)) + clng(strCBprevalence)
             else
               DictDSigNames.item(strCBdigSig) = clng(DictDSigNames.item(strCBdigSig)) + 1
