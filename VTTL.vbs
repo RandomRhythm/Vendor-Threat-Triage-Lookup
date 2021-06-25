@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.5.7 - Handle blank prevalence in combined CSV input
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.0 - Fix header value mismatch due to moving loading dictionaries: https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup/commit/e256daa5d42e3123163f3314591d746fb41e28d8. Move header output code. Add dialog for loading threat intelligence and watchlists.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1355,348 +1355,7 @@ if BoolCreateSpreadsheet = True then
     end if
   end if
   if objFSO.fileexists(strFile) then
-    if BoolUseThreatGRID = True then
-      strTmpTGhead = "|ThreatGRID"
-    else
-      strTmpTGhead = ""
-    end if  
-    if BoolEnableMetascan = True then
-      strTmpMetahead = "|Metadefender"
-    else
-      strTmpMetahead = ""
-    end if 
-
-    if boolUsePassiveTotal = True then
-      strTmpPThead = "|PassiveTotal"
-    else
-      strTmpPThead = ""
-    end if
-
-    if boolEnableCuckoo = True then
-      strTmpCuckooHead = "|Cuckoo Score"
-    else
-      strTmpCuckooHead = ""
-    end if
-    if BoolUseETIntelligence = True then
-      strTmpETIhead = "|ET Intelligence"
-      if boolCheckProofpointIDS = True then 
-        strTmpETIdshead = "|ET IDS"
-      else
-        strTmpETIdshead = ""
-      end if
-    else
-      strTmpETIhead = ""
-      strTmpETIdshead = ""
-    end if
-	
-	strTmpAlienHead1 = ""
-	strTmpAlienHead2 = ""
-	strTmpAlienHead3 = ""
-	if boolUseAlienVault = True then 
-		strTmpAlienHead1 = "|AlienVault Pulse"
-	end If
-	if boolUseAlienVault = True Or BoolSeclytics = True Or boolPulsedive = True Then
-		strTmpAlienHead2 ="|Validation"
-		if dictKWordWatchList.count > 0 then
-			strTmpKeyWordWatchListHead = "|Keyword Watch List"
-		else
-			strTmpKeyWordWatchListHead = ""
-		end If
-	End if	
-	If boolIncludeAVHashCount = True Then
-		strTmpAlienHead3 = "|AlienVault Hashes"
-	End If
-	
-	if boolUseThreatCrowd = True then
-		strTmpTCrowdHead = "|ThreatCrowd"
-	else
-		strTmpTCrowdHead = ""
-	end if
-	strDetectWatchListHead  = ""
     select case intVTListDataType
-      case 1 'ip/domain
-        LoadIPAuthorities 'populates Dictripe, DictArin, etc
-        loadFileExt 'used to identify file names and types for IOC output
-		if boolUseTrancoList = True and boolTrancoSQL = False then LoadTrancoList CurrentDirectory &"\top-1m.csv", dictTrancoList 'whitelist
-        if cint(intDetectionNameCount) > 0 then'set modified for number of columns
-          intaddDNameCount = round(intDetectionNameCount /2 +.1) 'round up to add additional column(s) for IP/Domain detection name association
-          if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
-        end if
-		If cint(inthfSiblingLoc) > -1 Then
-			strSiblingHead = "|Sibling Count"
-		Else
-			strSiblingsCount = ""
-		End If
-		If cint(inthfPrevalenceLoc) > -1 Then
-			strPrevalenceHead = "|Prevalence"
-		End If
-        if dictURLWatchList.count > 0 Then
-          strTmpURLWatchListHead = "|URL Watch List"
-        else
-          strTmpURLWatchListHead = ""
-        end if
-        if dictIPdomainWatchList.count > 0 then 
-          strTmpIpDwatchListHead = "|IP Domain Watch List"
-        else
-          strTmpIpDwatchListHead = ""
-        end if
-
-		if enableZEN = True then
-			strZRBL = "|Spamhaus ZEN RBL"
-		else
-			strZRBL = ""
-		end if
-		if boolEnableZDBL = True then
-			strZDBL = "|Spamhaus DBL"
-		else
-			strZDBL = ""
-		end if
-		
-		if enableURIBL = True then
-			strURIBL = "|URIBL"
-		else
-			strURIBL = ""
-		end if
-		if enableSURBL = True then
-			strSURBL = "|SURBL"
-		else
-			strSURBL = ""
-		end if
-		if EnableBarracuda = True then
-			strBarracudaDBL = "|Barrucda"
-		else
-			strBarracudaDBL = ""
-		end if
-		if EnableCBL = True then
-			strCBL = "|CBL"
-		else
-			strCBL = ""
-		end if
-		if BoolUseCIF = True then
-			strCIF = "|CIF"
-		else
-			strCIF = ""
-		end if
-		if enableSORBS = True then  
-			strSORBSline = "|SORBS"
-		else
-			strSORBSline = ""
-		end if
-		if boolUseQuad9 = True then
-			strQuad9Head = "|Quad9"
-		else
-			strQuad9Head = ""
-		end if
-		if boolAlienVaultNIDS = True then
-			alienNIDShead = "|NIDS Count|NIDS Categories|AlienVault NIDS"
-		else
-			alienNIDShead = ""
-		end if
-		if boolUseTrancoList = True then
-			TrancoHead = "|Tranco_list"
-		else
-			TrancoHead = ""
-		end If
-		
-		If BoolSeclytics = True Then
-			SeclytHead = "|Seclytics Reputation and Reason|Seclytics Associated File Metadata|Seclytics File Count"
-	        if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
- 
-		Else
-			SeclytHead = ""
-		End If	
-		if boolPulsedive = True then
-      PulsediveHead = "|Pulsedive|SSL Subject|SSL Org"
-		else
-      PulsediveHead = ""
-		end if
-        DetectionNameHeaderColumns = DetectionNameHeader 'header row for IP/Domain detection names
-		if BoolDisableVTlookup = False then
-			strVThead = "Scanned Item|VTTI Download From|VTTI Referrer|VTTI Callback To|VTTI_Uniq_URLs|VTTI_Uniq_Domains"
-			vtHead2 = "|VT Download|VT Referrer|VT Callback|VT URL"
-		else
-			strVThead = "Scanned Item"
-			vtHead2 = ""
-		end if
-            'write IP/domain header row
-        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
-        if BoolCreateSpreadsheet = True then
-          if cint(intDetectionNameCount) > 0 then 
-            
-            redim ArrayDnameLineE(cint(intDetectionNameCount) -1 + intaddDNameCount)
-          end if
-          if BoolUseExcel = True then
-            mycolumncounter = 1
-            Do while objExcel.Cells(1,mycolumncounter).Value <> ""
-              if objExcel.Cells(1,mycolumncounter).Value = "CIF" then
-                if BoolUseCIF = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 25
-              end if
-              if objExcel.Cells(1,mycolumncounter).Value = "Metadefender" then
-                if BoolMetascan = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 25
-              end if
-              if objExcel.Cells(1,mycolumncounter).Value = "RBL_Spamhaus ZEN" then
-                if BoolDNS_BLchecks = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 18
-              end if
-              if objExcel.Cells(1,mycolumncounter).Value = "Creation Date" then
-                sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 17
-              end if
-              if objExcel.Cells(1,mycolumncounter).Value = "Category" then
-                sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 17
-              end if
-              
-              if objExcel.Cells(1,mycolumncounter).Value = "ET Intelligence" then
-                if BoolUseETIntelligence = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 17
-              end if
-              mycolumncounter = mycolumncounter + 1
-            loop
-          end if
-        else
-          intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
-        end if
-      case 2 'Hash lookups only                                                                                       'hash lookups only
-        intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
-        boolLogHashes = false 'Don't log hashes if that is what we are looking up
-        if BoolSigCheckLookup = True and BoolUseCarbonBlack = True then
-          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
-        elseif BoolEnCaseLookup = True and BoolUseCarbonBlack = True then
-          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
-        elseif BoolUseCarbonBlack = True then
-          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
-        elseif BoolSigCheckLookup = True then
-          if cint(inthfPrevalenceLoc) > -1 then 'CB custom CSV export
-            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
-          elseif boolEnableCuckoo = True or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
-            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
-          else
-            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Digial Signature Tracking"
-          end if
-          if cint(intHostLocation) > 0 then
-            strTmpCBHead = strTmpCBHead & "|Hosts"
-          end if
-          if BoolSigCheckLookup = True and BoolUseCarbonBlack = False and boolEnableCuckoo = False then
-            'crowdstrike csv export does not support any of these
-            if inthfSizeLoc = -1 and (boolVTuseV3 = False or BoolDisableVTlookup = True) then strTmpCBHead = replace(strTmpCBHead, "|File Size","")
-            if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digital Sig","")
-            if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digial Signature Tracking","")			
-            if inthfProductLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Product Name","")
-            if intCompanyLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Company Name","")
-          end if
-
-        elseif boolEnableCuckoo = True then 
-          strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
-          'StrTmpCTimeStamp = "|PE TimeStamp"
-        elseif BoolDisableVTlookup = False and boolVTuseV3 = True Then
-        	strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
-        elseif BoolEnCaseLookup = True then
-          strTmpCBHead = "|File Path|File Size"
-        ElseIf boolEnableCuckooV2 = True then   
-			strTmpCBHead = "|File Size"
-        Else
-          strTmpCBHead = ""
-          StrTmpCTimeStamp = ""
-          strYARAhead = ""
-        end if
-        if boolEnableCuckoo = True then
-          strYARAhead = "|YARA"
-          strFileTypeHead = "|File Type"
-        else
-          strYARAhead = ""
-          strFileTypeHead = ""
-        end if
-		if boolEnableCuckooV2 = True Or (BoolDisableVTlookup = False and boolVTuseV3 = True) then 
-          strFileTypeHead = "|File Type"
-	    end If
-	    if BoolDisableVTlookup = False and boolVTuseV3 = True Then
-        	StrTmpCTimeStamp = "|PE TimeStamp"
-        	strMimeTypeHead = "|File Insight"
-        End if	
-        if boolEnableMalShare = True then
-          strTmpMalShareHead = "|MalShare"
-        else
-          strTmpMalShareHead = ""
-        end if
-        if boolCheckDrWeb = True then
-          strTmpDrWebHead = "|Dr.Web"
-        else
-          strTmpDrWebHead = ""
-        end if
-        if boolCheckAvira = True then
-          strTmpAviraHead = "|Avira"
-        else
-          strTmpAviraHead = ""
-        end if
-        if boolCheckSymantec = True then
-          strTmpSymantecHead = "|Symantec"
-        else
-          strTmpSymantecHead = ""
-        end if
-		if boolCheckFSecure = True then 
-			strTMpFSecureHead = "|F-Secure"
-		else
-			strTMpFSecureHead = ""
-		end if 
-		if boolCheckSophos = True then 
-			strTMpSophosHead = "|Sophos"
-		else
-			strTMpSophosHead = ""
-		end if
-		if boolCHeckMcAfee = True then 
-			strTMpMcAfeeHead = "|McAfee"
-		else
-			strTMpMcAfeeHead = ""
-		end if
-		if boolCheckMicrosoft = True then 
-			strTMpMicrosoftHead = "|Microsoft"
-		else
-			strTMpMicrosoftHead = ""
-		end if
-		if BoolCheckTrendMicro = True then 
-			strTMpTrendMicroHead = "|Trend Micro"
-		else
-			strTMpTrendMicroHead = ""
-		end if
-		if boolCheckESET = True then 
-			strTMpESETHead = "|ESET"
-		else
-			strTMpESETHead = ""
-		end if		
-		if boolCheckBitdefender = True then
-			strTmpBitdefenderHead = "|Bitdefender"
-		else
-			strTmpBitdefenderHead = ""
-		end if
-		if boolCheckPanda = True then 
-			strTMpPandaHead = "|Panda"
-		else
-			strTMpPandaHead = ""
-		end if 
-		if DisplayVendor <> "" Then
-			strTmpDispVendHead = "|" & DisplayVendor
-		else
-			strTmpDispVendHead = ""
-		end if
-		If BoolSeclytics = False Then
-			SeclytHead = ""
-		Else
-			
-	 		SeclytHead = "|Seclytics File Associated Metadata"
-			if dictURLWatchList.count > 0 Then
-	          strTmpURLWatchListHead = "|URL Watch List"
-	        else
-	          strTmpURLWatchListHead = ""
-	        end if
-	        if dictIPdomainWatchList.count > 0 then 
-	          strTmpIpDwatchListHead = "|IP Domain Watch List"
-	        else
-	          strTmpIpDwatchListHead = ""
-	        end If
-	        if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
-	    End if    
-		
-		if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
-		'Write file hash header row
-        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strMimeTypeHead & strFileTypeHead & StrTmpCTimeStamp & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
-        BoolUseCIF = False 'don't use CIF when in spreadsheet mode and performing hash lookups
       case 3
         Wscript.echo "Can't process IP/domains along side hashes. Please remove hashes or include only hashes in vtlist.txt. If only contains hashes make sure each entire line contains valid hashes (extra, missing, invalid characters)."
         
@@ -1718,11 +1377,13 @@ if BoolCreateSpreadsheet = True then
       objExcel.ActiveWindow.FreezePanes = True
 
     end if
-  end if
+  End if
 end if
 
-
+If BoolRunSilent = False then objShellComplete.popup "Loading threat intelligence and watchlists", 5, "VTTL - " & CurrentDirectory
 download_load 'download/load threat intelligence
+
+WriteHeaderRow 'write spreadsheet header row (needs to be completed after we load things like keywords as spreadsheet columns are dynamic based on what is available)
 
 Set objFile = objFSO.OpenTextFile(strFile)
 
@@ -13037,4 +12698,354 @@ if staticIntelPath <> "" And boolStaticIntel = True then TraverseIntelFolders ob
 if boolProxyFeed =True or boolMultiFeed = True or boolAttackerFeed = True or boolMalwareFeed = True then TraverseIntelFolders objFso.GetFolder(strIntelPath) 'load intelligence feeds
 
 LoadEncyclopedia_Cache 'populates encyclopedia dictionaries DictMicrosoftEncyclopedia
-end sub
+end Sub
+
+Sub WriteHeaderRow()
+	if BoolUseThreatGRID = True then
+      strTmpTGhead = "|ThreatGRID"
+    else
+      strTmpTGhead = ""
+    end if  
+    if BoolEnableMetascan = True then
+      strTmpMetahead = "|Metadefender"
+    else
+      strTmpMetahead = ""
+    end if 
+
+    if boolUsePassiveTotal = True then
+      strTmpPThead = "|PassiveTotal"
+    else
+      strTmpPThead = ""
+    end if
+
+    if boolEnableCuckoo = True then
+      strTmpCuckooHead = "|Cuckoo Score"
+    else
+      strTmpCuckooHead = ""
+    end if
+    if BoolUseETIntelligence = True then
+      strTmpETIhead = "|ET Intelligence"
+      if boolCheckProofpointIDS = True then 
+        strTmpETIdshead = "|ET IDS"
+      else
+        strTmpETIdshead = ""
+      end if
+    else
+      strTmpETIhead = ""
+      strTmpETIdshead = ""
+    end if
+	
+	strTmpAlienHead1 = ""
+	strTmpAlienHead2 = ""
+	strTmpAlienHead3 = ""
+	if boolUseAlienVault = True then 
+		strTmpAlienHead1 = "|AlienVault Pulse"
+	end If
+	If boolUseAlienVault = True Or BoolSeclytics = True Or boolPulsedive = True Then
+		strTmpAlienHead2 ="|Validation"
+		if dictKWordWatchList.count > 0 then
+			strTmpKeyWordWatchListHead = "|Keyword Watch List"
+		else
+			strTmpKeyWordWatchListHead = ""
+		end If
+	End if
+	If boolIncludeAVHashCount = True Then
+		strTmpAlienHead3 = "|AlienVault Hashes"
+	End If
+	
+	if boolUseThreatCrowd = True then
+		strTmpTCrowdHead = "|ThreatCrowd"
+	else
+		strTmpTCrowdHead = ""
+	end if
+	strDetectWatchListHead  = ""
+    select case intVTListDataType
+      case 1 'ip/domain
+        LoadIPAuthorities 'populates Dictripe, DictArin, etc
+        loadFileExt 'used to identify file names and types for IOC output
+		if boolUseTrancoList = True and boolTrancoSQL = False then LoadTrancoList CurrentDirectory &"\top-1m.csv", dictTrancoList 'whitelist
+        if cint(intDetectionNameCount) > 0 then'set modified for number of columns
+          intaddDNameCount = round(intDetectionNameCount /2 +.1) 'round up to add additional column(s) for IP/Domain detection name association
+          if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
+        end if
+		If cint(inthfSiblingLoc) > -1 Then
+			strSiblingHead = "|Sibling Count"
+		Else
+			strSiblingsCount = ""
+		End If
+		If cint(inthfPrevalenceLoc) > -1 Then
+			strPrevalenceHead = "|Prevalence"
+		End If
+        if dictURLWatchList.count > 0 Then
+          strTmpURLWatchListHead = "|URL Watch List"
+        else
+          strTmpURLWatchListHead = ""
+        end if
+        if dictIPdomainWatchList.count > 0 then 
+          strTmpIpDwatchListHead = "|IP Domain Watch List"
+        else
+          strTmpIpDwatchListHead = ""
+        end if
+
+		if enableZEN = True then
+			strZRBL = "|Spamhaus ZEN RBL"
+		else
+			strZRBL = ""
+		end if
+		if boolEnableZDBL = True then
+			strZDBL = "|Spamhaus DBL"
+		else
+			strZDBL = ""
+		end if
+		
+		if enableURIBL = True then
+			strURIBL = "|URIBL"
+		else
+			strURIBL = ""
+		end if
+		if enableSURBL = True then
+			strSURBL = "|SURBL"
+		else
+			strSURBL = ""
+		end if
+		if EnableBarracuda = True then
+			strBarracudaDBL = "|Barrucda"
+		else
+			strBarracudaDBL = ""
+		end if
+		if EnableCBL = True then
+			strCBL = "|CBL"
+		else
+			strCBL = ""
+		end if
+		if BoolUseCIF = True then
+			strCIF = "|CIF"
+		else
+			strCIF = ""
+		end if
+		if enableSORBS = True then  
+			strSORBSline = "|SORBS"
+		else
+			strSORBSline = ""
+		end if
+		if boolUseQuad9 = True then
+			strQuad9Head = "|Quad9"
+		else
+			strQuad9Head = ""
+		end if
+		if boolAlienVaultNIDS = True then
+			alienNIDShead = "|NIDS Count|NIDS Categories|AlienVault NIDS"
+		else
+			alienNIDShead = ""
+		end if
+		if boolUseTrancoList = True then
+			TrancoHead = "|Tranco_list"
+		else
+			TrancoHead = ""
+		end If
+		
+		If BoolSeclytics = True Then
+			SeclytHead = "|Seclytics Reputation and Reason|Seclytics Associated File Metadata|Seclytics File Count"
+	        if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
+ 
+		Else
+			SeclytHead = ""
+		End If	
+		if boolPulsedive = True then
+      PulsediveHead = "|Pulsedive|SSL Subject|SSL Org"
+		else
+      PulsediveHead = ""
+		end if
+        DetectionNameHeaderColumns = DetectionNameHeader 'header row for IP/Domain detection names
+		if BoolDisableVTlookup = False then
+			strVThead = "Scanned Item|VTTI Download From|VTTI Referrer|VTTI Callback To|VTTI_Uniq_URLs|VTTI_Uniq_Domains"
+			vtHead2 = "|VT Download|VT Referrer|VT Callback|VT URL"
+		else
+			strVThead = "Scanned Item"
+			vtHead2 = ""
+		end if
+		'write IP/domain header row
+        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
+        if BoolCreateSpreadsheet = True then
+          if cint(intDetectionNameCount) > 0 then 
+            
+            redim ArrayDnameLineE(cint(intDetectionNameCount) -1 + intaddDNameCount)
+          end if
+          if BoolUseExcel = True then
+            mycolumncounter = 1
+            Do while objExcel.Cells(1,mycolumncounter).Value <> ""
+              if objExcel.Cells(1,mycolumncounter).Value = "CIF" then
+                if BoolUseCIF = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 25
+              end if
+              if objExcel.Cells(1,mycolumncounter).Value = "Metadefender" then
+                if BoolMetascan = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 25
+              end if
+              if objExcel.Cells(1,mycolumncounter).Value = "RBL_Spamhaus ZEN" then
+                if BoolDNS_BLchecks = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 18
+              end if
+              if objExcel.Cells(1,mycolumncounter).Value = "Creation Date" then
+                sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 17
+              end if
+              if objExcel.Cells(1,mycolumncounter).Value = "Category" then
+                sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 17
+              end if
+              
+              if objExcel.Cells(1,mycolumncounter).Value = "ET Intelligence" then
+                if BoolUseETIntelligence = True then sbChangeColumnWidth DictAlpabet.item(mycolumncounter), 17
+              end if
+              mycolumncounter = mycolumncounter + 1
+            loop
+          end if
+        else
+          intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
+        end if
+      case 2 'Hash lookups only                                                                                       'hash lookups only
+        intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
+        boolLogHashes = false 'Don't log hashes if that is what we are looking up
+        if BoolSigCheckLookup = True and BoolUseCarbonBlack = True then
+          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+        elseif BoolEnCaseLookup = True and BoolUseCarbonBlack = True then
+          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+        elseif BoolUseCarbonBlack = True then
+          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+        elseif BoolSigCheckLookup = True then
+          if cint(inthfPrevalenceLoc) > -1 then 'CB custom CSV export
+            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+          elseif boolEnableCuckoo = True or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
+            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
+          else
+            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Digial Signature Tracking"
+          end if
+          if cint(intHostLocation) > 0 then
+            strTmpCBHead = strTmpCBHead & "|Hosts"
+          end if
+          if BoolSigCheckLookup = True and BoolUseCarbonBlack = False and boolEnableCuckoo = False then
+            'crowdstrike csv export does not support any of these
+            if inthfSizeLoc = -1 and (boolVTuseV3 = False or BoolDisableVTlookup = True) then strTmpCBHead = replace(strTmpCBHead, "|File Size","")
+            if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digital Sig","")
+            if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digial Signature Tracking","")			
+            if inthfProductLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Product Name","")
+            if intCompanyLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Company Name","")
+          end if
+
+        elseif boolEnableCuckoo = True then 
+          strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
+          'StrTmpCTimeStamp = "|PE TimeStamp"
+        elseif BoolDisableVTlookup = False and boolVTuseV3 = True Then
+        	strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
+        elseif BoolEnCaseLookup = True then
+          strTmpCBHead = "|File Path|File Size"
+        ElseIf boolEnableCuckooV2 = True then   
+			strTmpCBHead = "|File Size"
+        Else
+          strTmpCBHead = ""
+          StrTmpCTimeStamp = ""
+          strYARAhead = ""
+        end if
+        if boolEnableCuckoo = True then
+          strYARAhead = "|YARA"
+          strFileTypeHead = "|File Type"
+        else
+          strYARAhead = ""
+          strFileTypeHead = ""
+        end if
+		if boolEnableCuckooV2 = True Or (BoolDisableVTlookup = False and boolVTuseV3 = True) then 
+          strFileTypeHead = "|File Type"
+	    end If
+	    if BoolDisableVTlookup = False and boolVTuseV3 = True Then
+        	StrTmpCTimeStamp = "|PE TimeStamp"
+        	strMimeTypeHead = "|File Insight"
+        End if	
+        if boolEnableMalShare = True then
+          strTmpMalShareHead = "|MalShare"
+        else
+          strTmpMalShareHead = ""
+        end if
+        if boolCheckDrWeb = True then
+          strTmpDrWebHead = "|Dr.Web"
+        else
+          strTmpDrWebHead = ""
+        end if
+        if boolCheckAvira = True then
+          strTmpAviraHead = "|Avira"
+        else
+          strTmpAviraHead = ""
+        end if
+        if boolCheckSymantec = True then
+          strTmpSymantecHead = "|Symantec"
+        else
+          strTmpSymantecHead = ""
+        end if
+		if boolCheckFSecure = True then 
+			strTMpFSecureHead = "|F-Secure"
+		else
+			strTMpFSecureHead = ""
+		end if 
+		if boolCheckSophos = True then 
+			strTMpSophosHead = "|Sophos"
+		else
+			strTMpSophosHead = ""
+		end if
+		if boolCHeckMcAfee = True then 
+			strTMpMcAfeeHead = "|McAfee"
+		else
+			strTMpMcAfeeHead = ""
+		end if
+		if boolCheckMicrosoft = True then 
+			strTMpMicrosoftHead = "|Microsoft"
+		else
+			strTMpMicrosoftHead = ""
+		end if
+		if BoolCheckTrendMicro = True then 
+			strTMpTrendMicroHead = "|Trend Micro"
+		else
+			strTMpTrendMicroHead = ""
+		end if
+		if boolCheckESET = True then 
+			strTMpESETHead = "|ESET"
+		else
+			strTMpESETHead = ""
+		end if		
+		if boolCheckBitdefender = True then
+			strTmpBitdefenderHead = "|Bitdefender"
+		else
+			strTmpBitdefenderHead = ""
+		end if
+		if boolCheckPanda = True then 
+			strTMpPandaHead = "|Panda"
+		else
+			strTMpPandaHead = ""
+		end if 
+		if DisplayVendor <> "" Then
+			strTmpDispVendHead = "|" & DisplayVendor
+		else
+			strTmpDispVendHead = ""
+		end if
+		If BoolSeclytics = False Then
+			SeclytHead = ""
+		Else
+			
+	 		SeclytHead = "|Seclytics File Associated Metadata"
+			if dictURLWatchList.count > 0 Then
+	          strTmpURLWatchListHead = "|URL Watch List"
+	        else
+	          strTmpURLWatchListHead = ""
+	        end if
+	        if dictIPdomainWatchList.count > 0 then 
+	          strTmpIpDwatchListHead = "|IP Domain Watch List"
+	        else
+	          strTmpIpDwatchListHead = ""
+	        end If
+	        if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
+	    End if    
+		
+		if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
+
+	
+
+		'Write file hash header row
+        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strMimeTypeHead & strFileTypeHead & StrTmpCTimeStamp & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
+        BoolUseCIF = False 'don't use CIF when in spreadsheet mode and performing hash lookups
+end Select
+
+end Sub
