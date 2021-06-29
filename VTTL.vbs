@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.0 - Fix header value mismatch due to moving loading dictionaries: https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup/commit/e256daa5d42e3123163f3314591d746fb41e28d8. Move header output code. Add dialog for loading threat intelligence and watchlists.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.1 - Log to VT_URLs_.txt only when BoolDebugTrace = True
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -3012,7 +3012,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
           end if
           
       else
-        LogData strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpURLs,BoolEchoLog 
+        if BoolDebugTrace = True then LogData strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpURLs,BoolEchoLog 
         if strOptionalParameter = "&scan=1" then
           strWebScanResults = strWebScanResults & strScanDataInfo & vbtab & strTmpURLs & vbcrlf
         else
@@ -3109,7 +3109,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 	      
 	      if BoolCheckTrendMicro = True then VTvendorParseName strresponseText,"TrendMicro", True
 	      if StrTmpVendorDetectionURL <> "" then
-			  logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL,BoolEchoLog 
+			  if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL,BoolEchoLog 
 			  strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL & vbcrlf
 	      End if
 	      If boolCheckMicrosoft = True then VTvendorParseName strresponseText,"Microsoft", True
@@ -3155,23 +3155,23 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
         if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "strTmpVendorDetectionName = " & strTmpVendorDetectionName,BoolEchoLog
         if StrTmpVendorDetectionURL <> "" then
           if strTmpVendorDetectionName = "" then
-            logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & StrTmpVendorDetectionURL,BoolEchoLog 
+            if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & StrTmpVendorDetectionURL,BoolEchoLog 
             strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & StrTmpVendorDetectionURL & vbcrlf
           else
-            logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strTmpVendorDetectionName & vbtab & StrTmpVendorDetectionURL,BoolEchoLog 
+            if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strTmpVendorDetectionName & vbtab & StrTmpVendorDetectionURL,BoolEchoLog 
             strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & StrTmpVendorDetectionURL & vbcrlf
           end if
         end if
         if IsHash(strTmpVendorDetectionName) then 
           if StrTmpVendorDetectionURL <> "" then
-            logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL,BoolEchoLog 
+            if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL,BoolEchoLog 
             strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL & vbcrlf
           end if
           
           'when BoolLimitCBQueries = True only lookup CB if it wasn't provided with the SigCheckSSoutput 
           if BoolUseCarbonBlack = True and (BoolLimitCBQueries = True and strCBfilePath <> "") = False then checkCarBlack strTmpVendorDetectionName
           if ucase(strTmpVendorDetectionName) = "3AC9A0C8A8A5EC6D3ABA629BF66F9FB1" then
-            logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & "FireEye honey binary!  This is a whitelisted file",BoolEchoLog
+            if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & "FireEye honey binary!  This is a whitelisted file",BoolEchoLog
              strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & "FireEye honey binary!  This is a whitelisted file" & vbcrlf
           end if
         end if
@@ -3213,7 +3213,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
  	  
 	  
       
-      logdata strDebugPath & "\VT_URLs_" & "" & ".txt", getPositiveDetections(strresponseText) & " - " & strScanDataInfo & vbtab & strTmpURLs,BoolEchoLog 
+      if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", getPositiveDetections(strresponseText) & " - " & strScanDataInfo & vbtab & strTmpURLs,BoolEchoLog 
       strThisScanResults = strThisScanResults & getPositiveDetections(strresponseText) & " - " & strScanDataInfo & vbtab & strTmpURLs & vbcrlf
 
       if strScanDataInfo <> "" then'Skip if nothing to scan
@@ -3221,14 +3221,14 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
         If BoolMetascan = True then 
             strtmpMetascanReslts = SubmitMetaScan(strScanDataInfo)
             if strtmpMetascanReslts <> "Metadefender has never scanned this file hash" and strtmpMetascanReslts <> "Metadefender won't give results back" then
-              logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strtmpMetascanReslts, BoolEchoLog
+              if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strtmpMetascanReslts, BoolEchoLog
               strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & strtmpMetascanReslts & vbcrlf
             end If  
         End if    
         if BoolUseThreatGRID = True then
           strtmpMetascanReslts = SubmitThreatGRID(strScanDataInfo)
           if strtmpMetascanReslts <> "ThreatGRID has never seen this file hash" and strtmpMetascanReslts <> "ThreatGRID won't give results back" then
-            logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strtmpMetascanReslts, BoolEchoLog
+            if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strtmpMetascanReslts, BoolEchoLog
             strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & strtmpMetascanReslts & vbcrlf
             strTmpTGlineE = "|X"
 
@@ -10885,7 +10885,7 @@ if getPositiveDetections(VTresponse) <> 0 then '
 	if boolEncyclopedia = True And strTmpVendorDetectionName <> "" then
 		StrTmpVendorDetectionURL = Encyclopdia_Cache(strVendorName, strTmpVendorDetectionName)
 		if StrTmpVendorDetectionURL <> "" then
-		  logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL,BoolEchoLog 
+		  if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL,BoolEchoLog 
 		  strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & strTmpVendorDetectionName & " - " & StrTmpVendorDetectionURL & vbcrlf
 		end if
 				
