@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.2 - Support for common header values for ip/domain prevalence
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.3 - Add messaging about performance degradation when over one million URLs
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1382,7 +1382,12 @@ end if
 
 If BoolRunSilent = False then objShellComplete.popup "Loading threat intelligence and watchlists", 5, "VTTL - " & CurrentDirectory
 download_load 'download/load threat intelligence
-
+if dictURLWatchList.count > 100000 then
+  intAnswer = msgbox ("URL watchlist had more than 1,000,000 entries (" & dictURLWatchList.count & " in total) added to it by threat intelligence. This will cause poor performance. Do you want to continue?",vbYesNo, "VTTL")
+      if intAnswer = vbNo Then 
+        wscript.quit(43)
+      end if
+end if
 WriteHeaderRow 'write spreadsheet header row (needs to be completed after we load things like keywords as spreadsheet columns are dynamic based on what is available)
 
 Set objFile = objFSO.OpenTextFile(strFile)
