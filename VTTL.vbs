@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.1 - Log to VT_URLs_.txt only when BoolDebugTrace = True
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.2 - Support for common header values for ip/domain prevalence
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -8657,6 +8657,7 @@ if objFSO.fileexists(OpenFilePath1) then
 			(InStr(strSCData,	"md5") > 0 and instr(strSCData, "name") > 0 and instr(strSCData, "size") > 0) or _
 			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "CommonName") > 0) or _
 			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "Path") > 0) or _
+			(InStr(strSCData,	"dstip") > 0 and instr(strSCData, "count") > 0)  or _
 			(InStr(strSCData,	"Domain") > 0 and (instr(strSCData, "Prevalence") > 0 or instr(strSCData, "Sibling Count") > 0)) or _
 			(instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Company") > 0) Then
 	          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
@@ -8802,6 +8803,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         intPublisherLoc = inthArrayLoc
       case "Domain"
         intDomainLoc = inthArrayLoc
+      case "dstip"
+        intDomainLoc = inthArrayLoc
       case "Company"
         intCompanyLoc = inthArrayLoc
       case "companyname" 'crowdresponse
@@ -8854,6 +8857,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
       Case "CB Prevalence"
         inthfPrevalenceLoc = cint(inthArrayLoc)
       Case "Prevalence"
+        inthfPrevalenceLoc = cint(inthArrayLoc)
+      Case "count"
         inthfPrevalenceLoc = cint(inthArrayLoc)
       Case "Sibling Count"
         inthfSiblingLoc = cint(inthArrayLoc)
