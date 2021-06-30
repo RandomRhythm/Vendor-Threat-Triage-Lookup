@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.3 - Add messaging about performance degradation when over one million URLs
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.4 - Modify URLhaus intel download to have the default be to only grab 30 days unless otherwise specified.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -12587,6 +12587,9 @@ end if
 if intIntelAge > 30 then 'intel no longer updated/free license
 dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/maxmind_proxy_fraud.ipset", "cache\intel\MaxMindproxies.txt", "MaxMind", boolProxyFeed, False, 43800
 dload_list "https://github.com/firehol/blocklist-ipsets/blob/master/proxylists_30d.ipset", "cache\intel\proxylists.txt", "www.proxylists.net", boolProxyFeed, False, 43800 'open proxy
+dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24
+else
+dload_list "https://urlhaus.abuse.ch/downloads/text_recent/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24 'spamhaus only provides all or 30 days
 end if
 dload_list "https://www.dan.me.uk/torlist/", "cache\intel\tor.txt", "1", boolProxyFeed, False, 24
 dload_list "https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt", "cache\intel\ejrv_vpn.txt", "update", boolProxyFeed, False, 43800 'VPN list
@@ -12613,7 +12616,6 @@ dload_list "http://tracker.viriback.com/dump.php", "cache\intel\viriback(malware
 dload_list "https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt", "cache\intel\maltrail-static-trails.txt", "(static)", boolMalwareFeed, False, 24
 dload_list "https://www.talosintelligence.com/documents/ip-blacklist", "cache\intel\talosintelligence.txt", "1", boolMalwareFeed, False, 24
 dload_list "http://vxvault.net/URL_List.php", "cache\intel\vxvault(malware).txt", "VX Vault", boolMalwareFeed, False, 24
-dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24
 dload_list "https://cybercrime-tracker.net/ccpmgate.php", "cache\intel\pony.txt", "/gate.php", boolMalwareFeed, False, 24
 dload_list "https://raw.githubusercontent.com/Hestat/minerchk/master/hostslist.txt", "cache\intel\cryptomining.txt", ".com", boolMalwareFeed, False, 24
 dload_list "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt", "cache\intel\feodotracker.txt", "Botnet C2", boolMalwareFeed, False, 24
