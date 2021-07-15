@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.5 - Load intel age from INI
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.6 - Add TypeConvert function and support for long integer value in INI.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -11433,12 +11433,18 @@ if returniniVal = " " or returniniVal = "" then
 	ValueFromIni = currentValue
 	Exit function
 end if 
-if TypeName(returniniVal) = "String" then
-	returniniVal = stringToBool(returniniVal)'convert type to boolean if needed
-elseif TypeName(returniniVal) = "Integer" then
-	returniniVal = int(returniniVal)'convert type to int if needed
+ValueFromIni = TypeConvert(returniniVal)
+End Function
+
+Function TypeConvert(valConvert)
+returnVal = valConvert
+if TypeName(valConvert) = "String" then
+	returnVal = stringToBool(valConvert)'convert type to boolean if needed
+	If isnumeric(valConvert)  then
+		returnVal = clng(valConvert)'convert type to int if needed
+	End if	
 end if
-ValueFromIni = returniniVal
+TypeConvert = returnVal
 end function
 
 Function stringToBool(strBoolean)
@@ -12588,7 +12594,7 @@ end if
 if intIntelAge > 30 then 'intel no longer updated/free license
 dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/maxmind_proxy_fraud.ipset", "cache\intel\MaxMindproxies.txt", "MaxMind", boolProxyFeed, False, 43800
 dload_list "https://github.com/firehol/blocklist-ipsets/blob/master/proxylists_30d.ipset", "cache\intel\proxylists.txt", "www.proxylists.net", boolProxyFeed, False, 43800 'open proxy
-dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24
+dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24 'can cause performance issues due to size of feed
 else
 dload_list "https://urlhaus.abuse.ch/downloads/text_recent/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24 'spamhaus only provides all or 30 days
 end if
