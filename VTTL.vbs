@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.4 - Modify URLhaus intel download to have the default be to only grab 30 days unless otherwise specified.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.5 - Load intel age from INI
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -622,6 +622,7 @@ boolCacheDomain = ValueFromINI("vttl.ini", "main", "DomainCache", boolWhoisCache
 BoolUseExcel = ValueFromINI("vttl.ini", "main", "enable_Excel", BoolUseExcel) 'load value from INI
 sleepOnSkippedVT = ValueFromINI("vttl.ini", "main", "SleepOnCachedLookup", sleepOnSkippedVT) 'load value from INI to sleep if VirusTotal results came from cache
 intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) 'Number of days from first time seeing the hash that you want to refresh the cache data (get updated results) for processed items. Default value is 10
+intIntelAge = ValueFromINI("vttl.ini", "main", "FeedAgeLimit", intIntelAge) 'Days how far the intel should go back. 1, 7, 30, or use zero to grab most recent. Default is 30. Use 31 or greater to grab lists that are no longer updated. Different than refresh time period
 strDatabasePath = ValueFromINI("vttl.ini", "main", "database_location", strDatabasePath) 'Path to VTTL database
 boolOutputUnicode = ValueFromINI("vttl.ini", "main", "output_unicode", boolOutputUnicode) 'Encoding to use for log/file output
 boolReverseDNS = ValueFromINI("vttl.ini", "main", "reverseDNS", boolReverseDNS) 'Perform reverse DNS lookups
