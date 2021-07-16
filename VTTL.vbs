@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.6 - Add TypeConvert function and support for long integer value in INI.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.7 - Expose Static intel folder path via INI
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -506,7 +506,7 @@ sysinternalsWhois = False 'Use command line sysinternals whois tool for whois lo
 BooWhoIsIPLookup = True 'Use NirSoft whosip external lookup tool
 boolWhoisCache = False 'Cache whois results
 boolReverseDNS = True 'Perform reverse DNS lookups
-staticIntelPath = "" 'path to static intelligence https://github.com/stamparm/maltrail
+staticIntelPath = "\static" 'path to static intelligence https://github.com/stamparm/maltrail
 '--- VirusTotal custom checks
 intDetectionNameCount = 1 'Set greater than zero to enable reporting on detection names associated with domain/IP. set to zero to disable.
 intDetectionCategory = 2 'associated with domain/IP category to use: detected_downloaded_samples=0, detected_referrer_samples=1, detected_communicating_samples=2
@@ -627,6 +627,7 @@ strDatabasePath = ValueFromINI("vttl.ini", "main", "database_location", strDatab
 boolOutputUnicode = ValueFromINI("vttl.ini", "main", "output_unicode", boolOutputUnicode) 'Encoding to use for log/file output
 boolReverseDNS = ValueFromINI("vttl.ini", "main", "reverseDNS", boolReverseDNS) 'Perform reverse DNS lookups
 boolDeepIOCmatch = ValueFromINI("vttl.ini", "main", "deepIOCmatch", boolDeepIOCmatch)
+staticIntelPath  = ValueFromINI("vttl.ini", "main", "StaticIntelPath", staticIntelPath)
 BoolDisableVTlookup = ValueFromINI("vttl.ini", "vendor", "disable_VirusTotal", BoolDisableVTlookup) 'load value from INI
 boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault) 'load value from INI
 boolProxyFeed = ValueFromINI("vttl.ini", "vendor", "ProxyFeed", boolProxyFeed) 'load value from INI
@@ -808,10 +809,15 @@ strReportsPath =  CreateFolder(CurrentDirectory & "\Reports")
 if staticIntelPath = "" then
   if objFSO.folderexists(CurrentDirectory & "\static") then
     staticIntelPath = CurrentDirectory & "\static"
-  elseif objFSO.folderexists(CurrentDirectory & "\trails") then
-    if objFSO.folderexists(CurrentDirectory & "\trails\static") then
-      staticIntelPath = CurrentDirectory & "\trails\static"
-    end if
+  end if
+else
+  if objFSO.folderexists(staticIntelPath) then
+    'all set
+  elseif objFSO.folderexists(CurrentDirectory & "\" & staticIntelPath) then
+    staticIntelPath = CurrentDirectory & "\" & staticIntelPath
+  Else
+  	staticIntelPath = CurrentDirectory & "\" & staticIntelPath
+    objFSO.createfolder(CurrentDirectory & "\" & staticIntelPath)
   end if
 end if
 
