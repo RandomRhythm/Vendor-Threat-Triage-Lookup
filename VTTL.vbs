@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.7 - Expose Static intel folder path via INI
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.8 - Fix error creating static folder
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -816,8 +816,8 @@ else
   elseif objFSO.folderexists(CurrentDirectory & "\" & staticIntelPath) then
     staticIntelPath = CurrentDirectory & "\" & staticIntelPath
   Else
-  	staticIntelPath = CurrentDirectory & "\" & staticIntelPath
-    objFSO.createfolder(CurrentDirectory & "\" & staticIntelPath)
+  	if instr(staticIntelPath, ":") = 0 Then staticIntelPath = CurrentDirectory & "\" & staticIntelPath
+    objFSO.createfolder(staticIntelPath)
   end if
 end if
 
