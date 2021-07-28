@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.0 - Add config directory and move config files
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.1 - Modify logic to load combine spreadsheet. Change header logic.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -8664,15 +8664,23 @@ if objFSO.fileexists(OpenFilePath1) then
 			exit sub
 		end If
 		If BoolHeaderLocSet = false Then 'check if headers are known to us 
-	        if ((instr(strSCData, "Publisher") > 0 and instr(strSCData,	"Company") > 0 and instr(strSCData, "MD5") > 0)) or _
-			(instr(strSCData, "File Name") > 0 and instr(strSCData,	"SHA256") > 0 and instr(strSCData, "# of Hosts") > 0) or _
-			(InStr(strSCData,	"SHA1") > 0 and instr(strSCData, "FullPath") > 0) or _
-			(InStr(strSCData,	"md5") > 0 and instr(strSCData, "name") > 0 and instr(strSCData, "size") > 0) or _
-			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "CommonName") > 0) or _
-			(InStr(strSCData,	"MD5") > 0 and instr(strSCData, "Path") > 0) or _
-			(InStr(strSCData,	"dstip") > 0 and instr(strSCData, "count") > 0)  or _
-			(InStr(strSCData,	"Domain") > 0 and (instr(strSCData, "Prevalence") > 0 or instr(strSCData, "Sibling Count") > 0)) or _
-			(instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Company") > 0) Then
+	    if (instr(strSCData, "Publisher") > 0 or _
+			instr(strSCData,	"Company")  > 0 or _
+			instr(strSCData, "size") > 0 or _
+			instr(strSCData, "# of Hosts") > 0 or _
+			instr(strSCData, "count") > 0 or _
+			instr(strSCData, "Prevalence") > 0 or _
+			instr(strSCData, "Sibling Count") > 0 or _
+			instr(strSCData, "FullPath") > 0or _
+			instr(strSCData, "Image Path") > 0 or _
+			instr(strSCData, "Entry Location") > 0 or _
+			instr(strSCData, "File Name") > 0 or _
+			instr(strSCData, "name") > 0) And _
+			 (instr(strSCData, "MD5") > 0 or _
+			instr(strSCData,	"SHA256") > 0 or _
+			InStr(strSCData,	"SHA1") > 0 or _
+			InStr(strSCData,	"dstip") > 0 or _
+			InStr(strSCData,	"Domain") > 0) then
 	          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
 	            boolSuppressNoHash = True
 	          end if
@@ -12929,14 +12937,14 @@ Sub WriteHeaderRow()
         intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
         boolLogHashes = false 'Don't log hashes if that is what we are looking up
         if BoolSigCheckLookup = True and BoolUseCarbonBlack = True then
-          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
         elseif BoolEnCaseLookup = True and BoolUseCarbonBlack = True then
-          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
         elseif BoolUseCarbonBlack = True then
-          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+          strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
         elseif BoolSigCheckLookup = True then
           if cint(inthfPrevalenceLoc) > -1 then 'CB custom CSV export
-            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|CB Prevalence|File Size|Digial Signature Tracking"
+            strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
           elseif boolEnableCuckoo = True or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
           else
@@ -12945,9 +12953,9 @@ Sub WriteHeaderRow()
           if cint(intHostLocation) > 0 then
             strTmpCBHead = strTmpCBHead & "|Hosts"
           end if
-          if BoolSigCheckLookup = True and BoolUseCarbonBlack = False and boolEnableCuckoo = False then
-            'crowdstrike csv export does not support any of these
-            if inthfSizeLoc = -1 and (boolVTuseV3 = False or BoolDisableVTlookup = True) then strTmpCBHead = replace(strTmpCBHead, "|File Size","")
+          if BoolSigCheckLookup = True and BoolUseCarbonBlack = False and boolEnableCuckoo = false And (BoolDisableVTlookup = True Or boolVTuseV3 = False) then
+            'Remove columns that will not be reported on
+            if inthfSizeLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|File Size","")
             if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digital Sig","")
             if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digial Signature Tracking","")			
             if inthfProductLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Product Name","")
