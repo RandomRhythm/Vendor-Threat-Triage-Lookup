@@ -1,0 +1,116 @@
+Acronis
+Ad-Aware
+AegisLab
+Agnitum (deprecated)
+AhnLab (deprecated)
+AhnLab-V3
+Alibaba
+ALYac
+AntiVir (deprecated)
+Antivir7 (deprecated)
+Antiy-AVL
+APEX
+Arcabit
+a-squared (deprecated)
+Authentium (deprecated)
+Avast
+Avast5  (depreciated)
+Avast-Mobile
+AVG
+Avira
+AVware
+Babable
+Baidu
+Baidu-International
+BitDefender
+Bkav
+ByteHero
+CAT-QuickHeal
+ClamAV
+CMC
+Command
+Commtouch
+Comodo
+CrowdStrike
+Cybereason
+Cylance
+Cyren
+DrWeb
+DrWebSE (depreciated)
+eGambit
+Emsisoft
+Endgame
+eSafe
+eScan
+ESET NOD32 (depreciated)
+ESET-NOD32
+eTrust-InoculateIT (depreciated)
+eTrust-Vet (depreciated)
+Ewido
+FileAdvisor
+FireEye
+Fortinet
+FortinetBeta (depreciated)
+F-Prot
+F-Prot4 (depreciated)
+F-Secure
+GData
+Ikarus
+Jiangmin
+K7AntiVirus
+K7GW
+Kaspersky
+Kingsoft
+Malwarebytes
+MAX
+McAfee
+McAfee+Artemis (depreciated)
+McAfeeBeta (depreciated)
+McAfee-GW-Edition
+Microsoft
+MicroWorld-eScan (depreciated)
+NANO-Antivirus
+NOD32
+NOD32Beta (depreciated)
+NOD32v2 (depreciated)
+Norman
+nProtect
+Panda
+PandaB3 (depreciated)
+PandaBeta (depreciated)
+PandaBeta2 (depreciated)
+PCTools
+Prevx (depreciated)
+Prevx1 (depreciated)
+Qihoo-360
+Rising
+SAVMail (depreciated)
+SecureWeb-Gateway (depreciated)
+SentinelOne
+Sophos
+Sunbelt
+SUPERAntiSpyware
+Symantec
+SymCloud (depreciated)
+T3 (depreciated)
+TACHYON
+Tencent
+TheHacker
+TotalDefense
+TotalDefense2 (depreciated)
+Trapmine
+TrendMicro
+TrendMicro-HouseCall
+Trustlook
+UNA (depreciated)
+VBA32
+VIPRE
+ViRobot
+VIRobot (depreciated)
+VirusBuster (depreciated)
+Webwasher-Gateway (depreciated)
+Webroot
+Yandex
+Zillya
+Zoner
+ZoneAlarm

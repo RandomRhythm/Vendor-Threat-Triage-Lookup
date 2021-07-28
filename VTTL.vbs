@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.6.8 - Fix error creating static folder
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.0 - Add config directory and move config files
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -806,6 +806,7 @@ strCachePath = CreateFolder(CurrentDirectory & "\cache")
 strIntelPath = CreateFolder(CurrentDirectory & "\cache\intel")
 strTLDPath = CreateFolder(CurrentDirectory & "\tld")
 strReportsPath =  CreateFolder(CurrentDirectory & "\Reports")
+strConfigPath =  CreateFolder(CurrentDirectory & "\Config")
 if staticIntelPath = "" then
   if objFSO.folderexists(CurrentDirectory & "\static") then
     staticIntelPath = CurrentDirectory & "\static"
@@ -1294,10 +1295,10 @@ if strCIFurl = "" then' URL to use for CIF requests (supports v2 currently) exam
 end if
 
 'load no submit list to dictionary
-LoadWatchlist CurrentDirectory &"\VTTL_NoSubmit.txt", dictNoSubmit
+LoadWatchlist compatibleConfigPath(strConfigPath,"VTTL_NoSubmit.txt"), dictNoSubmit
 
 'load no domain submit list to dictionary
-LoadWatchlist CurrentDirectory &"\VTTL_domains.txt", dictNoDomainSubmit
+LoadWatchlist compatibleConfigPath(strConfigPath,"VTTL_domains.txt"), dictNoDomainSubmit
 
 
 'Read list of items to submit to VT
@@ -12572,7 +12573,7 @@ End Sub
 
 Sub download_load()
 'Check and save dynamic DNS dat
-if objFSO.fileexists(CurrentDirectory & "\DDNS.dat") = False Then dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat", "this is a listdynamic dns providers", True, false, 24
+if objFSO.fileexists(compatibleConfigPath(strConfigPath, "DDNS.dat")) = False Then dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat", "this is a listdynamic dns providers", True, false, 24
 'download intelligence
 'dload_list "https://sslbl.abuse.ch/blacklist/sslipblacklist.rules", "cache\intel\sslipblacklist.rules", "SSLBL" 'rules files not currently supported
 'dload_list "https://rules.emergingthreats.net/open/suricata/rules/emerging-dns.rules", "cache\intel\emerging-dns.rules", "Emerging Threats" 'rules files not currently supported
@@ -12683,13 +12684,13 @@ end if
 
 
 'Create country code dat if does not exist
-if objFSO.fileexists(CurrentDirectory &"\cc.dat")  = False then 
+if objFSO.fileexists(compatibleConfigPath(strConfigPath,"cc.dat"))  = False then 
 	'WriteCC_Dat
-	msgbox "Missing file " & chr(34) & CurrentDirectory &"\cc.dat" & chr(34) & ". Please get another copy from https://github.com/randomrhythm."
+	msgbox "Missing file " & chr(34) & compatibleConfigPath(strConfigPath,"cc.dat") & chr(34) & ". Please get another copy from https://github.com/randomrhythm."
 end if
 'load country code dat
-if objFSO.fileexists(CurrentDirectory &"\cc.dat") then
-  Set objFile = objFSO.OpenTextFile(CurrentDirectory &"\cc.dat")
+if objFSO.fileexists(compatibleConfigPath(strConfigPath,"cc.dat")) then
+  Set objFile = objFSO.OpenTextFile(compatibleConfigPath(strConfigPath,"cc.dat"))
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
@@ -12708,15 +12709,15 @@ if objFSO.fileexists(CurrentDirectory &"\cc.dat") then
 end if
 
 'load custom malware hash
-LoadCustomDict CurrentDirectory &"\malhash.dat", DictMalHash
+LoadCustomDict compatibleConfigPath(strConfigPath,"malhash.dat"), DictMalHash
 'load custom whitelist hash
-LoadCustomDict CurrentDirectory &"\whitehash.dat", Dictwhitehash
+LoadCustomDict compatibleConfigPath(strConfigPath,"whitehash.dat"), Dictwhitehash
 'format for dictIPdomainWatchList is watchitem|note
-LoadCustomDict CurrentDirectory &"\IPDwatchlist.txt", dictIPdomainWatchList
-LoadCustomDict CurrentDirectory & "\generics.alias", dictGenericLabel
-LoadWatchlist CurrentDirectory &"\DNwatchlist.txt", dictDnameWatchList
-LoadWatchlist CurrentDirectory & "\KWordwatchlist.txt", dictKWordWatchList
-LoadWatchlist CurrentDirectory &"\URLwatchlist.txt", dictURLWatchList
+LoadCustomDict compatibleConfigPath(strConfigPath,"IPDwatchlist.txt"), dictIPdomainWatchList
+LoadCustomDict compatibleConfigPath(strConfigPath,"\generics.alias"), dictGenericLabel
+LoadWatchlist compatibleConfigPath(strConfigPath,"DNwatchlist.txt"), dictDnameWatchList
+LoadWatchlist compatibleConfigPath(strConfigPath,"KWordwatchlist.txt"), dictKWordWatchList
+LoadWatchlist compatibleConfigPath(strConfigPath,"URLwatchlist.txt"), dictURLWatchList
 
 'addThreatIntel and processIntelCSV
 if staticIntelPath <> "" And boolStaticIntel = True then TraverseIntelFolders objFso.GetFolder(staticIntelPath) 'load static intelligence
@@ -13074,3 +13075,21 @@ Sub WriteHeaderRow()
 end Select
 
 end Sub
+
+Function compatibleConfigPath(strConfigFolderPath, strConfigFileName) 'moved config files out of current directory. This is backwards compatibility code.
+  if objFSO.fileexists(strConfigFolderPath & "\" & strConfigFileName) then
+    compatibleConfigPath = strConfigFolderPath & "\" & strConfigFileName
+  elseif objFSO.fileexists(CurrentDirectory & "\" & strConfigFileName) then
+    on error resume next
+    objFSO.MoveFile CurrentDirectory & "\" & strConfigFileName, strConfigFolderPath & "\"
+    if err.number <> 0 then
+      compatibleConfigPath = CurrentDirectory & "\" & strConfigFileName
+      MsgBox err.Description
+    else
+      compatibleConfigPath = strConfigFolderPath & "\" & strConfigFileName
+    end if
+    on error goto 0
+  else
+    compatibleConfigPath = strConfigFolderPath & "\" & strConfigFileName
+  end if
+end function
