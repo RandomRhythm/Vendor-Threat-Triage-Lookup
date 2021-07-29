@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.1 - Modify logic to load combine spreadsheet. Change header logic.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.2 - Move CSV feed column tracking to external file.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -389,7 +389,8 @@ Dim dictNIDSsigName: set dictNIDSsigName = CreateObject("Scripting.Dictionary")
 Dim dictNIDStmpCategory: set dictNIDStmpCategory = CreateObject("Scripting.Dictionary")
 Dim dictGenericLabel: set dictGenericLabel = CreateObject("Scripting.Dictionary")
 Dim dictTrancoList: set dictTrancoList =  CreateObject("Scripting.Dictionary")
-Dim DictBlank: Set DictBlank = CreateObject("Scripting.Dictionary") 'blank dictionary 
+Dim DictBlank: Set DictBlank = CreateObject("Scripting.Dictionary") 'blank dictionary
+Dim dictCSVFeed: Set dictCSVFeed = CreateObject("Scripting.Dictionary")
 Dim boolUseTrancoList
 Dim boolSkipOnTrancoHit
 Dim boolSkipDomain: boolSkipDomain = False 'skip lookups when domain matched Tranco list
@@ -11594,6 +11595,27 @@ if objFSO.fileexists(strListPath) then
 end if
 end sub
 
+Sub LoadCustomValDict(strListPath, dictToLoad)
+if objFSO.fileexists(strListPath) then
+  Set objFile = objFSO.OpenTextFile(strListPath)
+  Do While Not objFile.AtEndOfStream
+    if not objFile.AtEndOfStream then 'read file
+        On Error Resume Next
+        strTmpData = objFile.ReadLine
+        if instr(strTmpData, "|") then
+          strTmpArrayDDNS = split(strTmpData, "|")
+          valueText = mid(strTmpData, len(strTmpArrayDDNS(0)) +2)
+          if dictToLoad.exists(lcase(strTmpArrayDDNS(0))) = False then _
+          dictToLoad.add lcase(strTmpArrayDDNS(0)), valueText
+        else
+          if dictToLoad.exists(lcase(strTmpData)) = False then _
+          dictToLoad.add lcase(strTmpData), ""
+        end if
+        on error goto 0
+    end if
+  loop
+end if
+end sub
 
 Sub LoadTrancoList(strListPath, dictToLoad)
 if objFSO.fileexists(strListPath) then
@@ -12458,27 +12480,20 @@ End sub
 
 Sub processIntelCSV(strIntelCSVrow, tmpReportName)
 intIntelLocation = -1
-intIntelDescription = -1 
-Select Case tmpReportName
-	Case "maltrail-static-trails"
-		intIntelLocation = 0
-		intIntelDescription =1
-	Case "blackbook(malware)"
-		intIntelLocation = 0
-		intIntelDescription =1
-  Case "ThreatView_CobaltStrike"
-		intIntelLocation = 0
-		intIntelDescription =3
-  Case "ThreatView_CobaltStrike2"
-		intIntelLocation = 2
-		intIntelDescription =3
-	Case "viriback(malware)"
-		intIntelLocation = 1
-		intIntelDescription =0
-	Case "turris(bad reputation)"
-		intIntelLocation = 0
-		intIntelDescription =2		
-End Select		
+intIntelDescription = -1
+
+for Each reportKey in dictCSVFeed
+  if tmpReportName = reportKey then
+    reporValues = dictCSVFeed.item(tmpReportName)
+    if instr(reporValues, "|") >0 then 
+      arrayRval = split(reporValues, "|")
+      intIntelLocation = arrayRval(0)
+      intIntelDescription =arrayRval(1)
+		exit for
+		end if
+  end if
+next
+
 If InStr(strIntelCSVrow, Chr(34) & "," & Chr(34)) > 0 Then
 	arrayIntelCSV = Split(strIntelCSVrow, Chr(34) & "," & Chr(34))
 ElseIf InStr(strIntelCSVrow, ",") > 0 Then
@@ -12587,6 +12602,8 @@ if objFSO.fileexists(compatibleConfigPath(strConfigPath, "DDNS.dat")) = False Th
 'dload_list "https://rules.emergingthreats.net/open/suricata/rules/emerging-dns.rules", "cache\intel\emerging-dns.rules", "Emerging Threats" 'rules files not currently supported
 'dload_list "https://rules.emergingthreats.net/open/suricata/rules/botcc.rules", "cache\intel\botcc.rules", "CnC Server" 'rules files not currently supported
 'dload_list "http://cinsscore.com/list/ci-badguys.txt", "cache\intel\ciarmy.txt", "1" 'noisy
+
+LoadCustomValDict strConfigPath & "\csvfeed.dat",dictCSVFeed
 
 'proxy
 if intIntelAge < 1 then
