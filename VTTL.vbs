@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.3 - Move feed loading to external file.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.4 - Support for TSV intel feeds. Ignore extension of intel feed. Use dictCSVFeed to see if feed is CSV format.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -12492,12 +12492,15 @@ for Each reportKey in dictCSVFeed
 		exit for
 		end if
   end if
-next
+Next
+
 
 If InStr(strIntelCSVrow, Chr(34) & "," & Chr(34)) > 0 Then
 	arrayIntelCSV = Split(strIntelCSVrow, Chr(34) & "," & Chr(34))
 ElseIf InStr(strIntelCSVrow, ",") > 0 Then
 	arrayIntelCSV = Split(strIntelCSVrow, ",")
+ElseIf InStr(strIntelCSVrow, vbtab) > 0 Then
+	arrayIntelCSV = Split(strIntelCSVrow, vbtab)
 Else
 	Exit Sub
 End If
@@ -12519,9 +12522,14 @@ Sub LoadThreatIntel(strListPath)
 boolProcessCSV = False
 reportName = GetFilePath(strListPath) & "\"
 reportName = Replace(strListPath, reportName, "")
+
+
+
 If Len(strListPath) > 4 Then
-If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" Then Exit Sub
+'If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" And Right(strListPath, 4) <> ".intel" Then Exit Sub
 If Right(strListPath, 4) = ".csv" Then boolProcessCSV = True
+If dictCSVFeed.exists(reportName) Then boolProcessCSV = True
+
 reportName = Replace(reportName, ".txt", "")
 reportName = Replace(reportName, ".csv", "")
 End If
