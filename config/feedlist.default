@@ -53,4 +53,8 @@ https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset
 https://urlhaus.abuse.ch/downloads/text_recent/|\cache\intel\urlhaus.txt|contact urlhaus|TRUE|24|FALSE|1|malware
 https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/maxmind_proxy_fraud.ipset|cache\intel\MaxMindproxies.txt|MaxMind|TRUE|43800|FALSE|31|proxy
 https://github.com/firehol/blocklist-ipsets/blob/master/proxylists_30d.ipset|cache\intel\proxylists.txt|www.proxylists.net|TRUE|43800|FALSE|31|proxy
-https://urlhaus.abuse.ch/downloads/text/|\cache\intel\urlhaus.txt|contact urlhaus|TRUE|24|FALSE|31|malware
+https://urlhaus.abuse.ch/downloads/text/|\cache\intel\urlhaus.txt|contact urlhaus|True|24|False|31|malware
+https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/illuminate.intel|\cache\intel\illuminate.intel|indicator_type|True|24|False||malware
+https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/dom-bl.intel|\cache\intel\dom-bl.intel|indicator_type|True|24|False||malware
+https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/filetransferportals.intel|\cache\intel\filetransferportals.intel|indicator_type|True|24|False||multi
+https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/cps-collected-iocs.intel|\cache\intel\cps-collected-iocs.intel|indicator_type|True|24|False||malware
