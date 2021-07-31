@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.2 - Move CSV feed column tracking to external file.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.3 - Move feed loading to external file.
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -12594,6 +12594,83 @@ Sub aggregateDict(dictObject, strKeyvalue, strKeypairValue)
 End Sub
 '-----------------end load static intelligence------------
 
+
+'------------------begin feed loading
+Sub loadFeed()
+Dim dictFeedAge: set dictFeedAge = CreateObject("Scripting.Dictionary")
+
+if objFSO.fileexists(strConfigPath & "\feedlist.dat") then
+  Set objFile = objFSO.OpenTextFile(strConfigPath &"\feedlist.dat")
+  Do While Not objFile.AtEndOfStream
+    if not objFile.AtEndOfStream then 'read file
+        On Error Resume Next
+        'URL|cach_location|Feed_check_String|boolUseFeed|refresh_age|IgnoreSSLerror|age_limit|category
+        feedEntry = objFile.ReadLine 
+        on error goto 0
+
+      if instr(feedEntry, "|") > 0 Then 
+        feedEntryArray = split(feedEntry, "|")
+        if feedEntryArray(6) <> "" and isnumeric(feedEntryArray(6)) then
+          dictFeedAge.add feedEntry, cint(feedEntryArray(6)) 'sort through all aged intel after reading in entire file
+          
+          else
+
+                feedDownload feedEntryArray(0), feedEntryArray(1), feedEntryArray(2), feedEntryArray(3), feedEntryArray(4), feedEntryArray(5), feedEntryArray(6), feedEntryArray(7)
+         end if
+      end if
+    end if
+  loop
+end if
+Dim dictFeedProcessed: set dictFeedProcessed = CreateObject("Scripting.Dictionary")
+for each feedEntry in dictFeedAge 'loop through all entries that have age and compare each entry with the same cache location to find the closest age to intIntelAge
+  feedEntryArray = split(feedEntry, "|")
+  fileCacheLocation = feedEntryArray(1)
+  feedAge = dictFeedAge.item(feedEntry)
+  
+  bestMatch = ""
+  if intIntelAge >= feedAge then bestMatch = feedEntry
+  if dictFeedProcessed.exists(fileCacheLocation) = false then
+    for each feedReview in dictFeedAge
+      feedReviewArray = split(feedReview, "|")
+      if fileCacheLocation = feedReviewArray(1) then
+        if intIntelAge >= CInt(dictFeedAge.item(feedReview)) and CInt(dictFeedAge.item(feedReview)) > feedAge then 'less than intel age and greater than curent age
+           bestMatch = feedReview
+        end if
+      end if
+
+    next
+	  dictFeedProcessed.add fileCacheLocation, 1 'don't process this file again
+	If bestMatch <> "" Then
+	  feedEntryArray = split(bestMatch, "|")
+	  feedDownload feedEntryArray(0), feedEntryArray(1), feedEntryArray(2), feedEntryArray(3), feedEntryArray(4), feedEntryArray(5), feedEntryArray(6), feedEntryArray(7)
+	End if
+  end if
+
+next
+End sub
+
+Sub feedDownload(URL,cach_location,Feed_check_String,boolUseFeed,refresh_age,IgnoreSSLerror,age_limit,strCategory)
+boolUseFeed = stringToBool(boolUseFeed)
+IgnoreSSLerror = stringToBool(IgnoreSSLerror)
+refresh_age = TypeConvert(refresh_age)
+select case lcase(strCategory) 'category
+  case "proxy"
+     if boolProxyFeed = False then boolUseFeed = False
+  case "malware"
+     if boolMalwareFeed = False then boolUseFeed = False
+  case "attacker"
+     if boolAttackerFeed = False then boolUseFeed = False
+  case "multi"
+     if boolMultiFeed = False then boolUseFeed = False
+end select
+
+dload_list URL,cach_location,Feed_check_String,boolUseFeed,IgnoreSSLerror,refresh_age
+end sub
+
+
+'-----------------------------------------end feed loading
+
+
 Sub download_load()
 'Check and save dynamic DNS dat
 if objFSO.fileexists(compatibleConfigPath(strConfigPath, "DDNS.dat")) = False Then dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat", "this is a listdynamic dns providers", True, false, 24
@@ -12603,84 +12680,8 @@ if objFSO.fileexists(compatibleConfigPath(strConfigPath, "DDNS.dat")) = False Th
 'dload_list "https://rules.emergingthreats.net/open/suricata/rules/botcc.rules", "cache\intel\botcc.rules", "CnC Server" 'rules files not currently supported
 'dload_list "http://cinsscore.com/list/ci-badguys.txt", "cache\intel\ciarmy.txt", "1" 'noisy
 
-LoadCustomValDict strConfigPath & "\csvfeed.dat",dictCSVFeed
-
-'proxy
-if intIntelAge < 1 then
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
-elseif intIntelAge >= 30 then
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_30d.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_30d.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_30d.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
-elseif intIntelAge >= 7 then
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_7d.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_7d.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_7d.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
-elseif intIntelAge >= 1 then
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy_1d.ipset", "cache\intel\socks_proxy.txt", "socks-proxy.net", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies_1d.ipset", "cache\intel\sslproxies.txt", "sslproxies", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout_1d.ipset", "cache\intel\botscout.txt", "botscout", boolMalwareFeed, False, 24'malware feeds
-end if
-if intIntelAge > 30 then 'intel no longer updated/free license
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/maxmind_proxy_fraud.ipset", "cache\intel\MaxMindproxies.txt", "MaxMind", boolProxyFeed, False, 43800
-dload_list "https://github.com/firehol/blocklist-ipsets/blob/master/proxylists_30d.ipset", "cache\intel\proxylists.txt", "www.proxylists.net", boolProxyFeed, False, 43800 'open proxy
-dload_list "https://urlhaus.abuse.ch/downloads/text/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24 'can cause performance issues due to size of feed
-else
-dload_list "https://urlhaus.abuse.ch/downloads/text_recent/", "\cache\intel\urlhaus.txt", "contact urlhaus", boolMalwareFeed, False, 24 'spamhaus only provides all or 30 days
-end if
-dload_list "https://www.dan.me.uk/torlist/", "cache\intel\tor.txt", "1", boolProxyFeed, False, 24
-dload_list "https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt", "cache\intel\ejrv_vpn.txt", "update", boolProxyFeed, False, 43800 'VPN list
-
-'multi feeds
-dload_list "https://reputation.alienvault.com/reputation.generic", "cache\intel\alienvault_ip.txt", "1", boolMultiFeed, False, 24
-dload_list "https://openphish.com/feed.txt", "cache\intel\openphish.txt", "http://", boolMultiFeed, False, 24
-dload_list "https://www.turris.cz/greylist-data/greylist-latest.csv", "cache\intel\turris(bad reputation).csv", "1", boolMultiFeed, False, 24
-
-'attacker feeds
-dload_list "http://ipnoise.now.im/blacklist.txt", "cache\intel\ipnoise(known attacker).txt", "ipnoise", boolAttackerFeed, false, 24
-dload_list "https://blocklist.greensnow.co/greensnow.txt", "cache\intel\greensnow(known attacker).txt", "1", boolAttackerFeed, False, 24
-dload_list "https://iplists.firehol.org/files/dshield_top_1000.ipset", "cache\intel\dshield_top_1000(known attacker).txt", "known attacker", boolAttackerFeed, False, 24
-dload_list "https://lists.blocklist.de/lists/all.txt", "cache\intel\blocklist.de(known attacker).txt", "1", boolAttackerFeed, False, 24
-dload_list "http://danger.rulez.sk/projects/bruteforceblocker/blist.php", "cache\intel\bruteforceblocker.txt", "1", boolAttackerFeed, False, 24
-dload_list "https://www.cruzit.com/xxwbl2txt.php", "cache\intel\cruzit(known attacker).txt", "ipaddress", boolAttackerFeed, False, 24
-dload_list "https://iplists.firehol.org/files/gpf_comics.ipset", "cache\intel\gpf_comics(known attacker).txt", "gpf_comics", boolAttackerFeed, False, 24
-dload_list "https://myip.ms/files/blacklist/htaccess/latest_blacklist.txt", "cache\intel\myip(crawler).txt", "ADDRESSES DATABASE", boolAttackerFeed, False, 24
-dload_list "https://report.cs.rutgers.edu/DROP/attackers", "cache\intel\rutgers(known attacker).txt", "1", boolAttackerFeed, False, 24
-dload_list "https://sblam.com/blacklist.txt", "cache\intel\sblam(html spam).txt", "sblam.com", boolAttackerFeed, False, 24
-
-'malware feeds
-dload_list "http://tracker.viriback.com/dump.php", "cache\intel\viriback(malware).csv", "1", boolMalwareFeed, False, 24
-dload_list "https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt", "cache\intel\maltrail-static-trails.txt", "(static)", boolMalwareFeed, False, 24
-dload_list "https://www.talosintelligence.com/documents/ip-blacklist", "cache\intel\talosintelligence.txt", "1", boolMalwareFeed, False, 24
-dload_list "http://vxvault.net/URL_List.php", "cache\intel\vxvault(malware).txt", "VX Vault", boolMalwareFeed, False, 24
-dload_list "https://cybercrime-tracker.net/ccpmgate.php", "cache\intel\pony.txt", "/gate.php", boolMalwareFeed, False, 24
-dload_list "https://raw.githubusercontent.com/Hestat/minerchk/master/hostslist.txt", "cache\intel\cryptomining.txt", ".com", boolMalwareFeed, False, 24
-dload_list "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt", "cache\intel\feodotracker.txt", "Botnet C2", boolMalwareFeed, False, 24
-dload_list "https://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt", "cache\intel\emergingthreats-ip.txt", "1", boolMalwareFeed, False, 24
-dload_list "https://cybercrime-tracker.net/all.php", "cache\intel\cybercrime-tracker(malware).txt", "cp.php?m=login", boolMalwareFeed, False, 24
-dload_list "https://kriskintel.com/feeds/ktip_malicious_Ips.txt", "cache\intel\kriskintel_ip.txt", "Feed last refreshed", boolMalwareFeed, False, 24
-dload_list "https://kriskintel.com/feeds/ktip_malicious_domains.txt", "cache\intel\ktip_malicious_domains.txt", "Feed last refreshed", boolMalwareFeed, False, 24
-dload_list "https://data.netlab.360.com/feeds/dga/virut.txt", "cache\intel\virut_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/tofsee.txt", "cache\intel\tofsee_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/suppobox.txt", "cache\intel\suppobox_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/necurs.txt", "cache\intel\necurs_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/locky.txt", "cache\intel\locky_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/gameover.txt", "cache\intel\gameover_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/cryptolocker.txt", "cache\intel\cryptolocker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/conficker.txt", "cache\intel\conficker_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/chinad.txt", "cache\intel\chinad_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://data.netlab.360.com/feeds/dga/bigviktor.txt", "cache\intel\bigviktor_dga_(malware).txt", "netlab 360", boolMalwareFeed, True, 24
-dload_list "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset", "cache\intel\bitcoin_nodes_1d.txt", "1", boolMalwareFeed, false, 24
-dload_list "https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv", "cache\intel\blackbook(malware).csv", "Malware", boolMalwareFeed, false, 24
-dload_list "https://feeds.alphasoc.net/ryuk.txt", "cache\intel\AlphaSOC_RyukC2.txt", "AlphaSOC, Inc.", boolMalwareFeed, false, 24
-dload_list "https://threatview.io/Downloads/High-Confidence-CobaltStrike-C2%20-Feeds.txt", "cache\intel\ThreatView_CobaltStrike.csv", "Threatview[.]io", boolMalwareFeed, false, 24
-
-'Malware hash feeds
-dload_list "https://bazaar.abuse.ch/export/txt/md5/recent/", "cache\intel\bazaar_md5.txt", "bazaar.abuse.ch", boolMalwareFeed, True, 24
-dload_list "https://bazaar.abuse.ch/export/txt/sha1/recent/", "cache\intel\bazaar_sha1.txt", "bazaar.abuse.ch", boolMalwareFeed, True, 24
-dload_list "https://bazaar.abuse.ch/export/txt/sha256/recent/", "cache\intel\bazaar_sha256.txt", "bazaar.abuse.ch", boolMalwareFeed, True, 24
+LoadCustomValDict strConfigPath & "\csvfeed.dat",dictCSVFeed 'loads csv column pointers for feed
+loadFeed 'loads all configured feeds
 
 'load dynamic DNS dat
 if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") then
