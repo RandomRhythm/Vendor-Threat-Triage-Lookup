@@ -22,6 +22,7 @@ VTTL Performs lookups for file hashes, IP addresses and domain names. Results ar
 * SURBL
 * SORBS
 * Barracuda
+* Over 40 preconfigured threat intel feeds
 
 Additional checks:
 * Reverse DNS
