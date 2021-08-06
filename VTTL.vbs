@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.4 - Support for TSV intel feeds. Ignore extension of intel feed. Use dictCSVFeed to see if feed is CSV format.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.5 - Fix imphash caching. Remove unneeded VT cache call. Add boolTruncateVTsigner
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -455,6 +455,7 @@ Dim boolOutputUnicode
 Dim intIntelAge 'how far the intel should go back. Different than refresh time period
 Dim boolReverseDNS'Perform reverse DNS lookups
 Dim boolDeepIOCmatch ' Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
+Dim boolTruncateVTsigner ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -498,6 +499,7 @@ boolLogIPs = True 'Output IP addresses associated with the lookup items.
 AddIpResolutionsToQueue = True 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
 boolOutputUnicode = False 'Default output encoding is utf-8. You may need utf-16 depending on what data gets imported into the script
 boolDeepIOCmatch = True 'Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
+boolTruncateVTsigner = True ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -1081,7 +1083,7 @@ for intCountVendors = 0 to 13 'Count of vendor APIs
     strAPIproduct = "ET Intelligence" 
   elseif intCountVendors = 7 then
     strFile= CurrentDirectory & "\pt.dat"
-    strAPIproduct = "PassiveTotal" 
+    strAPIproduct = "RiskIQ (PassiveTotal)" 
 	strDisableFile = CurrentDirectory & "\pt.disable"
   elseif intCountVendors = 8 then
     strFile= CurrentDirectory & "\wa.dat"
@@ -2305,6 +2307,13 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           end if
         end if
         if strTmpSigAssesslineE = "" then 
+          if boolTruncateVTsigner = True and instr(strCBdigSig, ";") > 0  and DictMalDSigNames.exists(strCBdigSig) = False and DictPUADSigNames.exists(strCBdigSig) = False and DictGrayDSigNames.exists(strCBdigSig) = False Then
+            strTmpSignature = left(strCBdigSig, instr(strCBdigSig, ";") -1) 'truncate VirusTotal signer info to just first entity name
+            if DictMalDSigNames.exists(strTmpSignature) = True or DictPUADSigNames.exists(strTmpSignature) = True or DictGrayDSigNames.exists(strCBdigSig) = True Then
+              'known signer
+              strCBdigSig = strTmpSignature 'update with signer with known reputation
+            end if
+          end if
           if DictMalDSigNames.exists(strCBdigSig) = True then
             strTmpSigAssesslineE = "|Previous Malware Signer"
             IntTmpAdjustedMalScore = IntTmpAdjustedMalScore + DictMalDSigNames.item(strCBdigSig)
@@ -3044,10 +3053,6 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 
 
       If InStr(strresponseText, chr(34) & "https://www.virustotal.com") Then    
-
-		if BoolDisableCaching = False then CacheLookup strresponseText, "\vt\", strScanDataInfo, 45
-
-		
 		strTmpURLs = "https://www.virustotal.com" & GetData(strresponseText, chr(34), chr(34) & "https://www.virustotal.com")
         If InStr(strresponseText, chr(34) & "https://www.virustotal.com/api/v3/") Then 
 			boolVT_V3 = True   
@@ -5554,8 +5559,8 @@ else
       set objparameter2 = cmd.createparameter("@SHA256", 129, 1, 64,StrTMPSHA256)
     end if  
     strCompareIMP = Recordset.fields.item("IMPHash")
-    if strFileIMP <> "" and strCompareIMP = "" then
-      strQueryWrite = strQueryWrite & ", IMP = ?"
+    if strFileIMP <> "" and (strCompareIMP = "" Or IsNull(strCompareIMP)) Then
+      strQueryWrite = strQueryWrite & ", IMPHash = ?"
       set objparameter3 = cmd.createparameter("@IMPHash", 129, 1, 32,strFileIMP)
     end if
     set objparameter4 = cmd.createparameter("@HashVal", 129, 1, len(StrlcCacheName),StrlcCacheName)
