@@ -13,7 +13,7 @@ VTTL Performs lookups for file hashes, IP addresses and domain names. Results ar
 * ThreatIntelligenceAggregator (TIA)
 * RiskIQ
 * Collective Intelligence Framework (CIF)
-* Seclytics
+* SecLytics
 * Pulsedive
 * Quad9
 * ZEN RBL
@@ -22,9 +22,9 @@ VTTL Performs lookups for file hashes, IP addresses and domain names. Results ar
 * SURBL
 * SORBS
 * Barracuda
-* Over 40 preconfigured threat intel feeds
 
 Additional checks:
+* Over 40 preconfigured threat intel feeds
 * Reverse DNS
 * Reverse IP (lookup to document sample of associated domains)
 * Whois (often provided via APIs already listed)
