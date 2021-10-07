@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.5 - Fix imphash caching. Remove unneeded VT cache call. Add boolTruncateVTsigner
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.6 - Update AlienVault OTX whois parsing
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2940,13 +2940,13 @@ strTmpIPlineE = "|"
 if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then 'whois lookup for IP and domain
 	If BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "Lookup Item: " & strData, false
 	if instr(strFullAPIURL,"domain=") then
-		strTmpRequestResponse = WhoIsDomain_Parse(strresponseText)
+		strTmpRequestResponse = WhoIsDomain_Parse(strresponseText) 'If we want this value then assign to strTmpIPContactLineE instead of strTmpRequestResponse. 
 		if BoolWhoisDebug = True then msgbox "domain return:" & strTmpRequestResponse
 		if instr(strTmpWhoIs, ".") <> instrrev(strTmpWhoIs, ".") then ' sub domain
 			strTmpWhoIs = levelup(strScanDataInfo)
 		end if
 	else
-	strTmpRequestResponse = ParseVTIPOwner(strresponseText)	
+		strTmpRequestResponse = ParseVTIPOwner(strresponseText)	
 	end If
 	
 	whoIsPopulate strScanDataInfo
@@ -3298,19 +3298,6 @@ if instr(strFullAPIURL,"domain=") then
   end if
   
 
-  
- 'Perform x-force lookups 
- if boolUseXforce = True then 
-   strTmpXforce = CheckXForce(strData)
-   logdata strIPreportsPath & "\IBM_domain_" & strData & ".txt", strScanDataInfo & vbtab & strTmpXforce,BoolEchoLog 
-   if strTmpXforce <> "" then
-    if strXforce_Output = "" then
-      strXforce_Output = "https://exchange.xforce.ibmcloud.com/url/" & strData
-    else
-      strXforce_Output = strXforce_Output & vbcrlf & "https://exchange.xforce.ibmcloud.com/url/" & strData
-    end if
-   end if
- end if
  
  'Threat Crowd lookups
  if boolUseThreatCrowd = True then
@@ -5128,7 +5115,7 @@ end function
 Function WhoIsDomain_Parse(dataresults) 'loose text generic whois
 'check for sinkhole 
 CheckWhoISData dataresults
-if BoolDebugTrace = True then LogData strDebugPath & "\whois_responses.log", "Sysinternals whois response", false
+if BoolDebugTrace = True then LogData strDebugPath & "\whois_responses.log", "WhoIsDomain_Parse", false
 
 ' set city, region, and country code for spreadsheet output
 if strTmpCITlineE = "" or strTmpCITlineE = "|" then
@@ -6009,7 +5996,7 @@ Function CheckWhoISData(strTmpWhoisResponse)'check for sinkhole domain
 Dim strTmpRegistrantName
 Dim strTmpRegistrantOrg
 Dim strTmpNameServer
-if instr(strTmpWhoisResponse, "Status: clientTransferProhibited") then
+if instr(strTmpWhoisResponse, "Status: clientTransferProhibited") Then 'need to remove this and the associated column as it is not useful info
   if instr(strTmpWhoisResponse, "Status: clientUpdateProhibited") then
     if instr(strTmpWhoisResponse, "Status: clientRenewProhibited") then
       if instr(strTmpWhoisResponse, "Status: clientDeleteProhibited") then
@@ -6032,7 +6019,8 @@ if instr(strTmpWhoisResponse, "\nRegistrant Organization:") then
 	if instr(strTmpRegistrantOrg, vbcr) > 0 then 
 		strTmpRegistrantOrg = left(strTmpRegistrantOrg,instr(strTmpRegistrantOrg, vbcr) -1)
 		
-	end if
+	end If
+	SinkholeRegistrantCheck strTmpRegistrantName, strTmpRegistrantOrg 'sinkhole check for org
 end if
 if CheckBadValues(StrPVTWhoIS_Return) and instr(strTmpWhoisResponse, "\nRegistrant Name:") then
 	strTmpRegistrantName = getdata(strTmpWhoisResponse, "\", "\nRegistrant Name:")
@@ -11269,7 +11257,8 @@ aWhoisReturn = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" 
 if aWhoisReturn = "" then aWhoisReturn = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & " Name" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "name" & chr(34) & "}")
 
 if aWhoisReturn = "" then aWhoisReturn = getdata(strWhoisTmp, chr(34), chr(34) & "asn" & chr(34) & ": " & chr(34) )
-if aWhoisReturn = "" then aWhoisReturn = getdata(strWhoisTmp, chr(34), chr(34) & " Org" & chr(34) & ", " & chr(34) & "value" & chr(34) & ": " & chr(34) )
+if aWhoisReturn = "" then aWhoisReturn = getdata(strWhoisTmp, chr(34), chr(34) & " Org" & chr(34) & ", " & chr(34) & "value" & chr(34) & ": " & chr(34) ) 'can likely remove this as space seems to have been removed from " Org"
+if aWhoisReturn = "" then aWhoisReturn = getdata(strWhoisTmp, chr(34), chr(34) & "Org" & chr(34) & ", " & chr(34) & "value" & chr(34) & ": " & chr(34) )
 ' set city, region, and country code for spreadsheet output
 if strTmpCITlineE = "" or strTmpCITlineE = "|" then
 strTmpCITlineE = rgetdata(strWhoisTmp, chr(34), chr(34) & ", " & chr(34) & "name" & chr(34) & ": " & chr(34) & "City" & chr(34) & ", " & chr(34) & "key" & chr(34) & ": " & chr(34) & "city" & chr(34) & "}")
