@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.6 - Update AlienVault OTX whois parsing
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.7 - Support merging Defender export
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -8851,6 +8851,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfPathLoc = inthArrayLoc		
       Case "FullPath" 'ShimCacheParser
         inthfPathLoc = inthArrayLoc	
+      Case "FolderPath" 'Defender
+        If inthfPathLoc = "" Then inthfPathLoc = inthArrayLoc	'prefer other headers for file path/file name
       Case "CommonName" 'Cylance Protect
         inthfPathLoc = inthArrayLoc	
       Case "Product"
@@ -8867,7 +8869,7 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfSizeLoc = inthArrayLoc 
       Case "size" ' crowdresponse
         inthfSizeLoc = inthArrayLoc 
-      Case "FileSize" ' Cylance Protect
+      Case "FileSize" ' Cylance Protect/Defender
         inthfSizeLoc = inthArrayLoc 
       Case "CB Prevalence"
         inthfPrevalenceLoc = cint(inthArrayLoc)
