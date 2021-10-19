@@ -1,4 +1,5 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.7 - Support merging Defender export
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.8 - Updates to improve whois results
+
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -4873,10 +4874,13 @@ if instr(strIPcontact,".") > 0 or instr(strIPcontact,":") > 0 then
   if isIPv6(strIPcontact) = True then 'quick fix for IPv6 need to fix this
 	strIPcontact = lcase(strIPcontact) 'force hex to lowercase
 	if IpV6RIPE(strIPcontact) = True then
-		GetIPContact = Checkripe(strIPcontact, True)
-	end if
-	GetIPContact = CheckARIN(strIPcontact)
-	exit function
+		strReturnContactResults = Checkripe(strIPcontact, True)
+	end If
+	If strReturnContactResults = "" Then
+		strReturnContactResults = CheckARIN(strIPcontact)
+	End If
+	GetIPContact = strReturnContactResults	
+	Exit function
   end if
   
   if DictArin.exists(left(strIPcontact, instr(strIPcontact,".") -1)) And boolUseARIN = True then 
@@ -4887,9 +4891,9 @@ if instr(strIPcontact,".") > 0 or instr(strIPcontact,":") > 0 then
     strReturnContactResults = WhoIsIP_Lookup(strIPcontact)
   end if
 
-  if strReturnGIPResults = "error" then
+  if strReturnContactResults = "error" then
     intMScount = 0
-    do while strReturnGIPResults = "error" and intMScount > 5
+    do while strReturnContactResults = "error" and intMScount < 5
       wscript.sleep 1000
       if DictArin.exists(left(strIPcontact, instr(strIPcontact,".") -1)) Then
         strReturnContactResults = CheckARIN(strIPcontact)
@@ -12048,7 +12052,7 @@ Sub whoIsPopulate(strTmpWhoIs)
       elseif strTmpRequestResponse = "" then
         strTmpRequestResponse = GetIPContact(strTmpWhoIs) 'arin/ripe lookups
       end if
-      strTmpRequestResponse = CleanupWhoisData(strTmpRequestResponse)
+      If strTmpRequestResponse <> "" Then strTmpRequestResponse = CleanupWhoisData(strTmpRequestResponse)
       
       if strTmpWCO_CClineE <> "|" and isIPaddress(strTmpWhoIs) = False and boolWhoisCache = True then
         CacheWhois strTmpWhoIs, strTmpRequestResponse
@@ -12263,13 +12267,26 @@ answer_ip = GetData(PdnsSection,  chr(34) , chr(34) & "answer_ip" & chr(34) & ":
 If isIPaddress(answer_ip) = True Then strTmpIPlineE = answer_ip
 End Sub
 
-Sub SeclytASN(httpAPIbody)
+Sub SeclytASN(httpAPIbody) 'also parses whois if ASN blank
 If ispipeorempty(strTmpIPContactLineE) then
 	strTmpIPContactLineE = GetData(httpAPIbody, "},", chr(34) & "asn" & chr(34) & ": {")
 	If InStr(strTmpIPContactLineE, Chr(34) & ": " & Chr(34)) > 0 Then
 		strTmpIPContactLineE = GetData(strTmpIPContactLineE, Chr(34), Chr(34) & ": " & Chr(34))
 	End If
-End if
+End If
+If ispipeorempty(strTmpIPContactLineE) Then
+	If InStr(httpAPIbody, "whois" & chr(34) & ": [") > 0 Then 'parse whois results for contact org
+		tmpWhois = GetData(httpAPIbody, "]", "whois" & chr(34) & ": [")
+		If InStr(tmpWhois, "org" & chr(34) & ": ") Then
+			arrayWhois = Split(tmpWhois, "name" & chr(34) & ": ")
+			For each tempWhois In arrayWhois
+				strTmpIPContactLineE = GetData(tempWhois,Chr(34), "org" & chr(34) & ": " & Chr(34))
+				If strTmpIPContactLineE = "VR-ARIN" Then strTmpIPContactLineE = ""
+				If strTmpIPContactLineE <> "" Then Exit Sub
+			Next	
+		End If
+	End If
+End If
 End Sub
 
 Sub SeclytFileDate(httpAPIbody)
