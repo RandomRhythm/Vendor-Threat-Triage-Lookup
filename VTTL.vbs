@@ -1,5 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.7.8 - Updates to improve whois results
-
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.0 - Expose cell truncation length
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -457,6 +456,7 @@ Dim intIntelAge 'how far the intel should go back. Different than refresh time p
 Dim boolReverseDNS'Perform reverse DNS lookups
 Dim boolDeepIOCmatch ' Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 Dim boolTruncateVTsigner ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
+Dim cellTruncateLength
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -501,6 +501,7 @@ AddIpResolutionsToQueue = True 'Passive DNS can provide IP addresses for the dom
 boolOutputUnicode = False 'Default output encoding is utf-8. You may need utf-16 depending on what data gets imported into the script
 boolDeepIOCmatch = True 'Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 boolTruncateVTsigner = True ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
+cellTruncateLength = 8000 'Truncate cell value length. Default 8000. Max 32767
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -1610,9 +1611,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytReturnBody = httpget("https://api.seclytics.com/files/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
-			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
+			if len(SeclytRepReason) > cellTruncateLength then SeclytRepReason = truncateCell(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
-			if len(SeclytFileRep) > 32767 then SeclytFileRep = truncateCell(SeclytFileRep)
+			if len(SeclytFileRep) > cellTruncateLength then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileDate SeclytReturnBody 'Populate first seen date
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
 		End If
@@ -1827,10 +1828,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytReturnBody = httpget("https://api.seclytics.com/ips/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
-			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
+			if len(SeclytRepReason) > cellTruncateLength then SeclytRepReason = truncateCell(SeclytRepReason)
 
 			SeclytFileRep = dict2List(DicFile_Context, "^")
-			if len(SeclytFileRep) > 32767 then SeclytFileRep = truncateCell(SeclytFileRep)
+			if len(SeclytFileRep) > cellTruncateLength then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			SeclytASN SeclytReturnBody 'populate IP owner field
 			SeclytReturnBody = replace(SeclytReturnBody, ". Additionally botnets are available for rent or purchase.", ". Additionally b.o.t.nets are available for rent or purchase.") 'prevent matching on botnet keyword for MITRE T1329 via Seclytics
@@ -1969,9 +1970,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytReturnBody = httpget("https://api.seclytics.com/hosts/", strScanDataInfo,"?","access_token", SeclyApikey, false) 'get API results
 			SeclyticsProcess(SeclytReturnBody) 'process API results populating dictionaries
 			SeclytRepReason = dict2List(DicIP_Context, "^") 'create list from dict
-			if len(SeclytRepReason) > 32767 then SeclytRepReason = truncateCell(SeclytRepReason)
+			if len(SeclytRepReason) > cellTruncateLength then SeclytRepReason = truncateCell(SeclytRepReason)
 			SeclytFileRep = dict2List(DicFile_Context, "^")
-			if len(SeclytFileRep) > 32767 Then SeclytFileRep = truncateCell(SeclytFileRep)
+			if len(SeclytFileRep) > cellTruncateLength Then SeclytFileRep = truncateCell(SeclytFileRep)
 			SeclytFileCount = getSeclyticFileCount(SeclytReturnBody)'get file count from number of hashes
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
 			SeclytWhitelist SeclytReturnBody 'Set validation if whitelisted
@@ -2471,7 +2472,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  If BoolSeclytics = True Or intVTListDataType = 1 Then  '0=unknown, 1 domain/IP, 2=hash, 3=hash/domain/ip
 		if dictURLWatchList.count > 0 then strURLWatchLineE = addPipe(strURLWatchLineE)
 		if dictIPdomainWatchList.count > 0 then 
-			if len(strIpDwatchLineE) > 32767 then strIpDwatchLineE = truncateCell(strIpDwatchLineE)
+			if len(strIpDwatchLineE) > cellTruncateLength then strIpDwatchLineE = truncateCell(strIpDwatchLineE)
 			strIpDwatchLineE = addPipe(strIpDwatchLineE)
 		End if	
 	  End If
@@ -12418,8 +12419,8 @@ end sub
 
 Function truncateCell(cellContents)
 
-			if len(cellContents) > 32460 then 'cell length limitation
-        cellContents= left(cellContents, 32460) 'truncate
+			if len(cellContents) > cellTruncateLength then 'cell length limitation
+        cellContents= left(cellContents, cellTruncateLength) 'truncate
 
         sepLocation = InstrRev(cellContents, "^")
         if sepLocation > 0 then
