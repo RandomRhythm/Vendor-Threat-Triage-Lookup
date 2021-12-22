@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.0 - Expose cell truncation length
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.1 - Rename dicMD5Loc to dicHashLoc
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -257,7 +257,7 @@ Dim inthfPrevalenceLoc: inthfPrevalenceLoc = -1
 Dim objFSO: Set objFSO = CreateObject("Scripting.FileSystemObject")
 Dim BoolHeaderLocSet: BoolHeaderLocSet = False
 Dim intCSVRowLocation
-Dim dicMD5Loc: Set dicMD5Loc = CreateObject("Scripting.Dictionary")'Hash location in CSV import
+Dim dicHashLoc: Set dicHashLoc = CreateObject("Scripting.Dictionary")'Hash location in CSV import - is used for all hash values (MD5, SHA1, SHA256)
 Dim ArraySigCheckData()
 Dim BoolSigCheckLookup
 Dim BoolEnCaseLookup: BoolEnCaseLookup = False
@@ -8692,10 +8692,10 @@ if objFSO.fileexists(OpenFilePath1) then
         elseIf BoolHeaderLocSet = True then
           if instr(strSCData, ",") then
             
-            If intDomainLoc <> "" Then saveCSVimportLocation strSCData, intDomainLoc, dicMD5Loc, intCSVRowLocation
-            If intMD5Loc <> "" then  saveCSVimportLocation strSCData, intMD5Loc, dicMD5Loc, intCSVRowLocation
-            if intSHA1Loc <> "" then saveCSVimportLocation strSCData, intSHA1Loc, dicMD5Loc, intCSVRowLocation
-            if intSHA256Loc <> "" then  saveCSVimportLocation strSCData, intSHA256Loc, dicMD5Loc, intCSVRowLocation
+            If intDomainLoc <> "" Then saveCSVimportLocation strSCData, intDomainLoc, dicHashLoc, intCSVRowLocation
+            If intMD5Loc <> "" then  saveCSVimportLocation strSCData, intMD5Loc, dicHashLoc, intCSVRowLocation
+            if intSHA1Loc <> "" then saveCSVimportLocation strSCData, intSHA1Loc, dicHashLoc, intCSVRowLocation
+            if intSHA256Loc <> "" then  saveCSVimportLocation strSCData, intSHA256Loc, dicHashLoc, intCSVRowLocation
           else
             Msgbox "This line will be ignored as it does not contain commas:" & strSCData
           end if
@@ -8936,7 +8936,7 @@ end if
 end sub
 
 Sub SSoutputDomainIP(strSSDIP)
-IntSCArrayLoc = dicMD5Loc.item(strSSDIP)
+IntSCArrayLoc = dicHashLoc.item(strSSDIP)
 if IntSCArrayLoc = "" Then Exit Sub
 If cint(inthfPrevalenceLoc) > -1 then '
 	strCBprevalence = ReturnSigCheckItem(ArraySigCheckData(IntSCArrayLoc),inthfPrevalenceLoc)
@@ -8951,7 +8951,7 @@ End Sub
 sub SigCheckSSoutput(strSCSSO_hash)
 Dim IntSCArrayLoc
 strSCSSO_hash = lcase(strSCSSO_hash)
-IntSCArrayLoc = dicMD5Loc.item(strSCSSO_hash)
+IntSCArrayLoc = dicHashLoc.item(strSCSSO_hash)
 if boolSigCheckDebug = true then msgbox "sigcheck hash:" & strSCSSO_hash
 if boolSigCheckDebug = true then msgbox "sigcheck hash data:" & ArraySigCheckData(IntSCArrayLoc)
 if boolSigCheckDebug = true then msgbox "BoolSigCheckLookup=" & BoolSigCheckLookup
@@ -9067,8 +9067,8 @@ if objFSO.fileexists(OpenFilePath1) then
           if instr(strSCData, vbtab) then
             strTmpHArray = split(strSCData, vbtab)  
             strSCMD5 = lcase(replace(strTmpHArray(intMD5Loc), vbtab, ""))
-            if dicMD5Loc.exists(strTmpHArray(intMD5Loc)) = false then
-              dicMD5Loc.add strTmpHArray(intMD5Loc), intCSVRowLocation
+            if dicHashLoc.exists(strTmpHArray(intMD5Loc)) = false then
+              dicHashLoc.add strTmpHArray(intMD5Loc), intCSVRowLocation
               if boolSigCheckDebug = True then msgbox "md5loc-" & strTmpHArray(intMD5Loc) & "|" & intCSVRowLocation
             end if
           else
