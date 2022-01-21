@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.1 - Rename dicMD5Loc to dicHashLoc
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.2 - Change debug log condition
 
 'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -8678,6 +8678,7 @@ if objFSO.fileexists(OpenFilePath1) then
 			 (instr(strSCData, "MD5") > 0 or _
 			instr(strSCData,	"SHA256") > 0 or _
 			InStr(strSCData,	"SHA1") > 0 or _
+			InStr(strSCData,	"hash") > 0 or _
 			InStr(strSCData,	"dstip") > 0 or _
 			InStr(strSCData,	"Domain") > 0) then
 	          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
@@ -8844,12 +8845,22 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
       Case chr(34) & "MD5" & Chr(34)
         intMD5Loc = inthArrayLoc
         intRealMD5Loc = inthArrayLoc		' some kind of workaround
+      Case "hash"
+        intMD5Loc = inthArrayLoc
+        intSHA1Loc = inthArrayLoc
+        intSHA256Loc = inthArrayLoc
+      Case "process_hash"
+        intMD5Loc = inthArrayLoc
+        intSHA1Loc = inthArrayLoc
+        intSHA256Loc = inthArrayLoc
       Case "Path"
         inthfPathLoc = inthArrayLoc
       Case chr(34) & "Path" & Chr(34)
         inthfPathLoc = inthArrayLoc
       Case "Item Path"
         inthfPathLoc = inthArrayLoc
+      Case "process_name" 'CB
+        inthfPathLoc = inthArrayLoc	
       Case "File Name"'crowdstrike process execution history
         inthfPathLoc = inthArrayLoc		
       Case "name"'crowdresponse
@@ -8928,8 +8939,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         if boolOutputHosts = True then intHostLocation = inthArrayLoc
     end select
   next
-  if BoolDebugTrace = True then logdata strDebugPath & "\sigcheck" & "" & ".txt", "Header Locations:" &  "md5|" & "inthfPathLoc|" & "intPublisherLoc|" &  "inthfProductLoc|" &  "intCompanyLoc|" & "inthfPrevalenceLoc|inthfSizeLoc"   ,BoolEchoLog
-  if BoolDebugTrace = True then logdata strDebugPath & "\sigcheck" & "" & ".txt", "Header Locations:" & intMD5Loc & "|" & inthfPathLoc & "|" & intPublisherLoc & "|" & inthfProductLoc & "|" & intCompanyLoc & "|" & inthfPrevalenceLoc & "|" &  inthfSizeLoc  ,BoolEchoLog
+  if boolSigCheckDebug = True then logdata strDebugPath & "\sigcheck" & "" & ".txt", "Header Locations:" &  "md5|" & "inthfPathLoc|" & "intPublisherLoc|" &  "inthfProductLoc|" &  "intCompanyLoc|" & "inthfPrevalenceLoc|inthfSizeLoc"   ,BoolEchoLog
+  if boolSigCheckDebug = True then logdata strDebugPath & "\sigcheck" & "" & ".txt", "Header Locations:" & intMD5Loc & "|" & inthfPathLoc & "|" & intPublisherLoc & "|" & inthfProductLoc & "|" & intCompanyLoc & "|" & inthfPrevalenceLoc & "|" &  inthfSizeLoc  ,BoolEchoLog
 else
   Msgbox "error parsing header"
 end if
