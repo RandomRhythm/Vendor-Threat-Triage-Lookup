@@ -1,6 +1,6 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.2 - Change debug log condition
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.3 - Check if import CSV file is unicode but being processed as ANSI and if so reprocess as unicode. Support further CSV header values.
 
-'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -2375,15 +2375,15 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		if BoolSigCheckLookup = True then
 			'crowdstrike doesn't include any of these so make sure the column was provided
 			if intPublisherLoc > -1 then 
-				strCBdigSig = AddPipe(strCBdigSig) 'CB Digital Sig
+				strCBdigSig = AddPipe(strCBdigSig) 'Digital Sig
 				if strTmpSigAssesslineE = "" then strTmpSigAssesslineE = "|"
 			end if
 			if intCompanyLoc > -1 then strCBcompanyName = AddPipe(strCBcompanyName)'CB Company Name
 			if inthfProductLoc > -1 then strCBproductName = AddPipe(strCBproductName) 'Product Name  
 			
 		else 'BoolUseCarbonBlack = True
-			strCBdigSig = AddPipe(strCBdigSig) 'CB Digital Sig
-			strCBcompanyName = AddPipe(strCBcompanyName)'CB Company Name
+			strCBdigSig = AddPipe(strCBdigSig) 'Digital Sig
+			strCBcompanyName = AddPipe(strCBcompanyName)'Company Name
 			strCBproductName = AddPipe(strCBproductName) 'Product Name  
 			if strTmpSigAssesslineE = "" then strTmpSigAssesslineE = "|"
 		end if
@@ -2394,8 +2394,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		strFileTypeLineE = addpipe(strFileTypeLineE)		
 	  end if
 	  if boolEnableCuckoo = True Or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
-        strCBdigSig = AddPipe(strCBdigSig) 'CB Digital Sig
-        strCBcompanyName = AddPipe(strCBcompanyName)'CB Company Name
+        strCBdigSig = AddPipe(strCBdigSig) 'Digital Sig
+        strCBcompanyName = AddPipe(strCBcompanyName)'Company Name
         strCBproductName = AddPipe(strCBproductName) 'Product Name  
         strCBFileSize = AddPipe(strCBFileSize)  
         strPE_TimeStamp = AddPipe(strPE_TimeStamp)    
@@ -8662,7 +8662,15 @@ if objFSO.fileexists(OpenFilePath1) then
 			loadSigCheckData strSigCheckFpath, true 'try reading as unicode
 			exit sub
 		end If
-		If BoolHeaderLocSet = false Then 'check if headers are known to us 
+		If BoolHeaderLocSet = false Then 'check if headers are known to us
+      if len(strSCData) >2 then
+        if left(strSCData,2) =  chr(255) & chr(254) and boolUnicode = False then 
+          loadSigCheckData strSigCheckFpath, True
+          exit sub
+        end if
+        'if left(strSCData,3) =  chr(239) & chr(187) & chr(191) then objShellComplete.popup "UTF-8 is not supported. Please supply ANSI or unicode file to combine.", 30, "VTTL - " & CurrentDirectory
+      end if
+      'must have a hash value and at least one value to import
 	    if (instr(strSCData, "Publisher") > 0 or _
 			instr(strSCData,	"Company")  > 0 or _
 			instr(strSCData, "size") > 0 or _
@@ -8670,15 +8678,20 @@ if objFSO.fileexists(OpenFilePath1) then
 			instr(strSCData, "count") > 0 or _
 			instr(strSCData, "Prevalence") > 0 or _
 			instr(strSCData, "Sibling Count") > 0 or _
-			instr(strSCData, "FullPath") > 0or _
+			instr(strSCData, "FullPath") > 0 or _
 			instr(strSCData, "Image Path") > 0 or _
 			instr(strSCData, "Entry Location") > 0 or _
 			instr(strSCData, "File Name") > 0 or _
+			instr(strSCData, "Top values of file.path") > 0 or _
+			instr(strSCData, "Count of records") > 0 or _
+			instr(strSCData, "Target File Path") > 0 or _
 			instr(strSCData, "name") > 0) And _
 			 (instr(strSCData, "MD5") > 0 or _
 			instr(strSCData,	"SHA256") > 0 or _
 			InStr(strSCData,	"SHA1") > 0 or _
 			InStr(strSCData,	"hash") > 0 or _
+			InStr(strSCData,	"Top values of cb.threatHunterInfo.sha256.keyword") > 0 or _
+			InStr(strSCData,	"Target File SHA1") > 0 or _
 			InStr(strSCData,	"dstip") > 0 or _
 			InStr(strSCData,	"Domain") > 0) then
 	          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
@@ -8834,6 +8847,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         intSHA1Loc = inthArrayLoc
       Case "sha1" 'crowdresponse
         intSHA1Loc = inthArrayLoc
+      Case "Target File SHA1"
+        intSHA1Loc = inthArrayLoc
       Case "IMP"
         intIMPLoc = inthArrayLoc
       Case "MD5"
@@ -8862,7 +8877,9 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
       Case "process_name" 'CB
         inthfPathLoc = inthArrayLoc	
       Case "File Name"'crowdstrike process execution history
-        inthfPathLoc = inthArrayLoc		
+        inthfPathLoc = inthArrayLoc	
+      Case "Target File Path"
+        inthfPathLoc = inthArrayLoc
       Case "name"'crowdresponse
         inthfPathLoc = inthArrayLoc		
       Case "FullPath" 'ShimCacheParser
@@ -8891,6 +8908,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfPrevalenceLoc = cint(inthArrayLoc)
       Case "Prevalence"
         inthfPrevalenceLoc = cint(inthArrayLoc)
+      Case "Count of records"
+        inthfPrevalenceLoc = cint(inthArrayLoc)
       Case "count"
         inthfPrevalenceLoc = cint(inthArrayLoc)
       Case "Sibling Count"
@@ -8900,6 +8919,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         SetDateFirstSeen tmpDFS
 	  Case "# of Hosts"'crowdstrike process execution history
 		inthfPrevalenceLoc = cint(inthArrayLoc)
+	  Case "Top values of cb.threatHunterInfo.sha256.keyword"
+	  	intSHA256Loc = inthArrayLoc
 	  Case "sha256" 'crowdresponse
 	  	intSHA256Loc = inthArrayLoc
 	  	'boolSHA256csvLookup = True
@@ -8913,7 +8934,9 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
       Case "Size (KB)"
         inthfSizeLoc = inthArrayLoc 
       Case "File Name"
-        inthfPathLoc = inthArrayLoc        
+        inthfPathLoc = inthArrayLoc   
+      Case "Top values of file.path"
+        inthfPathLoc = inthArrayLoc     
       case "Image Path"
         inthfPathLoc = inthArrayLoc
       Case "Date Time Added" 'Rhythm Cb Response Scripts
