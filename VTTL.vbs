@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.3 - Check if import CSV file is unicode but being processed as ANSI and if so reprocess as unicode. Support further CSV header values.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.4 - Output StrDetectionTypeLineE when doing domain/IP lookups and hash context is enabled.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2485,7 +2485,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       select case intVTListDataType
         case 1
           'write row for domain & IP
-          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strCBprevalence & strSiblingsCount & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
+          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strCBprevalence & strSiblingsCount & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & StrDetectionTypeLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
         case 2
           If dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 		  'Add to adjusted malware score for custom list malware and update detection name if one was given in malhash.dat
@@ -8664,7 +8664,7 @@ if objFSO.fileexists(OpenFilePath1) then
 		end If
 		If BoolHeaderLocSet = false Then 'check if headers are known to us
       if len(strSCData) >2 then
-        if left(strSCData,2) =  chr(255) & chr(254) and boolUnicode = False then 
+        if left(strSCData,2) =  chr(255) & chr(254) and boolUnicode = False then 'uncode processing will occur
           loadSigCheckData strSigCheckFpath, True
           exit sub
         end if
@@ -10600,12 +10600,17 @@ if instr(strVTAPIresponse,chr(34) & ": {" & chr(34) & "detected" & chr(34) & ": 
       
       
       intDnameCount = 1
-      'output excel entry for detection type name
+      'output spreadsheet entry for detection type name
       if DictTypeNames.count > -1 then 
 		  for each strUniqueDname in DictTypeNames
 			if BoolDebugTrace = True then LogData strDebugPath & "\dtnames.log", strUniqueDname & "|" & DictTypeNames.item(strUniqueDname) , false
-			if (strUniqueDname = "trojan" or strUniqueDname = "troj") and DictTypeNames.item(strUniqueDname) > 3 then BoolTrojanType = True 'favor other name types
-			if intDnameCount < DictTypeNames.item(strUniqueDname) and BoolTrojanType = false then
+			if (cstr(strUniqueDname) = "trojan" or cstr(strUniqueDname) = "troj") and DictTypeNames.item(strUniqueDname) > 3 then BoolTrojanType = True 'favor other name types
+			If intDnameCount < DictTypeNames.item(strUniqueDname) And intDetectionNameCount > 1 And DictTypeNames.Count > 2 Then
+				intDnameCount = DictTypeNames.item(strUniqueDname)
+				SortDictionary DictTypeNames, dictItem 'Sorts dictionary by item count (not key)
+				TypeNameKeys = DictTypeNames.keys
+				StrDetectionTypeLineE = "|" &  TypeNameKeys(UBound(TypeNameKeys) -1) & "^" &  TypeNameKeys(UBound(TypeNameKeys) -2)
+			ElseIf intDnameCount < DictTypeNames.item(strUniqueDname) and BoolTrojanType = false then
 			  StrDetectionTypeLineE = "|" & strUniqueDname
 			  intDnameCount = DictTypeNames.item(strUniqueDname)
 			end if
@@ -10636,8 +10641,8 @@ if instr(strVTAPIresponse,chr(34) & ": {" & chr(34) & "detected" & chr(34) & ": 
 else'no positive detections
 	strDetectNameLineE = "|"
 end if  
+End sub
 
-end sub
 
 Function BuildArrayWithoutEndQuote (strArrayDnameQuote)
 reDim arrayTmpReturn(ubound(strArrayDnameQuote) -1)
@@ -10660,7 +10665,7 @@ next
 BuildArrayWithoutEndQuote = arrayTmpReturn
 end function
 
-Function SortDictionary(objDict,intSort)'https://support.microsoft.com/en-us/kb/246067
+Function SortDictionary(objDict,intSort)'https://web.archive.org/web/20150401071715/https://support.microsoft.com/en-us/kb/246067
 Dim strDict()
 Dim objKey
 Dim strKey,strItem
@@ -12965,6 +12970,8 @@ Sub WriteHeaderRow()
       PulsediveHead = ""
 		end if
         DetectionNameHeaderColumns = DetectionNameHeader 'header row for IP/Domain detection names
+        detectionTypeHead = ""
+        If DetectionNameHeaderColumns <> "" Then detectionTypeHead = "|Detection Type" 'top generic keyword
 		if BoolDisableVTlookup = False then
 			strVThead = "Scanned Item|VTTI Download From|VTTI Referrer|VTTI Callback To|VTTI_Uniq_URLs|VTTI_Uniq_Domains"
 			vtHead2 = "|VT Download|VT Referrer|VT Callback|VT URL"
@@ -12973,7 +12980,7 @@ Sub WriteHeaderRow()
 			vtHead2 = ""
 		end if
 		'write IP/domain header row
-        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
+        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & detectionTypeHead & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
         if BoolCreateSpreadsheet = True then
           if cint(intDetectionNameCount) > 0 then 
             
