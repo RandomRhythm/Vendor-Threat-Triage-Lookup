@@ -8,6 +8,7 @@ VTTL Performs lookups for file hashes, IP addresses and domain names. Results ar
 * Emerging Threats ET Intelligence
 * Malshare
 * Carbon Black EDR/Hosted EDR (formally Cb Response)
+* Carbon Black Enterprise EDR (formally ThreatHunter)
 * ThreatGRID
 * ThreatCrowd
 * ThreatIntelligenceAggregator (TIA)
