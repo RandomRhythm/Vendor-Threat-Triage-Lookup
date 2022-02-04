@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.4 - Output StrDetectionTypeLineE when doing domain/IP lookups and hash context is enabled.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.5 - Support getting metadata for SHA256 file hash values via Carbon Black Cloud Enterprise EDR API
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -231,6 +231,7 @@ Dim BoolUseCarbonBlack: BoolUseCarbonBlack = False
 Dim BoolLimitCBQueries 'if a custom CSV export was feed to the script don't lookup API for known CSV items and rely on CSV data
 Dim BoolEnableCarbonBlack
 Dim StrBaseCBURL
+Dim StrBaseCBCURL
 Dim strCBfilePath 'CB File Path
 Dim strCBdigSig 'CB Digital Sig
 Dim strCBcompanyName 'CB Company Name
@@ -457,6 +458,7 @@ Dim boolReverseDNS'Perform reverse DNS lookups
 Dim boolDeepIOCmatch ' Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 Dim boolTruncateVTsigner ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 Dim cellTruncateLength
+Dim strSignTimeStamp
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -567,6 +569,7 @@ strCIFconfidence = "0" 'lowest CIF rated confidence to return.
 strCIFurl = "" ' URL to use for CIF requests (supports v2 currently) example: https://domain.com/indicators
 BoolEnableCIF = True 'Perform queries against CIF. Disabled if no API key provided
 BoolEnableCarbonBlack = True 'Perform queries for md5 against Carbon Black. Disabled if no API key and URL provided
+BoolEnableCBenterpriseEDR = True 'Perform API queries against SHA256 values in Carbon Black Enterprise EDR
 BoolDisableCBCachLookup = True 'Default value is True. Prevents getting CB results from cache
 BoolLimitCBQueries = True 'Default is True. If a custom CSV export was feed to the script; rely on CSV data and don't lookup API for known CSV items. Set to False to perform queries against CB regardless of CSV data.
 BoolEnableThreatGRID = True 'Perform queries against ThreatGRID. Disabled if no API key provided
@@ -652,6 +655,8 @@ BoolEnableTIA = ValueFromINI("vttl.ini", "vendor", "enable_TIA", BoolEnableTIA) 
 SignatureDateCheck = ValueFromINI("vttl.ini", "vendor", "TIA_DateCheck", SignatureDateCheck)'Alert if any dates from TIA for signature are within intSigDateRange
 intSigDateRange  = ValueFromINI("vttl.ini", "vendor", "TIA_DateRange", intSigDateRange) 'Date range in days to alert on signature dates from TIA
 BoolEnableCarbonBlack = ValueFromINI("vttl.ini", "vendor", "enable_CarbonBlack", BoolEnableCarbonBlack)
+BoolEnableCBenterpriseEDR = ValueFromINI("vttl.ini", "vendor", "enable_CarbonBlackEnterprise", BoolEnableCBenterpriseEDR)
+CBCorgKey = ValueFromINI("vttl.ini", "vendor", "CarbonBlackOrgKey", CBCorgKey)
 BoolEnableThreatGRID = ValueFromINI("vttl.ini", "vendor", "enable_ThreatGRID", BoolEnableThreatGRID)
 enableZEN = ValueFromINI("vttl.ini", "vendor", "enable_ZEN", enableZEN)
 enableURIBL = ValueFromINI("vttl.ini", "vendor", "enable_URIBL", enableURIBL)
@@ -987,7 +992,7 @@ end if
 
 
 'for loop to load API keys
-for intCountVendors = 0 to 13 'Count of vendor APIs
+for intCountVendors = 0 to 14 'Count of vendor APIs
 	boolVendorEnabled = True
   if BoolDisableVTlookup = True and intCountVendors = 0 then 
 	intCountVendors = 1
@@ -1055,6 +1060,10 @@ for intCountVendors = 0 to 13 'Count of vendor APIs
      useAlienVapiKey = False
 	 boolAlienVaultNIDS = False 'need an API key for this to work
 	 boolAlienHostCheck = False 'Don't want to go over query threshold so disabled without API key
+
+  end if 
+   If BoolEnableCBenterpriseEDR = false and intCountVendors = 14 then 
+
     exit for'Only exit on the last intCountVendors item
   end if  
   strDisableFile = ""
@@ -1111,6 +1120,9 @@ for intCountVendors = 0 to 13 'Count of vendor APIs
     strFile= CurrentDirectory & "\av.dat"
     strAPIproduct = "AlienVault"  
 	strDisableFile = CurrentDirectory & "\av.disable"
+   ElseIf intCountVendors = 14 then
+    strFile= CurrentDirectory & "\cbc.dat"
+    strAPIproduct = "Carbon Black Enterprise EDR"  
    end if
 
 strTmpData = ""
@@ -1123,6 +1135,8 @@ strTmpData = ""
           StrBaseCBURL = objFile.ReadLine
         elseif intCountVendors = 7 then
           strPTAPIuser = objFile.ReadLine 
+        elseif intCountVendors = 14 then 
+          StrBaseCBCURL = objFile.ReadLine
         end if  
         on error goto 0
     end if
@@ -1143,13 +1157,17 @@ strTmpData = ""
         logdata strFile,strTempEncryptedAPIKey,False
         strTempEncryptedAPIKey = ""
         If intCountVendors = 3 Then
-          strCIFurl = inputbox("Enter your " & strAPIproduct & " base URL (example: https://domain.com/indicators")
+          strCIFurl = inputbox("Enter your " & strAPIproduct & " base URL (example: https://domain.com/indicators)")
           if instr(strCIFurl, " ") then strCIFurl = replace(StrBaseCBURL, " ", "")
           UpdateIni CurrentDirectory & "\vttl.ini", "CIF_URL=" & strCIFurl ,"[vendor]" 
         ElseIf intCountVendors = 5 then
-          StrBaseCBURL = inputbox("Enter your " & strAPIproduct & " base URL (example: https://ryancb-example.my.carbonblack.io")
+          StrBaseCBURL = inputbox("Enter your " & strAPIproduct & " base URL (example: https://ryancb-example.my.carbonblack.io)")
           if instr(StrBaseCBURL, " ") then StrBaseCBURL = replace(StrBaseCBURL, " ", "")
           logdata strFile,StrBaseCBURL,False
+        ElseIf intCountVendors = 14 then
+          StrBaseCBURL = inputbox("Enter your " & strAPIproduct & " base URL (example: https://defense-prod05.conferdeploy.net)")
+          if instr(StrBaseCBURL, " ") then StrBaseCBCURL = replace(StrBaseCBURL, " ", "")
+          logdata strFile,StrBaseCBCURL,False
         end if 
         if intCountVendors = 7 then
           strPTAPIuser = inputbox("Enter your " & strAPIproduct & " user name (typically email address)")
@@ -1220,6 +1238,10 @@ strTmpData = ""
 		  intAnswer = msgbox ("Continuing without AlienVault API key. Do you want to disable this AlienVault API key prompt in the future?",vbYesNo, "VTTL AlienVault API Lookups")
 		  if intAnswer = vbYes Then UpdateIni CurrentDirectory & "\vttl.ini", "use_AlienVaultAPIkey=False" ,"[vendor_AlienVault]"     
 		  useAlienVapiKey = False	  
+		elseif intCountVendors = 14 and BoolEnableCBenterpriseEDR = True then  
+		  intAnswer = msgbox ("Continuing without Carbon Black check. Do you want to disable Carbon Black lookups in the future?",vbYesNo, "VTTL Carbon Black Lookups")
+		  if intAnswer = vbYes Then  UpdateIni CurrentDirectory & "\vttl.ini", "enable_CarbonBlackEnterprise=False" ,"[vendor]" 
+		  BoolEnableCBenterpriseEDR = False
 		end if
 	  end If ' if strTempAPIKey <> "" then
   end If 'if strTempAPIKey = "" then
@@ -1274,6 +1296,8 @@ strTmpData = ""
 		PulsediveApikey = strTempAPIKey
   elseif intCountVendors = 13 and useAlienVapiKey = True then
 	strAlienVaultkey = strTempAPIKey
+  elseif intCountVendors = 14 and BoolEnableCBenterpriseEDR = True then
+	CBCapiKey = strTempAPIKey
   end if
   on error resume next
   objFile.close
@@ -1575,8 +1599,12 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 
 	
 	if (BoolDisableVTlookup = True Or boolsubmitVT = false) and IsHash(strData) = True Then
+		'AlienVault OTX
 		AlienHashLookup(strData)
-		        
+		'Carbon Black Enterprise EDR
+		  If BoolEnableCBenterpriseEDR = True Then 
+          	If Len(strScanDataInfo) = 64 Then CarbonBlackEnterpriseEDR strScanDataInfo
+          End If
         If Len(strData) = 32 Then 'md5 hash
 	        'Threat Crowd lookups
 	        If boolUseThreatCrowd = True And tcHashLookedUp = False Then 'only accepts md5
@@ -1617,6 +1645,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			SeclytFileDate SeclytReturnBody 'Populate first seen date
 			KeywordSearch SeclytReturnBody 'keyword search watch list processing
 		End If
+
 	End If
 	
     if inLoopCounter >= 4 then
@@ -2434,7 +2463,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           strCBfilePath = AddPipe(strCBfilePath) 'CB File Path
           if inthfSizeLoc > -1 or (BoolDisableVTlookup = False and boolVTuseV3 = True) then strCBFileSize = AddPipe(strCBFileSize)  
       end if
-      if BoolUseCarbonBlack = True then 'CB custom CSV export
+      if BoolUseCarbonBlack = True Or BoolEnableCBenterpriseEDR = True then 'CB custom CSV export
         strCBprevalence = AddPipe(strCBprevalence)
 		strCBFileSize = AddPipe(strCBFileSize) 'crowdstrike provides prevalence but not
 	  elseif cint(inthfPrevalenceLoc) > -1 then 'CSV
@@ -2442,7 +2471,8 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         if BoolSigCheckLookup = True and inthfSizeLoc > -1 then strCBFileSize = AddPipe(strCBFileSize) 'crowdstrike provides prevalence but not file size.
       else
         strCBprevalence = ""
-      end If
+      End If
+      If BoolEnableCBenterpriseEDR = True Then strSignTimeStamp = AddPipe(strSignTimeStamp)
       If cint(inthfSiblingLoc) > -1 then '
 		strSiblingsCount = AddPipe(strSiblingsCount)
 	  End If	
@@ -2504,7 +2534,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           if boolDisableSQL_IQ = False and boolSQLcache = True and ishash(strdata) = True then SQL_Intelligence_Query lcase(strdata) 
           if TrustedBinary = True then IntTmpAdjustedMalScore = 0 'whitelisted file          
           'write row for hash lookups
-          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strMimeTypeLineE & strFileTypeLineE & strPE_TimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
+          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strMimeTypeLineE & strFileTypeLineE & strPE_TimeStamp & strSignTimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
       end select 
 
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSSline = "  & strTmpSSline,BoolEchoLog 
@@ -2668,6 +2698,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        sslOrg = ""
        sslSubject = ""
        strTmpVTTIlineE = ""
+       strSignTimeStamp= ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
        TrustedBinary = False
 	  
@@ -3146,7 +3177,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 		  if boolCheckPanda = True then VTvendorParseName strresponseText, "Panda", True
 		  if DisplayVendor <> "" then strDiplayVendDname = "|" & VTvendorParseName (strresponseText, DisplayVendor, False)
       End If 'End virus total results were returned
-
+		strTmpSHA256 = ""
       if instr(strresponseText,"md5" & chr(34) & ": " & chr(34)) or IsHash(strScanDataInfo) then'grab file hash
 	    strTmpVendorDetectionName = ""
 		StrTmpVendorDetectionURL = ""
@@ -3167,8 +3198,8 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
 			AlienHashLookup(strTmpHashLookupValue)
 			strTmpHashLookupValue = getdata(strresponseText,chr(34),"sha1" & chr(34) & ": " & chr(34))
 			AlienHashLookup(strTmpHashLookupValue)
-			strTmpHashLookupValue = getdata(strresponseText,chr(34),"sha256" & chr(34) & ": " & chr(34))
-			AlienHashLookup(strTmpHashLookupValue)
+			strTmpSHA256 = getdata(strresponseText,chr(34),"sha256" & chr(34) & ": " & chr(34))
+			AlienHashLookup(strTmpSHA256)
 		else'single hash lookup
 			AlienHashLookup(strScanDataInfo)
 		end if
@@ -3191,6 +3222,13 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
           
           'when BoolLimitCBQueries = True only lookup CB if it wasn't provided with the SigCheckSSoutput 
           if BoolUseCarbonBlack = True and (BoolLimitCBQueries = True and strCBfilePath <> "") = False then checkCarBlack strTmpVendorDetectionName
+          if BoolEnableCBenterpriseEDR = True Then 
+          	If Len(strScanDataInfo) = 64 Then 
+          		CarbonBlackEnterpriseEDR strScanDataInfo
+          	elseIf Len(strTmpSHA256) = 64 Then 
+          		CarbonBlackEnterpriseEDR strTmpSHA256
+          	End if	
+          End If
           if ucase(strTmpVendorDetectionName) = "3AC9A0C8A8A5EC6D3ABA629BF66F9FB1" then
             if BoolDebugTrace = True then logdata strDebugPath & "\VT_URLs_" & "" & ".txt", strScanDataInfo & vbtab & "FireEye honey binary!  This is a whitelisted file",BoolEchoLog
              strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & "FireEye honey binary!  This is a whitelisted file" & vbcrlf
@@ -12275,15 +12313,16 @@ Function HTTPget(strRequestURL, strCheckItem, strSection, strAPIheader, strApiKe
   Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
 
       strAVEurl = strRequestURL & StrValidDomainName &  strSection
-    if boolHeader = True then 
-      objHTTP.setRequestHeader strAPIheader, strApiKey 
-    elseif strApiKey <> "" and strAPIheader <> "" then
+
+    if boolHeader = False and strApiKey <> "" and strAPIheader <> "" Then 'API key goes in URL
       strAVEurl = strAVEurl & strAPIheader & "=" & strApiKey
     end if
    
     'objHTTP.setRequestHeader 
     objHTTP.open "GET", strAVEurl
-   
+  if boolHeader = True then 'API key goes in header
+      objHTTP.setRequestHeader strAPIheader, strApiKey
+  end if      
   on error resume next
     objHTTP.send 
     if err.number <> 0 then
@@ -12300,8 +12339,8 @@ Function HTTPget(strRequestURL, strCheckItem, strSection, strAPIheader, strApiKe
   Set objHTTP = Nothing
 end Function
 
-Sub SeclytPdns(httpAPIbody)
 
+Sub SeclytPdns(httpAPIbody)
 PdnsSection = GetData(httpAPIbody, "]"  , chr(34) & "passive_dns" & chr(34) & ": [")
 answer_ip = GetData(PdnsSection,  chr(34) , chr(34) & "answer_ip" & chr(34) & ": " & chr(34))
 If isIPaddress(answer_ip) = True Then strTmpIPlineE = answer_ip
@@ -13017,11 +13056,11 @@ Sub WriteHeaderRow()
       case 2 'Hash lookups only                                                                                       'hash lookups only
         intDetectionNameCount = 0 'zero out to disable IP/domain detection name hash lookups
         boolLogHashes = false 'Don't log hashes if that is what we are looking up
-        if BoolSigCheckLookup = True and BoolUseCarbonBlack = True then
+        if BoolSigCheckLookup = True and (BoolUseCarbonBlack = True Or BoolEnableCBenterpriseEDR = True) then
           strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
-        elseif BoolEnCaseLookup = True and BoolUseCarbonBlack = True then
+        elseif BoolEnCaseLookup = True and (BoolUseCarbonBlack = True Or BoolEnableCBenterpriseEDR = True) then
           strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
-        elseif BoolUseCarbonBlack = True then
+        elseif (BoolUseCarbonBlack = True Or BoolEnableCBenterpriseEDR = True) then
           strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
         elseif BoolSigCheckLookup = True then
           if cint(inthfPrevalenceLoc) > -1 then 'CB custom CSV export
@@ -13041,8 +13080,9 @@ Sub WriteHeaderRow()
             if intPublisherLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Digial Signature Tracking","")			
             if inthfProductLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Product Name","")
             if intCompanyLoc = -1 then strTmpCBHead = replace(strTmpCBHead, "|Company Name","")
-          end if
+          end If
 
+		
         elseif boolEnableCuckoo = True then 
           strTmpCBHead = "|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
           'StrTmpCTimeStamp = "|PE TimeStamp"
@@ -13063,7 +13103,9 @@ Sub WriteHeaderRow()
         else
           strYARAhead = ""
           strFileTypeHead = ""
-        end if
+        end If
+        headSignTime = ""
+		If BoolEnableCBenterpriseEDR = True Then headSignTime = "|Signature Timestamp"
 		if boolEnableCuckooV2 = True Or (BoolDisableVTlookup = False and boolVTuseV3 = True) then 
           strFileTypeHead = "|File Type"
 	    end If
@@ -13159,7 +13201,7 @@ Sub WriteHeaderRow()
 	
 
 		'Write file hash header row
-        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strMimeTypeHead & strFileTypeHead & StrTmpCTimeStamp & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
+        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strMimeTypeHead & strFileTypeHead & StrTmpCTimeStamp & headSignTime & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
         BoolUseCIF = False 'don't use CIF when in spreadsheet mode and performing hash lookups
 end Select
 
@@ -13182,3 +13224,44 @@ Function compatibleConfigPath(strConfigFolderPath, strConfigFileName) 'moved con
     compatibleConfigPath = strConfigFolderPath & "\" & strConfigFileName
   end if
 end function
+
+
+Sub CarbonBlackEnterpriseEDR(tmpSHA256)
+If strMimeTypeLineE = "" Or strMimeTypeLineE = "|" Or strCBcompanyName = "" Or strCBcompanyName = "|" Then ParseCBCFileResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/metadata", "X-Auth-Token", CBCapiKey, True))
+If strCBprevalence = 0 or strCBprevalence = "" Or strCBprevalence = "|" Then ParseCBCFileSummaryDeviceResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/device", "X-Auth-Token", CBCapiKey, True))
+If strCBdigSig = "" Or strCBdigSig = "|" Then ParseCBCFileSummarySigResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/signature", "X-Auth-Token", CBCapiKey, True))
+If strCBfilePath = "" Or strCBfilePath = "|" Then ParseCBCFileSummaryPathResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/file_path", "X-Auth-Token", CBCapiKey, True))
+end sub
+
+Function ParseCBCFileResults(strCBCHashResult)
+If strMimeTypeLineE = "" Or strMimeTypeLineE = "|" Then strMimeTypeLineE = getdata(strCBCHashResult, Chr(34), "architecture" & Chr(34) & ":["  & Chr(34))
+strCBcompanyName = getdata(strCBCHashResult,  Chr(34), "company_name" & Chr(34) & ":"  & Chr(34))
+strCBproductName = getdata(strCBCHashResult,  Chr(34), "product_name" & Chr(34) & ":"  & Chr(34))
+strCBFileSize = getdata(strCBCHashResult,  ",", "file_size" & Chr(34) & ":" )
+fileAvailable = getdata(strCBCHashResult,  ",", "file_available" & Chr(34) & ":" )
+ParseCBCFileResults = strMimeTypeLineE & "|" & strCBproductName & "|" & strCBFileSize & "|" & fileAvailable
+End function
+
+Function ParseCBCFileSummaryDeviceResults(strCBCHashResult)
+strCBprevalence= getdata(strCBCHashResult,  ",", "num_devices" & Chr(34) & ":" )
+strCBhosts =  getdata(strCBCHashResult,  Chr(34), "first_seen_device_name" & Chr(34) & ":"  & Chr(34))
+strCBhosts = strCBhosts & "^" & getdata(strCBCHashResult,  Chr(34), "last_seen_device_name" & Chr(34) & ":"  & Chr(34))
+If strDFSlineE = "" Or strDFSlineE = "|" Then strDFSlineE = getdata(strCBCHashResult,  Chr(34), "first_seen_device_timestamp" & Chr(34) & ":"  & Chr(34))
+ParseCBCFileSummaryDeviceResults = strCBprevalence & "|" & strCBhosts & "|" & strDFSlineE
+end Function
+
+Function ParseCBCFileSummarySigResults(strCBCHashResult)
+strissuer_name  = getdata(strCBCHashResult,  Chr(34), "issuer_name" & Chr(34) & ":"  & Chr(34))
+strCBdigSig  = getdata(strCBCHashResult,  Chr(34), "publisher_name" & Chr(34) & ":"  & Chr(34)) & ";" & strissuer_name
+strSignTimeStamp = getdata(strCBCHashResult,  Chr(34), "sign_timestamp" & Chr(34) & ":"  & Chr(34))
+strSignerSeenTimeStamp = getdata(strCBCHashResult,  Chr(34), "first_seen_timestamp" & Chr(34) & ":"  & Chr(34))
+If InStr(strCBCHashResult, "sign_state" & Chr(34) & ":[" & Chr(34) & "signed" & Chr(34) & "," & Chr(34) & "verified" & Chr(34)) = 0 Then
+	strCBdigSig = "(Invalid) " & strCBdigSig
+End If
+ParseCBCFileSummarySigResults = strCBdigSig & "|" & strSignTimeStamp & "|" & strSignerSeenTimeStamp
+End Function
+
+Function ParseCBCFileSummaryPathResults(strCBCHashResult)
+strCBfilePath = getdata(strCBCHashResult,  Chr(34), "file_path" & Chr(34) & ":"  & Chr(34))
+ParseCBCFileSummaryPathResults = strCBfilePath
+End Function
