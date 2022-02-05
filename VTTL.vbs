@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.5 - Support getting metadata for SHA256 file hash values via Carbon Black Cloud Enterprise EDR API
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.6 - Adjust binary signature validation behavior. Output "trusted" as the common detection name when identifed the file is from a trusted source.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -2532,7 +2532,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             if Dictwhitehash.item(lcase(strdata)) <> "" and strDetectNameLineE = "|" then strDetectNameLineE = "|" & Dictwhitehash.item(lcase(strdata))
           end if
           if boolDisableSQL_IQ = False and boolSQLcache = True and ishash(strdata) = True then SQL_Intelligence_Query lcase(strdata) 
-          if TrustedBinary = True then IntTmpAdjustedMalScore = 0 'whitelisted file          
+          if TrustedBinary = True then 
+          	IntTmpAdjustedMalScore = 0 'whitelisted file          
+          	If ispipeorempty(strDetectNameLineE) Then strDetectNameLineE= "|trusted"
+          End if  	
           'write row for hash lookups
           strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strMimeTypeLineE & strFileTypeLineE & strPE_TimeStamp & strSignTimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
       end select 
@@ -3103,13 +3106,13 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
       end if
 			
 			If ispipeorempty(strCBdigSig) Then strCBdigSig = GetData(strresponseText, Chr(34), Chr(34) & "signers" & Chr(34) & ": " & Chr(34))
+			VTtags = getdata(strresponseText, "],", "tags" & chr(34) & ": [")
 			If not ispipeorempty(strCBdigSig) Then 'check for invalid signature and modify signature name to note it
-        VTtags = getdata(strresponseText, "],", "tags" & chr(34) & ": [")
-        if instr(VTtags, chr(34) & "invalid-signature" & chr(34)) then strCBdigSig = "(Invalid) " & strCBdigSig
+		        if instr(VTtags, chr(34) & "invalid-signature" & chr(34)) And strCBdigSig <> "" Then strCBdigSig = "(Invalid) " & strCBdigSig
 			end if
-		if instr(VTtags, chr(34) & "trusted" & chr(34)) then
-        TrustedBinary = True
-      end if
+			If instr(VTtags, chr(34) & "trusted" & chr(34)) then
+		        TrustedBinary = True
+		    End if
 	        If ispipeorempty(strCBcompanyName) Then strCBcompanyName = GetData(strresponseText, Chr(34), Chr(34) & "CompanyName" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBproductName) Then strCBproductName = GetData(strresponseText, Chr(34), Chr(34) & "product" & Chr(34) & ": " & Chr(34))
 	        If ispipeorempty(strCBFileSize) Then 
@@ -13252,11 +13255,13 @@ end Function
 
 Function ParseCBCFileSummarySigResults(strCBCHashResult)
 strissuer_name  = getdata(strCBCHashResult,  Chr(34), "issuer_name" & Chr(34) & ":"  & Chr(34))
-strCBdigSig  = getdata(strCBCHashResult,  Chr(34), "publisher_name" & Chr(34) & ":"  & Chr(34)) & ";" & strissuer_name
+If strissuer_name <> "" Then strCBdigSig  = getdata(strCBCHashResult,  Chr(34), "publisher_name" & Chr(34) & ":"  & Chr(34)) & ";" & strissuer_name
 strSignTimeStamp = getdata(strCBCHashResult,  Chr(34), "sign_timestamp" & Chr(34) & ":"  & Chr(34))
 strSignerSeenTimeStamp = getdata(strCBCHashResult,  Chr(34), "first_seen_timestamp" & Chr(34) & ":"  & Chr(34))
-If InStr(strCBCHashResult, "sign_state" & Chr(34) & ":[" & Chr(34) & "signed" & Chr(34) & "," & Chr(34) & "verified" & Chr(34)) = 0 Then
-	strCBdigSig = "(Invalid) " & strCBdigSig
+If strCBdigSig <> "" then
+	If InStr(strCBCHashResult, "sign_state" & Chr(34) & ":[" & Chr(34) & "signed" & Chr(34) & "," & Chr(34) & "verified" & Chr(34)) = 0 Then
+		strCBdigSig = "(Invalid) " & strCBdigSig
+	End If
 End If
 ParseCBCFileSummarySigResults = strCBdigSig & "|" & strSignTimeStamp & "|" & strSignerSeenTimeStamp
 End Function
