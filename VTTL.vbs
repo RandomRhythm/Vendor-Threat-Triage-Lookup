@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.6 - Adjust binary signature validation behavior. Output "trusted" as the common detection name when identifed the file is from a trusted source.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.7 - Additional checks and error logging around CB Enterprise EDR API.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1150,7 +1150,10 @@ strTmpData = ""
   if not objFSO.fileexists(strFile) and strTmpData = "" and objFSO.fileexists(strDisableFile) = False Then
     
       strTempAPIKey = inputbox("Enter your " & strAPIproduct & " api key")
-      if strTempAPIKey <> "" then
+      if strTempAPIKey <> "" Then
+      	If  intCountVendors = 14 And InStr(strTempAPIKey, "/") = 0 Then
+      		strTempAPIKey = inputbox("Enter your " & strAPIproduct & " api key in the  format of  API Secret Key/API ID. Example:" & vbCrLf & "ZZHLMUAWL3MD8M1M5N7NR1G7/NBRP8Z2PG8")
+      	End If
       	strTempEncryptedAPIKey = strTempAPIKey
       	strTempEncryptedAPIKey = Trim(strTempEncryptedAPIKey)'remove spaces from the ends
         strTempEncryptedAPIKey = encrypt(strTempEncryptedAPIKey,strRandom)
@@ -1165,8 +1168,8 @@ strTmpData = ""
           if instr(StrBaseCBURL, " ") then StrBaseCBURL = replace(StrBaseCBURL, " ", "")
           logdata strFile,StrBaseCBURL,False
         ElseIf intCountVendors = 14 then
-          StrBaseCBURL = inputbox("Enter your " & strAPIproduct & " base URL (example: https://defense-prod05.conferdeploy.net)")
-          if instr(StrBaseCBURL, " ") then StrBaseCBCURL = replace(StrBaseCBURL, " ", "")
+          StrBaseCBCURL = inputbox("Enter your " & strAPIproduct & " base URL (example: https://defense-prod05.conferdeploy.net)")
+          if instr(StrBaseCBURL, " ") then StrBaseCBCURL = replace(StrBaseCBCURL, " ", "")
           logdata strFile,StrBaseCBCURL,False
         end if 
         if intCountVendors = 7 then
@@ -13230,13 +13233,18 @@ end function
 
 
 Sub CarbonBlackEnterpriseEDR(tmpSHA256)
-If strMimeTypeLineE = "" Or strMimeTypeLineE = "|" Or strCBcompanyName = "" Or strCBcompanyName = "|" Then ParseCBCFileResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/metadata", "X-Auth-Token", CBCapiKey, True))
-If strCBprevalence = 0 or strCBprevalence = "" Or strCBprevalence = "|" Then ParseCBCFileSummaryDeviceResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/device", "X-Auth-Token", CBCapiKey, True))
-If strCBdigSig = "" Or strCBdigSig = "|" Then ParseCBCFileSummarySigResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/signature", "X-Auth-Token", CBCapiKey, True))
-If strCBfilePath = "" Or strCBfilePath = "|" Then ParseCBCFileSummaryPathResults(HTTPget ("https://defense-prod05.conferdeploy.net/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/file_path", "X-Auth-Token", CBCapiKey, True))
+If StrBaseCBCURL= "" Then Exit Sub
+If strMimeTypeLineE = "" Or strMimeTypeLineE = "|" Or strCBcompanyName = "" Or strCBcompanyName = "|" Then ParseCBCFileResults(HTTPget (StrBaseCBCURL & "/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/metadata", "X-Auth-Token", CBCapiKey, True))
+If strCBprevalence = 0 or strCBprevalence = "" Or strCBprevalence = "|" Then ParseCBCFileSummaryDeviceResults(HTTPget (StrBaseCBCURL & "/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/device", "X-Auth-Token", CBCapiKey, True))
+If strCBdigSig = "" Or strCBdigSig = "|" Then ParseCBCFileSummarySigResults(HTTPget (StrBaseCBCURL & "/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/signature", "X-Auth-Token", CBCapiKey, True))
+If strCBfilePath = "" Or strCBfilePath = "|" Then ParseCBCFileSummaryPathResults(HTTPget (StrBaseCBCURL & "/ubs/v1/orgs/" & CBCorgKey & "/sha256/", tmpSHA256,"/summary/file_path", "X-Auth-Token", CBCapiKey, True))
 end sub
 
 Function ParseCBCFileResults(strCBCHashResult)
+If InStr(strCBCHashResult, Chr(34) & "success" & chr(34) & ": false,") Or  InStr(strCBCHashResult, Chr(34) & "error_code" & chr(34) & ": ") Then 
+	LogData CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Carbon Black Cloud API error: " & strCBCHashResult,False
+	Exit Function
+End if	
 If strMimeTypeLineE = "" Or strMimeTypeLineE = "|" Then strMimeTypeLineE = getdata(strCBCHashResult, Chr(34), "architecture" & Chr(34) & ":["  & Chr(34))
 strCBcompanyName = getdata(strCBCHashResult,  Chr(34), "company_name" & Chr(34) & ":"  & Chr(34))
 strCBproductName = getdata(strCBCHashResult,  Chr(34), "product_name" & Chr(34) & ":"  & Chr(34))
@@ -13246,6 +13254,10 @@ ParseCBCFileResults = strMimeTypeLineE & "|" & strCBproductName & "|" & strCBFil
 End function
 
 Function ParseCBCFileSummaryDeviceResults(strCBCHashResult)
+If InStr(strCBCHashResult, Chr(34) & "success" & chr(34) & ": false,") Or  InStr(strCBCHashResult, Chr(34) & "error_code" & chr(34) & ": ") Then 
+	LogData CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Carbon Black Cloud API error: " & strCBCHashResult,False
+	Exit Function
+End if	
 strCBprevalence= getdata(strCBCHashResult,  ",", "num_devices" & Chr(34) & ":" )
 strCBhosts =  getdata(strCBCHashResult,  Chr(34), "first_seen_device_name" & Chr(34) & ":"  & Chr(34))
 strCBhosts = strCBhosts & "^" & getdata(strCBCHashResult,  Chr(34), "last_seen_device_name" & Chr(34) & ":"  & Chr(34))
@@ -13254,6 +13266,10 @@ ParseCBCFileSummaryDeviceResults = strCBprevalence & "|" & strCBhosts & "|" & st
 end Function
 
 Function ParseCBCFileSummarySigResults(strCBCHashResult)
+If InStr(strCBCHashResult, Chr(34) & "success" & chr(34) & ": false,") Or  InStr(strCBCHashResult, Chr(34) & "error_code" & chr(34) & ": ") Then 
+	LogData CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Carbon Black Cloud API error: " & strCBCHashResult,False
+	Exit Function
+End if	
 strissuer_name  = getdata(strCBCHashResult,  Chr(34), "issuer_name" & Chr(34) & ":"  & Chr(34))
 If strissuer_name <> "" Then strCBdigSig  = getdata(strCBCHashResult,  Chr(34), "publisher_name" & Chr(34) & ":"  & Chr(34)) & ";" & strissuer_name
 strSignTimeStamp = getdata(strCBCHashResult,  Chr(34), "sign_timestamp" & Chr(34) & ":"  & Chr(34))
@@ -13267,6 +13283,10 @@ ParseCBCFileSummarySigResults = strCBdigSig & "|" & strSignTimeStamp & "|" & str
 End Function
 
 Function ParseCBCFileSummaryPathResults(strCBCHashResult)
+If InStr(strCBCHashResult, Chr(34) & "success" & chr(34) & ": false,") Or  InStr(strCBCHashResult, Chr(34) & "error_code" & chr(34) & ": ") Then 
+	LogData CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Carbon Black Cloud API error: " & strCBCHashResult,False
+	Exit Function
+End if
 strCBfilePath = getdata(strCBCHashResult,  Chr(34), "file_path" & Chr(34) & ":"  & Chr(34))
 ParseCBCFileSummaryPathResults = strCBfilePath
 End Function
