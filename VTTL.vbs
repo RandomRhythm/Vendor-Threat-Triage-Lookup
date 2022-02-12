@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.7 - Additional checks and error logging around CB Enterprise EDR API.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.8 - Add IMPhash prevalence reporting when using SQLite. Support further CSV header values for import. Fix column alignment for IP/domain CSV output.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1600,6 +1600,14 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter=" & inLoopCounter,False 
       end if
 
+	If  IsHash(strData) = True And BoolUseSQLite = True  Then 'IMPHash Prevalence
+		'strFileIMP
+		'intIMPHashPrev
+		If Not ispipeorempty(strFileIMP) then
+			sSQL = "SELECT count(*) as ImpPrev FROM VendorCache WHERE IMPHash =  ? " 
+						intIMPHashPrev = "|" & ReturnSQLiteItem(sSQL, strFileIMP, "ImpPrev")
+		End If				
+	End If
 	
 	if (BoolDisableVTlookup = True Or boolsubmitVT = false) and IsHash(strData) = True Then
 		'AlienVault OTX
@@ -2466,7 +2474,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           strCBfilePath = AddPipe(strCBfilePath) 'CB File Path
           if inthfSizeLoc > -1 or (BoolDisableVTlookup = False and boolVTuseV3 = True) then strCBFileSize = AddPipe(strCBFileSize)  
       end if
-      if BoolUseCarbonBlack = True Or BoolEnableCBenterpriseEDR = True then 'CB custom CSV export
+      if intVTListDataType =2 And (BoolUseCarbonBlack = True Or BoolEnableCBenterpriseEDR = True) then 'CB custom CSV export
         strCBprevalence = AddPipe(strCBprevalence)
 		strCBFileSize = AddPipe(strCBFileSize) 'crowdstrike provides prevalence but not
 	  elseif cint(inthfPrevalenceLoc) > -1 then 'CSV
@@ -2496,7 +2504,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		  end If
 	  end If
 	  if dictDnameWatchList.count > 0  then strDnameWatchLineE = addPipe(strDnameWatchLineE)
-	  
+	  If  IsHash(strData) = True And BoolUseSQLite = True  Then 'IMPHash Prevalence
+		intIMPHashPrev = AddPipe(intIMPHashPrev)
+	  End if
 	  If BoolSeclytics = True Then 'set to true to use Seclytics
 		SeclytRepReason = AddPipe(SeclytRepReason) 'Seclytics Reputation and Reason
 		SeclytFileRep = AddPipe(SeclytFileRep)'Seclytics Associated File Metadata
@@ -2540,7 +2550,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           	If ispipeorempty(strDetectNameLineE) Then strDetectNameLineE= "|trusted"
           End if  	
           'write row for hash lookups
-          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strMimeTypeLineE & strFileTypeLineE & strPE_TimeStamp & strSignTimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
+          strTmpSSline = strTmpSSline  & intHashDetectionsLineE & "|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore & strTmpMSOlineE & strTmpPPointLine & strTmpTGlineE & strTMPTCrowdLine & strTrendMicroLineE & strMicrosoftLineE & strMcAfeeLineE & strSophoslineE & strSymanteclineE & strESETlineE & strAviralineE & strDrWeblineE & strPandaLineE & strFSecurelineE & strBitdefenderLineE & strDiplayVendDname & AlienVaultPulseLine & "|" & strDateTimeLineE & strDetectNameLineE & StrDetectionTypeLineE & strTmpCacheLineE & strDnameWatchLineE & strTmpMalShareLineE & strCBfilePath & strCBdigSig & strCBcompanyName & strCBproductName & strCBprevalence & strCBFileSize & intIMPHashPrev & strTmpSigAssesslineE & strCuckooScore & strCBhosts & strPassiveTotal & strDFSlineE & StrYARALineE & strMimeTypeLineE & strFileTypeLineE & strPE_TimeStamp & strSignTimeStamp & strPPidsLineE & SeclytFileRep & strIpDwatchLineE & strURLWatchLineE & strTmpKeyWordWatchList
       end select 
 
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSSline = "  & strTmpSSline,BoolEchoLog 
@@ -2705,6 +2715,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        sslSubject = ""
        strTmpVTTIlineE = ""
        strSignTimeStamp= ""
+       intIMPHashPrev = ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
        TrustedBinary = False
 	  
@@ -8729,9 +8740,11 @@ if objFSO.fileexists(OpenFilePath1) then
 			instr(strSCData, "Top values of file.path") > 0 or _
 			instr(strSCData, "Count of records") > 0 or _
 			instr(strSCData, "Target File Path") > 0 or _
+			instr(strSCData, "IMPHash") > 0 or _
 			instr(strSCData, "name") > 0) And _
 			 (instr(strSCData, "MD5") > 0 or _
 			instr(strSCData,	"SHA256") > 0 or _
+			instr(strSCData,	"Sha256") > 0 or _
 			InStr(strSCData,	"SHA1") > 0 or _
 			InStr(strSCData,	"hash") > 0 or _
 			InStr(strSCData,	"Top values of cb.threatHunterInfo.sha256.keyword") > 0 or _
@@ -8895,6 +8908,10 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         intSHA1Loc = inthArrayLoc
       Case "IMP"
         intIMPLoc = inthArrayLoc
+      Case "ImpHash"
+        intIMPLoc = inthArrayLoc
+      Case "IMPHash"
+        intIMPLoc = inthArrayLoc
       Case "MD5"
         intMD5Loc = inthArrayLoc
         intRealMD5Loc = inthArrayLoc
@@ -8948,6 +8965,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         inthfSizeLoc = inthArrayLoc 
       Case "FileSize" ' Cylance Protect/Defender
         inthfSizeLoc = inthArrayLoc 
+      Case "Length"
+        inthfSizeLoc = inthArrayLoc 
       Case "CB Prevalence"
         inthfPrevalenceLoc = cint(inthArrayLoc)
       Case "Prevalence"
@@ -8975,6 +8994,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
           intSHA256Loc = inthArrayLoc
           boolSHA256csvLookup = True
         end if
+      Case "Sha256"
+      	intSHA256Loc = inthArrayLoc
       Case "Size (KB)"
         inthfSizeLoc = inthArrayLoc 
       Case "File Name"
@@ -13110,6 +13131,10 @@ Sub WriteHeaderRow()
           strYARAhead = ""
           strFileTypeHead = ""
         end If
+		imphashHead = ""
+		If  BoolUseSQLite = True Then 'IMPHash Prevalence
+			imphashHead = "|IMPHash Prevalence"
+		End If
         headSignTime = ""
 		If BoolEnableCBenterpriseEDR = True Then headSignTime = "|Signature Timestamp"
 		if boolEnableCuckooV2 = True Or (BoolDisableVTlookup = False and boolVTuseV3 = True) then 
@@ -13207,7 +13232,7 @@ Sub WriteHeaderRow()
 	
 
 		'Write file hash header row
-        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strMimeTypeHead & strFileTypeHead & StrTmpCTimeStamp & headSignTime & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
+        Write_Spreadsheet_line("Hash|VT Scan|Mal Score|Generic Score|PUA Score|HKTL Score|Malicious" & strTmpMetahead & strTmpXforceHead & strTmpETIhead & strTmpTGhead & strTmpTCrowdHead & strTMpTrendMicroHead & strTMpMicrosoftHead & strTMpMcAfeeHead & strTMpSophosHead & strTmpSymantecHead & strTMpESETHead & strTmpAviraHead & strTmpDrWebHead & strTMpPandaHead & strTMpFSecureHead & strTmpBitdefenderHead & strTmpDispVendHead & strTmpAlienHead1 & "|Scan Date|Common Name|Detection Type|Cache" & strDetectWatchListHead  & strTmpMalShareHead & strTmpCBHead & imphashHead & strTmpCuckooHead & strTmpPThead & "|Date First Seen" & strYARAhead & strMimeTypeHead & strFileTypeHead & StrTmpCTimeStamp & headSignTime & strTmpETIdshead & SeclytHead & strTmpIpDwatchListHead & strTmpURLWatchListHead & strTmpKeyWordWatchListHead)
         BoolUseCIF = False 'don't use CIF when in spreadsheet mode and performing hash lookups
 end Select
 
