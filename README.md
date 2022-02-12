@@ -44,7 +44,7 @@ Additional checks:
 * Registration date of domains
 * Sinkhole checks
 
-Combine hash lookups with tool output from (requires MD5 hash values):
+Combine hash lookups with tool output from:
 * Sysinternals Sigcheck
 * Sysinternals Autorunsc
 * Cisco AMP for Networks
