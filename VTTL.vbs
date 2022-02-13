@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.8 - Add IMPhash prevalence reporting when using SQLite. Support further CSV header values for import. Fix column alignment for IP/domain CSV output.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.9 - Fix logging error.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -3708,7 +3708,7 @@ if TextFileName <> "" then
   WriteTextFile.Close
   if err.number <> 0 then 
 
-    Set WriteTextFile = fsoLogData.OpenTextFile(replace(TextFileName, ".", "_unicode.", 1, 1),ForAppending, False, TristateTrue)
+    Set WriteTextFile = fsoLogData.OpenTextFile(replace(TextFileName, ".", "_unicode.", 1, 1),ForAppending, True, TristateTrue)
     WriteTextFile.WriteLine TextToWrite
     WriteTextFile.Close
   on error goto 0
