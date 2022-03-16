@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.2.8.9 - Fix logging error.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.0 - Output date first seen for domains when using SQLite. Remove strTmpDomainRestric
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -138,7 +138,7 @@ Dim strTmpWCO_CClineE
 Dim strTmpIPContactLineE
 Dim strTmpVTPositvLineE 'greatest value for positive detections
 Dim strTmpIPlineE
-Dim strTmpCacheLineE 'Was a cached lookup CacheLookup
+Dim strTmpCacheLineE 'Was a cached lookup CacheLookup. For domains this will contain LastUpDate from SQLite
 Dim strTmpMalShareLineE
 Dim strTmpPulsediveLineE
 Dim BoolNoScanning
@@ -217,7 +217,6 @@ Dim DictWhois: Set DictWhois = CreateObject("Scripting.Dictionary")
 Dim DictAlpabet: Set DictAlpabet = CreateObject("Scripting.Dictionary")
 Dim IntTmpHkTlScore
 Dim StrDetectionTypeLineE
-Dim strTmpDomainRestric 'spreadsheet output for domain restricted
 Dim strTmpSinkHole 'domain has been sinkholed
 Dim BoolWhoisDebug: BoolWhoisDebug = False 'value is loaded from ini
 Dim BoolForceWhoisLocationLookup 'VirusTotal doesn't always list location data such as the country code in their whois data.
@@ -626,7 +625,7 @@ end if
 BoolDisableCaching = ValueFromINI("vttl.ini", "main", "disable_CacheWrite", BoolDisableCaching) ' Do not write cache items
 BoolDisableCacheLookup = ValueFromINI("vttl.ini", "main", "disable_CacheRead", BoolDisableCacheLookup) 'Do not query cache for lookups
 boolWhoisCache = ValueFromINI("vttl.ini", "main", "whoisCache", boolWhoisCache) 'Cache whois data for domains
-boolCacheDomain = ValueFromINI("vttl.ini", "main", "DomainCache", boolWhoisCache) 'Cache domain lookups
+boolCacheDomain = ValueFromINI("vttl.ini", "main", "DomainCache", boolCacheDomain) 'Cache domain lookups
 BoolUseExcel = ValueFromINI("vttl.ini", "main", "enable_Excel", BoolUseExcel) 'load value from INI
 sleepOnSkippedVT = ValueFromINI("vttl.ini", "main", "SleepOnCachedLookup", sleepOnSkippedVT) 'load value from INI to sleep if VirusTotal results came from cache
 intRefreshAge = ValueFromINI("vttl.ini", "main", "HashRefresh", intRefreshAge) 'Number of days from first time seeing the hash that you want to refresh the cache data (get updated results) for processed items. Default value is 10
@@ -1945,19 +1944,21 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 					boolSkipDomain = False
 				end if
 			end if
+			
 		  if boolsubmitVT = True and boolSkipDomain = False then 
             VT_Submit
             inLoopCounter = inLoopCounter + 1
             If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter=" & inLoopCounter,False 
-          end if
+		  end if
+		  
 		  if boolUseQuad9 = True then
-			 strQuad9DNS = nslookup_Return(strScanDataInfo, "9.9.9.9")
-			if strQuad9DNS = "" then
-				strQuad9DNS = "|nxdomain"
-			else
-				strQuad9DNS = "|"
-			end if
-		  end If
+        strQuad9DNS = nslookup_Return(strScanDataInfo, "9.9.9.9")
+        if strQuad9DNS = "" then
+          strQuad9DNS = "|nxdomain"
+        else
+          strQuad9DNS = "|"
+        end if
+			end If
   
 		  'Check dynamic DNS
 		  If BoolDDNS_Checks = True then
@@ -2145,7 +2146,6 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  if boolUseAlienVault = True Or BoolSeclytics = True then AlienVaultValidation = addPipe(AlienVaultValidation)
 	  If (boolUseAlienVault = True Or BoolSeclytics = True) and dictKWordWatchList.count > 0 then strTmpKeyWordWatchList = addPipe(strTmpKeyWordWatchList)
       if strDetectNameLineE = "" then strDetectNameLineE = "|"
-      strTmpDomainRestric = AddPipe(strTmpDomainRestric)
       if strTmpCacheLineE = "" then strTmpCacheLineE = "|"
       if strTmpMalShareLineE = "" and BoolEnableMalshare = True then strTmpMalShareLineE = "|"
 
@@ -2391,14 +2391,19 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         end if
       end if
       
-      if strDFSlineE = "" then 
-        if strDateTimeLineE <> "" then 
-          strDFSlineE = "|" & strDateTimeLineE
-        else  
-          strDFSlineE = "|" & Date & " " & Time
+
+      if intVTListDataType <> 1 or BoolUseSQLite = True and BoolDisableCacheLookup = False Then 'if not domain/IP or we are doing SQL queries then add date first seen
+        if strDFSlineE = "" then 
+          if strDateTimeLineE <> "" then 
+            strDFSlineE = "|" & strDateTimeLineE
+          else  
+            strDFSlineE = "|" & Date & " " & Time
+          end if
+        else
+          strDFSlineE = addpipe(strDFSlineE)
         end if
       else
-        strDFSlineE = addpipe(strDFSlineE)
+        strDFSlineE = ""
       end if
       if BoolDebugTrace = True then logdata strDebugPath & "\VT_h_scoring" & "" & ".txt", intHashDetectionsLineE & "|adjusted score|" & intTmpMalScore & "|" & IntTmpGenericScore & "|" & IntTmpPUA_Score & "|" & IntTmpHkTlScore & "|" & IntTmpAdjustedMalScore, false
       
@@ -2528,7 +2533,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       select case intVTListDataType
         case 1
           'write row for domain & IP
-          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strCBprevalence & strSiblingsCount & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strTmpDomainRestric & strTmpSinkHole & strTmpCacheLineE & StrDetectionTypeLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
+          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strCBprevalence & strSiblingsCount & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strDFSlineE & strTmpSinkHole & strTmpCacheLineE & StrDetectionTypeLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
         case 2
           If dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 		  'Add to adjusted malware score for custom list malware and update detection name if one was given in malhash.dat
@@ -2583,7 +2588,6 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	   if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpKeyWordWatchList" & "=" & strTmpKeyWordWatchList ,BoolEchoLog 
 	   if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpVTPositvLineE" & "=" & strTmpVTPositvLineE ,BoolEchoLog 
 	   if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpIPlineE" & "=" & strTmpIPlineE ,BoolEchoLog                    
-       if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpDomainRestric" & "=" & strTmpDomainRestric ,BoolEchoLog                    
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpSinkHole" & "=" & strTmpSinkHole ,BoolEchoLog                    
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpCacheLineE" & "=" & strTmpCacheLineE ,BoolEchoLog                    
        if BoolDebugTrace = True then logdata strDebugPath & "\VT_SS_Debug" & "" & ".txt", "strTmpMalShareLineE" & "=" & strTmpMalShareLineE ,BoolEchoLog    
@@ -2687,7 +2691,6 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       strDateTimeLineE = ""
       strDetectNameLineE = "|"
       StrDetectionTypeLineE = "|"
-      strTmpDomainRestric = "|"
       strTmpSinkHole = "|"
       strTmpCacheLineE = "|"
        strCBfilePath = "" 'CB File Path
@@ -3647,7 +3650,7 @@ if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug_TI_b" & "" & ".t
 Set objHTTP = Nothing
 
 'Store SQLite data for domains
-if instr(strFullAPIURL,"domain=") then
+if instr(strFullAPIURL,"domain=") > 0 and boolCacheDomain = True and BoolUseSQLite = True And BoolDisableCaching = false then
   Set cmd1 = createobject("ADODB.Command")
   StrNow = DateDiff("s", "01/01/1970 00:00:00", Now())  
   set objparameter0 = cmd1.createparameter("@created", 129, 1, len(StrNow),StrNow)
@@ -3672,13 +3675,13 @@ if instr(strFullAPIURL,"domain=") then
   if len(strTmpIXFlineE) > 1 then set objparameter7 = cmd1.createparameter("@x-force", 129, 1, len(strTmpIXFlineE)-1,right(strTmpIXFlineE,len(strTmpIXFlineE) -1)) 'no longer used
   if len(strTmpSinkHole) > 1 then set objparameter8 = cmd1.createparameter("@Sinkhole", 129, 1, len(strTmpSinkHole)-1,right(strTmpSinkHole,len(strTmpSinkHole) -1))
 
- 'UpdateDomainVendTable strdomainName, objCreatedDate, objLastUpDate, objVTdomain, objTCdomain, objRevDomain, objCountryNameDomain,	CountryCodeDomain, objRegionNameDomain, objRegionCodeDomain, objCityNameDomain, objCreationDate, objWHOISName, objIPaddress, objETdomain, ObjXForce, ObjSinkhole)
-  if BoolUseSQLite = True And BoolDisableCaching = false And boolCacheDomain = True then
-	UpdateDomainVendTable strData    , objparameter0, objparameter1, objparameter2, objparameter3, objparameter4,                "",	             ""  ,         ""         ,            ""      ,                "",              "",           "", objparameter5, objparameter6, objparameter7, objparameter8
-  end if
+  
+  'UpdateDomainVendTable strdomainName, objCreatedDate, objLastUpDate, objVTdomain, objTCdomain, objRevDomain, objCountryNameDomain,	CountryCodeDomain, objRegionNameDomain, objRegionCodeDomain, objCityNameDomain, objCreationDate, objWHOISName, objIPaddress, objETdomain, ObjXForce, ObjSinkhole)
+  UpdateDomainVendTable strData    , objparameter0, objparameter1, objparameter2, objparameter3, objparameter4,                "",	             ""  ,         ""         ,            ""      ,                "",              "",           "", objparameter5, objparameter6, objparameter7, objparameter8
+
   set cmd1 = nothing
 end if
-end sub
+end sub 'VT_Submit
 
 
 function LogData(TextFileName, TextToWrite,EchoOn)
@@ -6056,15 +6059,7 @@ Function CheckWhoISData(strTmpWhoisResponse)'check for sinkhole domain
 Dim strTmpRegistrantName
 Dim strTmpRegistrantOrg
 Dim strTmpNameServer
-if instr(strTmpWhoisResponse, "Status: clientTransferProhibited") Then 'need to remove this and the associated column as it is not useful info
-  if instr(strTmpWhoisResponse, "Status: clientUpdateProhibited") then
-    if instr(strTmpWhoisResponse, "Status: clientRenewProhibited") then
-      if instr(strTmpWhoisResponse, "Status: clientDeleteProhibited") then
-        strTmpDomainRestric = "|X"
-      end if
-    end if
-  end if
-end if
+
 
 if BoolDebugTrace = True then LogData strDebugPath & "\whois_responses.log", "-------------------" & vbcrlf & "strTmpWhoisResponse:" & strTmpWhoisResponse, false
 if instr(strTmpWhoisResponse, "Registrant Name: ") then
@@ -7408,8 +7403,8 @@ IPSinkholeCheck strIPRevLookup, "195.157.15.100", "|ET TROJAN AnubisNetworks Sin
 IPSinkholeCheck strIPRevLookup, "212.61.180.100", "|ET TROJAN AnubisNetworks Sinkhole SSL Cert lolcat - specific IPs"
 IPSinkholeCheck strIPRevLookup, "212.61.180.100", "|ET TROJAN AnubisNetworks Sinkhole SSL Cert lolcat - specific IPs"
 IPSinkholeCheck strIPRevLookup, "87.106.18.141", "|1and1 Internet AG Sinkhole"
-
 ' End Emerging Threats rules
+IPSinkholeCheck strIPRevLookup, "72.5.65.111", "|Palo Alto Networks Sinkhole - sinkhole.paloaltonetworks.com" 'https://knowledgebase.paloaltonetworks.com/KCSArticleDetail?id=kA10g000000Clk2
  
  strRevDNS = "|" & nslookup_Return(strIPRevLookup, DNSserverIP)
  if strTmpSinkHole = "|" and instr(lcase(strRevDNS), "sinkhole") or instr(lcase(strRevDNS), "snkhole") then 'only update if a sinkhole isn't already known. DNS sinkhole will provide more information that IP sinkhole.
@@ -9831,13 +9826,15 @@ if booluseSQLite = true then
   cmd.ActiveConnection = oCNCT
   Set Recordset = CreateObject("ADODB.Recordset")
   'sSQL =  "CREATE TABLE DomainVend (DomainName TEXT, CreatedDate TEXT, LastUpDate TEXT, VTdomain TEXT, TCdomain INTEGER, RevDomain TEXT, CountryNameDomain TEXT,	CountryCodeDomain TEXT, RegionNameDomain TEXT, RegionCodeDomain TEXT, CityNameDomain TEXT, CreationDate TEXT, WHOISName TEXT, IPaddress TEXT, ETdomain TEXT, Sinkhole TEXT)"
-  sSQL = "Select CountryNameDomain, CountryCodeDomain, RegionNameDomain, RegionCodeDomain, CityNameDomain, CreationDate, WHOISName, LastUpDate FROM DomainVend WHERE DomainName = ?"
+  sSQL = "Select CreatedDate, CountryNameDomain, CountryCodeDomain, RegionNameDomain, RegionCodeDomain, CityNameDomain, CreationDate, WHOISName, LastUpDate FROM DomainVend WHERE DomainName = ?"
   set objparameter = cmd.createparameter("@DomainName", 129, 1, len(strWhoisDomain),strWhoisDomain)
   cmd.Parameters.Append objparameter
   cmd.CommandText = sSQL
   Recordset.Open cmd
 
   If not Recordset.EOF Then 
+      strDFSlineE = Recordset.fields.item("CreatedDate")
+      strDFSlineE = "|" & EpochConvert(strDFSlineE)
       strTmpCNlineE = "|" & Recordset.fields.item("CountryNameDomain")
       strTmpCClineE = "|" & Recordset.fields.item("CountryCodeDomain")
       strTmpRNlineE = "|" & Recordset.fields.item("RegionNameDomain")
@@ -12955,17 +12952,19 @@ Sub WriteHeaderRow()
 		If cint(inthfPrevalenceLoc) > -1 Then
 			strPrevalenceHead = "|Prevalence"
 		End If
-        if dictURLWatchList.count > 0 Then
-          strTmpURLWatchListHead = "|URL Watch List"
-        else
-          strTmpURLWatchListHead = ""
-        end if
-        if dictIPdomainWatchList.count > 0 then 
-          strTmpIpDwatchListHead = "|IP Domain Watch List"
-        else
-          strTmpIpDwatchListHead = ""
-        end if
-
+    if dictURLWatchList.count > 0 Then
+      strTmpURLWatchListHead = "|URL Watch List"
+    else
+      strTmpURLWatchListHead = ""
+    end if
+    if dictIPdomainWatchList.count > 0 then 
+      strTmpIpDwatchListHead = "|IP Domain Watch List"
+    else
+      strTmpIpDwatchListHead = ""
+    end if
+    if BoolUseSQLite = True and BoolDisableCacheLookup = False Then
+      domainFirstSeenHead = "|Date First Seen"
+    end if
 		if enableZEN = True then
 			strZRBL = "|Spamhaus ZEN RBL"
 		else
@@ -13046,7 +13045,7 @@ Sub WriteHeaderRow()
 			vtHead2 = ""
 		end if
 		'write IP/domain header row
-        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & "|Restricted Domain|Sinkhole|Cache" & detectionTypeHead & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
+        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & domainFirstSeenHead & "|Sinkhole|Cache" & detectionTypeHead & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
         if BoolCreateSpreadsheet = True then
           if cint(intDetectionNameCount) > 0 then 
             
