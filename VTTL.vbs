@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.0 - Output date first seen for domains when using SQLite. Remove strTmpDomainRestric
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.1 - Support Shodan InternetDB
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -458,6 +458,11 @@ Dim boolDeepIOCmatch ' Perform IOC matching against indirect but related IOCs (D
 Dim boolTruncateVTsigner ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 Dim cellTruncateLength
 Dim strSignTimeStamp
+Dim boolShodan
+Dim cpesLineE
+Dim openPortsLineE
+Dim ShodanTags
+Dim ShodanVulns
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -609,6 +614,7 @@ DisplayVendor = "" 'Add column to display all of this vendor's detection names. 
 intClippingLevel = 2 'Domain/IP reporting for detection name will report on name label with score greater than this
 BoolCacheRelatedHashLookups = True
 boolSiblings = True
+boolShodan = True
 '--- End config items
 
 '----------------reconfigure
@@ -636,7 +642,8 @@ boolReverseDNS = ValueFromINI("vttl.ini", "main", "reverseDNS", boolReverseDNS) 
 boolDeepIOCmatch = ValueFromINI("vttl.ini", "main", "deepIOCmatch", boolDeepIOCmatch)
 staticIntelPath  = ValueFromINI("vttl.ini", "main", "StaticIntelPath", staticIntelPath)
 BoolDisableVTlookup = ValueFromINI("vttl.ini", "vendor", "disable_VirusTotal", BoolDisableVTlookup) 'load value from INI
-boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault) 'load value from INI
+boolShodan = ValueFromINI("vttl.ini", "vendor", "enable_Shodan", boolShodan) 'load value from INI
+boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault)
 boolProxyFeed = ValueFromINI("vttl.ini", "vendor", "ProxyFeed", boolProxyFeed) 'load value from INI
 boolMultiFeed = ValueFromINI("vttl.ini", "vendor", "MultiFeed", boolMultiFeed) 'load value from INI
 boolAttackerFeed = ValueFromINI("vttl.ini", "vendor", "AttackerFeed", boolAttackerFeed) 'load value from INI
@@ -1823,6 +1830,20 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           end if
       end if
 
+
+    if boolShodan = True then
+      tmpShodan = HTTPget ("https://internetdb.shodan.io/", strScanDataInfo,"", "", "", False)
+      if instr(tmpShodan, "No information available") = 0 then
+        cpesLineE = parseShodanResults(tmpShodan, "cpes", "^")
+        if ispipeorempty(strDomainListOut) then 'passive DNS
+         strDomainListOut = parseShodanResults(tmpShodan, "hostnames", ";")
+        end if
+        openPortsLineE = parseShodanResults(tmpShodan, "ports", "^")
+        ShodanTags = parseShodanResults(tmpShodan, "tags", "^")
+        ShodanVulns = parseShodanResults(tmpShodan, "vulns", "^")
+      end if
+    end if
+
 		'MsgBox "debug: boolUseAlienVault=" & boolUseAlienVault
 		if boolUseAlienVault = True then'AlienVault general IP query provides owner and geoip as well as pulses and validation
 			if isIpv6(strScanDataInfo) = True then
@@ -2113,7 +2134,14 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         AlienNIDSCat = addpipe(AlienNIDSCat)
         dictNIDStmpCategory.RemoveAll
         end if
+      
+      if boolShodan = True then
+        cpesLineE = addpipe(cpesLineE)
+        openPortsLineE= addpipe(openPortsLineE)
+        ShodanTags = addpipe(ShodanTags)
+        ShodanVulns = addpipe(ShodanVulns)
       end if
+    end if
 		'format Date time the same for easier sorting
 		strTmpCreationD = replace(strTmpWCO_CClineE, "|", "")
 		if isdate(strTmpCreationD) then
@@ -2533,7 +2561,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       select case intVTListDataType
         case 1
           'write row for domain & IP
-          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strCBprevalence & strSiblingsCount & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strDFSlineE & strTmpSinkHole & strTmpCacheLineE & StrDetectionTypeLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
+          strTmpSSline = strTmpSSline  & strTmpVTTIlineE & strTrancoLineE & strTmpPPointLine & strSORBSlineE & strQuad9DNS & strTmpCBLlineE & strTmpCudalineE & strTmpZENlineE & strTmpZDBLlineE & strTmpURIBLlineE & strTmpSURbLineE & strTmpTGlineE & strTmpCIFlineE & strTmpMSOlineE & strTmpCNlineE & strTmpCClineE & strTmpRNlineE & strTmpRClineE & strTmpCITlineE & strTmpWCO_CClineE & strRevDNS & strTmpIPContactLineE & strDomainListOut & strTmpIPlineE & strCategoryLineE & strDDNSLineE & strCBprevalence & strSiblingsCount & strTMPTCrowdLine & AlienVaultPulseLine & AlienVaultHashCount & AlienVaultValidation & strTmpKeyWordWatchList & strTmpVTPositvLineE & strDFSlineE & strTmpSinkHole & strTmpCacheLineE & StrDetectionTypeLineE & DetectionNameSSlineE & strIpDwatchLineE & strDnameWatchLineE & strURLWatchLineE & strPPidsLineE & AlienNIDScount & AlienNIDSCat & AlienNIDS & cpesLineE & openPortsLineE & ShodanTags & ShodanVulns & SeclytRepReason & SeclytFileRep & SeclytFileCount & strTmpPulsediveLineE & sslSubject & sslOrg '& strTmpCacheLineE
         case 2
           If dictDnameWatchList.count > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 		  'Add to adjusted malware score for custom list malware and update detection name if one was given in malhash.dat
@@ -2719,6 +2747,10 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
        strTmpVTTIlineE = ""
        strSignTimeStamp= ""
        intIMPHashPrev = ""
+       cpesLineE = ""
+       openPortsLineE= ""
+       ShodanTags = ""
+       ShodanVulns = ""
        dictCountDomains.RemoveAll 'clear dict we use for tracking domain associations
        TrustedBinary = False
 	  
@@ -13025,10 +13057,15 @@ Sub WriteHeaderRow()
 		If BoolSeclytics = True Then
 			SeclytHead = "|Seclytics Reputation and Reason|Seclytics Associated File Metadata|Seclytics File Count"
 	        if dictDnameWatchList.count > 0 then strDetectWatchListHead  = "|Detection Name Watch List"
- 
 		Else
 			SeclytHead = ""
 		End If	
+		
+		if boolShodan = True then
+      ShodanHead = "|CPEs|Open Ports|Shodan Tags|Vulnerabilities"
+    else
+      ShodanHead = ""
+    end if
 		if boolPulsedive = True then
       PulsediveHead = "|Pulsedive|SSL Subject|SSL Org"
 		else
@@ -13045,7 +13082,7 @@ Sub WriteHeaderRow()
 			vtHead2 = ""
 		end if
 		'write IP/domain header row
-        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & domainFirstSeenHead & "|Sinkhole|Cache" & detectionTypeHead & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & SeclytHead & PulsediveHead)
+        Write_Spreadsheet_line(strVThead & TrancoHead & strTmpETIhead & strSORBSline & strQuad9Head & strCBL & strBarracudaDBL & strZRBL & strZDBL & strURIBL & strSURBL & strTmpTGhead & strCIF & strTmpMetahead & "|Country Name|Country Code|Region Name|Region Code|City Name|Creation Date|Reverse DNS|WHOIS|Hosted Domains|IP Address" & strTmpXforceHead & "|Category|DDNS" & strPrevalenceHead  & strSiblingHead & strTmpTCrowdHead & strTmpAlienHead1 & strTmpAlienHead3 & strTmpAlienHead2 & strTmpKeyWordWatchListHead & vtHead2 & domainFirstSeenHead & "|Sinkhole|Cache" & detectionTypeHead & DetectionNameHeaderColumns & strTmpIpDwatchListHead & strDetectWatchListHead  & strTmpURLWatchListHead & strTmpETIdshead & alienNIDShead & ShodanHead & SeclytHead & PulsediveHead)
         if BoolCreateSpreadsheet = True then
           if cint(intDetectionNameCount) > 0 then 
             
@@ -13314,3 +13351,23 @@ End if
 strCBfilePath = getdata(strCBCHashResult,  Chr(34), "file_path" & Chr(34) & ":"  & Chr(34))
 ParseCBCFileSummaryPathResults = strCBfilePath
 End Function
+
+Function parseShodanResults(strShodanResults, strShodanKey, strAppendCharacter)
+if instr(strShodanResults, strShodanKey & Chr(34) & ":[]") = 0 then 
+  shodan_values = getdata(strShodanResults, Chr(34) & "]", strShodanKey & Chr(34) & ":["  & Chr(34))
+  If shodan_values = "" then shodan_values =getdata(strShodanResults, "]", strShodanKey & Chr(34) & ":[") 'integer values
+  if instr(shodan_values, Chr(34) & "," & Chr(34)) Then
+    arrayShodan = split(shodan_values, Chr(34) & "," & Chr(34))
+  ElseIf instr(shodan_values, ",") then
+  	arrayShodan = split(shodan_values, ",")
+  End If
+  if instr(shodan_values, Chr(34) & "," & Chr(34)) > 0 Or instr(shodan_values, ",") > 0 then	'multiple values
+    for each strCPES in arrayShodan:
+      strShodanReturn = AppendValuesList(strShodanReturn, strCPES, strAppendCharacter)
+    next
+  else 'single value
+    strShodanReturn = shodan_values
+  end if
+  parseShodanResults = strShodanReturn
+end if
+end function

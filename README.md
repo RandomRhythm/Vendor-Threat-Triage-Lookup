@@ -14,6 +14,7 @@ VTTL Performs lookups for file hashes, IP addresses and domain names. Results ar
 * ThreatIntelligenceAggregator (TIA)
 * RiskIQ
 * Collective Intelligence Framework (CIF)
+* Shodan InternetDB
 * SecLytics
 * Pulsedive
 * Quad9
