@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.1 - Support Shodan InternetDB
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.2 - Now reports accurate highest URL detection count. Remove pipe from date first seen until it is reported.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1833,7 +1833,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 
     if boolShodan = True then
       tmpShodan = HTTPget ("https://internetdb.shodan.io/", strScanDataInfo,"", "", "", False)
-      if instr(tmpShodan, "No information available") = 0 then
+      if instr(tmpShodan, "No information available") = 0 and tmpShodan <> "" then
         cpesLineE = parseShodanResults(tmpShodan, "cpes", "^")
         if ispipeorempty(strDomainListOut) then 'passive DNS
          strDomainListOut = parseShodanResults(tmpShodan, "hostnames", ";")
@@ -3520,14 +3520,14 @@ if instr(strFullAPIURL,"ip=") or instr(strFullAPIURL,"domain=") then
 				   
 					if cint(intDetectionNameCount) > intHashlookupCount and intTmpHashPositives > intHashPositiveThreashold and intDetectionCategory = 1 then 
 						
-						DetectionNameSSlineE = DetectionNameSSline(strTmpIPurl, intPositiveDetectSection) 'spreadsheet line output
+						DetectionNameSSlineE = DetectionNameSSline(strTmpIPurl, intDetectionCategory) 'spreadsheet line output
 					end if
 				 elseif intPositiveDetectSection =3 then
 				   if not DicHashComm.Exists(strTmpIPurl) then _
 				   hashTrack strTmpIPurl, strdata, DicHashComm end If 'add to dictionary if not already there
 				   
 				   if cint(intDetectionNameCount) > intHashlookupCount and intTmpHashPositives > intHashPositiveThreashold and intDetectionCategory = 2 then 
-						DetectionNameSSlineE = DetectionNameSSline(strTmpIPurl, intPositiveDetectSection) 'spreadsheet line output for IP/Domain detection names
+						DetectionNameSSlineE = DetectionNameSSline(strTmpIPurl, intDetectionCategory) 'spreadsheet line output for IP/Domain detection names
 				   end if
 				 elseif intPositiveDetectSection = 3 then
 				   if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt","DIcHashes.Exists(strTmpIPurl)=" & DIcHashes.Exists(strTmpIPurl), False
@@ -9866,7 +9866,7 @@ if booluseSQLite = true then
 
   If not Recordset.EOF Then 
       strDFSlineE = Recordset.fields.item("CreatedDate")
-      strDFSlineE = "|" & EpochConvert(strDFSlineE)
+      strDFSlineE = EpochConvert(strDFSlineE)
       strTmpCNlineE = "|" & Recordset.fields.item("CountryNameDomain")
       strTmpCClineE = "|" & Recordset.fields.item("CountryCodeDomain")
       strTmpRNlineE = "|" & Recordset.fields.item("RegionNameDomain")
