@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.2 - Now reports accurate highest URL detection count. Remove pipe from date first seen until it is reported.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.3 - Don't report on registration date from Pulsedive for IP addresses. Parse ASN for IP address owners from Pulsedive instead of registrant to report in whois column.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -12492,7 +12492,13 @@ strWhoisText = lcase(strWhoisText)
       strTmpCClineE = Getdata(strWhoisText , Chr(34), "country" & Chr(34) & ":" & Chr(34))
       strTmpCClineE = "|" & CleanupWhoisData(strTmpCClineE)
       end if
-
+	If InStr(strWhoisText,  Chr(34) & "type" & Chr(34) & ":" & Chr(34) &  "ip" & Chr(34) ) > 0 Then 'if IP address
+		tmpRegistrant = Getdata(strWhoisText, "]", "mnt-by" & Chr(34) & ":[" & Chr(34))
+		If InStr(tmpRegistrant, Chr(34) & "," & Chr(34)) > 0 Then 'get ASN
+			tmpRegistrant = Replace(tmpRegistrant, Chr(34) & "," & Chr(34), " ")
+			tmpRegistrant = Replace(tmpRegistrant,Chr(34), "")
+		End If	
+	Else 'domain whois results
       if strTmpWCO_CClineE = "" or strTmpWCO_CClineE = "|" then
         strTmpWCO_CClineE = Getdata(strWhoisText, Chr(34), "date_created" & Chr(34) & ":" & Chr(34))
         strTmpWCO_CClineE = "|" & CleanupWhoisData(strTmpWCO_CClineE)
@@ -12502,7 +12508,7 @@ strWhoisText = lcase(strWhoisText)
         strTmpWCO_CClineE = "|" & CleanupWhoisData(strTmpWCO_CClineE)
       end if
       tmpRegistrant = Getdata(strWhoisText, Chr(34), "++registrant" & Chr(34) & ":" & Chr(34))
-
+	End If
 	If InStr(strWhoisText, Chr(34) & "dns" & Chr(34) & ":") > 0 Then 'passive DNS
       wiPdns = GetData(strWhoisText, "}", Chr(34) & "dns" & Chr(34) & ":{" & Chr(34) & "a" & Chr(34) & ":")
       getDataSplit wiPdns, Chr(34), Chr(34), ",", GetRef("DictTrackDomain")
