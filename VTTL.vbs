@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.3 - Don't report on registration date from Pulsedive for IP addresses. Parse ASN for IP address owners from Pulsedive instead of registrant to report in whois column.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.4 - Parse "Create date"
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -5232,6 +5232,9 @@ end if
 if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "whois Creation Date before being set: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE, false
 if strTmpWCO_CClineE = "" or strTmpWCO_CClineE = "|" or len(strTmpWCO_CClineE) < 4  then
   strTmpWCO_CClineE = Getdataon(dataresults , vbcr, "\n", "Creation Date:")
+  if strTmpWCO_CClineE = "" or strTmpWCO_CClineE = "|" or len(strTmpWCO_CClineE) < 4  then
+    strTmpWCO_CClineE = Getdata(dataresults, "\n", "Create date: ")'VirusTotal
+  end if
   if BoolDebugTrace = True then LogData strDebugPath & "\IP_SS_Contact.log", "whois Creation Date: " & "strTmpWCO_CClineE =" & strTmpWCO_CClineE, false
   strTmpWCO_CClineE = "|" & CleanupWhoisData(strTmpWCO_CClineE)
   if CheckBadValues(strTmpWCO_CClineE) then 
@@ -12382,7 +12385,7 @@ Function HTTPget(strRequestURL, strCheckItem, strSection, strAPIheader, strApiKe
   on error resume next
     objHTTP.send 
     if err.number <> 0 then
-      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " " & strAPIheader  & " lookup failed with HTTP error while querying " & strCheckItem & " - " & err.description,False 
+      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " " & strAPIheader  & " lookup failed with HTTP error with " & strAVEurl & " while querying " & strCheckItem & " - " & err.description,False 
       exit function 
     end if
   on error goto 0  
