@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.4 - Parse "Create date"
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.5 - Status logging. Change messaging for combining spreadsheets.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -1404,17 +1404,17 @@ if BoolCreateSpreadsheet = True then
     select case intVTListDataType
       case 3
         Wscript.echo "Can't process IP/domains along side hashes. Please remove hashes or include only hashes in vtlist.txt. If only contains hashes make sure each entire line contains valid hashes (extra, missing, invalid characters)."
-        
+        LogOverwriteData strDebugPath & "\status.txt", "Finished - Error: Could not process hashes along side IP/domains",BoolEchoLog 
         ExitExcel
         wscript.quit(747)
       case 4
         Wscript.echo "Data was found besides hashes. Please include only hashes or IP/domains in vtlist.txt. If only contains hashes make sure each entire line contains valid hashes (extra, missing, invalid characters)."
-        
+        LogOverwriteData strDebugPath & "\status.txt", "Finished - Error: Could not process hashes along side IP/domains",BoolEchoLog 
         ExitExcel
         wscript.quit(748)
       Case 0
         Wscript.echo "No data was found in vtlist.txt that can be scanned. If you are scanning a hash make sure the character length is appropiate (Example: 32 characters in MD5 hash). If scanning a domain or IP address please check your formatting."
-        
+        LogOverwriteData strDebugPath & "\status.txt", "Finished - Error: Missing input data",BoolEchoLog 
         ExitExcel
         wscript.quit(746)    
     end select
@@ -1425,7 +1425,7 @@ if BoolCreateSpreadsheet = True then
     end if
   End if
 end if
-
+LogOverwriteData strDebugPath & "\status.txt", "Starting - Loading threat intelligence and watchlists",BoolEchoLog 
 If BoolRunSilent = False then objShellComplete.popup "Loading threat intelligence and watchlists", 5, "VTTL - " & CurrentDirectory
 download_load 'download/load threat intelligence
 if dictURLWatchList.count > 100000 then
@@ -1476,11 +1476,15 @@ next
 
 inLoopCounter = 0
 intCountPendItems = 0
-
-
+intTotalProcessed = 0
+LogOverwriteData strDebugPath & "\status.txt", "Started - Ready to perform lookups",BoolEchoLog 
 If BoolRunSilent = False and strSigCheckFilePath = "" then objShellComplete.popup "Starting lookups", 25, "VTTL - " & CurrentDirectory
+LogOverwriteData strDebugPath & "\status.txt", "Started - Performing lookups for first item",BoolEchoLog 
 Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAItems = True
+    LogOverwriteData strDebugPath & "\status.txt", "Started - " & cstr(intTotalProcessed) & " items processed",BoolEchoLog 
+    intTotalProcessed = intTotalProcessed +1
     if BoolSkipedVTlookup = true and sleepOnSkippedVT = True then 'If true a cached VT result was pulled
+		
 		inLoopCounter = inLoopCounter +1
 		If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " inLoopCounter=" & inLoopCounter,False 
 	elseif BoolDisableVTlookup = True then
@@ -2845,6 +2849,7 @@ if objFSO.fileexists(CurrentDirectory & "\vtlist.que") = false then
      objShellComplete.run chr(34) & strSSfilePath & chr(34)
     End If 
   End if
+  LogOverwriteData strDebugPath & "\status.txt", "Finished",BoolEchoLog 
   if BoolRunSilent = False then _
   Msgbox "The VTTL script has finished lookups and will exit. The following items were processed:" & vbcrlf & strScannedItems,,"VTTL - " & CurrentDirectory
 else
@@ -8708,7 +8713,8 @@ End Sub
 
 sub loadSigCheckData(strSigCheckFpath, boolUnicode)
 if strSigCheckFpath = "" then
-  wscript.echo "Please open the sigcheck csv"
+  LogOverwriteData strDebugPath & "\status.txt", "Starting - Prompt for combining output",BoolEchoLog 
+  wscript.echo "Please select the CSV output that you would like to combine with such as output from Carbon Black, sigcheck, etc. or cancel to continue without importing any data"
   OpenFilePath1 = SelectFile( )
 else
 OpenFilePath1 = strSigCheckFpath
@@ -9164,6 +9170,7 @@ End Function
 
 
 sub loadEncaseData
+LogOverwriteData strDebugPath & "\status.txt", "Starting - Prompt for combining output",BoolEchoLog 
 wscript.echo "Please open the EnCase or NetAMP export"
 OpenFilePath1 = SelectFile( )
 if BoolDebugTrace = True then logdata strDebugPath & "\sigcheck" & "" & ".txt", "File path:" & OpenFilePath1 ,BoolEchoLog
@@ -11677,6 +11684,7 @@ Function ReadIni( myFilePath, mySection, myKey ) 'http://www.robvanderwoude.com/
         objIniFile.Close
     Else
         if BoolRunSilent = False and boolIniNotify = True then 
+        LogOverwriteData strDebugPath & "\status.txt", "Starting - Prompt for missing configuration",BoolEchoLog 
 			WScript.Echo strFilePath & " does not exist. Using script configured settings instead"
 			boolIniNotify = False
 		end if
