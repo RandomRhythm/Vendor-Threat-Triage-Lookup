@@ -1,6 +1,8 @@
 ### Vendor Threat Triage Lookup (VTTL)
 ##### VTTL utilizes various vendors to lookup intelligence for threat triage.
 
+![VTTL Domain/IP Address mode](https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup/blob/master/Misc/markdown/img/VTTL_IPD.png?raw=true "VTTL Domain/IP Address mode")
+
 VTTL Performs lookups for file hashes, IP addresses and domain names. Results are output to a CSV file. Supported vendor lookups include the following:
 * VirusTotal
 * AlienVault OTX
