@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.5 - Status logging. Change messaging for combining spreadsheets.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.6 - Support for IP range watchlists (IPv4 only)
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -463,6 +463,8 @@ Dim cpesLineE
 Dim openPortsLineE
 Dim ShodanTags
 Dim ShodanVulns
+Dim dictCIDR: Set dictCIDR = CreateObject("Scripting.Dictionary") 'used to convert CIDR subnet to dotted quad
+Dim dictIPrange: Set dictIPrange = CreateObject("Scripting.Dictionary") 'stores the IP ranges for watchlist (should not be used if we get this into a SQLite table)
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -1338,6 +1340,11 @@ LoadWatchlist compatibleConfigPath(strConfigPath,"VTTL_NoSubmit.txt"), dictNoSub
 'load no domain submit list to dictionary
 LoadWatchlist compatibleConfigPath(strConfigPath,"VTTL_domains.txt"), dictNoDomainSubmit
 
+'load CIDR conversion
+loadCIDR_Subnets
+
+'load IP range watchlist
+loadIPrange(strConfigPath & "\IPrangeWatchlist.txt")
 
 'Read list of items to submit to VT
 if not objFSO.fileexists(CurrentDirectory & "\vtlist.txt") then
@@ -8761,7 +8768,7 @@ if objFSO.fileexists(OpenFilePath1) then
         end if
         'if left(strSCData,3) =  chr(239) & chr(187) & chr(191) then objShellComplete.popup "UTF-8 is not supported. Please supply ANSI or unicode file to combine.", 30, "VTTL - " & CurrentDirectory
       end if
-      'must have a hash value and at least one value to import
+      'must have a hash value or domain/IP and at least one value to import
 	    if (instr(strSCData, "Publisher") > 0 or _
 			instr(strSCData,	"Company")  > 0 or _
 			instr(strSCData, "size") > 0 or _
@@ -8786,6 +8793,8 @@ if objFSO.fileexists(OpenFilePath1) then
 			InStr(strSCData,	"Top values of cb.threatHunterInfo.sha256.keyword") > 0 or _
 			InStr(strSCData,	"Target File SHA1") > 0 or _
 			InStr(strSCData,	"dstip") > 0 or _
+			InStr(strSCData,	"IP") > 0 or _
+			InStr(strSCData,	"IP Address") > 0 or _
 			InStr(strSCData,	"Domain") > 0) then
 	          If instr(strSCData, "Image Path") > 0 and instr(strSCData,	"MD5") > 0 and instr(strSCData, "Entry Location") > 0 then 'autoruns
 	            boolSuppressNoHash = True
@@ -8931,6 +8940,10 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
       case "Domain"
         intDomainLoc = inthArrayLoc
       case "dstip"
+        intDomainLoc = inthArrayLoc
+      case "IP"
+        intDomainLoc = inthArrayLoc
+      case "IP Address"
         intDomainLoc = inthArrayLoc
       case "Company"
         intCompanyLoc = inthArrayLoc
@@ -10931,8 +10944,14 @@ end if
 
 MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, strIpDreturn, "^")
 
-base32check = RegularExpressionMatch(strIpDitem, "[A-Z2-7]{63}\.")
-If base32check = True Then MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, "base32", "^")
+if isIPaddress(strIpDitem) then
+  if instr(TestString, ":") = 0 then 'checkIPrange only works for IPv4
+    MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, checkIPrange(strIpDitem), "^")
+  end if
+elseIf base32check = True Then 'base32 checks only apply to domains
+  base32check = RegularExpressionMatch(strIpDitem, "[A-Z2-7]{63}\.")
+  MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, "base32", "^")
+end if
 End function
 
 
@@ -13388,3 +13407,307 @@ if instr(strShodanResults, strShodanKey & Chr(34) & ":[]") = 0 then
   parseShodanResults = strShodanReturn
 end if
 end function
+
+
+'-----------------------------------------------------------
+'Calculating Subnet Ranges With VBScript
+'Copyright Matthew Painter - https://www.codeproject.com/Articles/72622/Calculating-Subnet-Ranges-With-VBScript
+function CalcSubnet(strIP,strSNM)
+
+   binSNM=str2bin(strSNM) 
+   binIP=str2bin(strIP) 
+
+
+   'IP <AND> SN to find Network addresses
+   for c=32 to 1 step -1
+      temp=(cint(mid(binIP,c, 1)) and cint(mid(binSNM,c, 1))) & temp
+   next
+   netwAdd=temp : temp=""
+
+
+
+   'IP <OR> SN to find blocks of all "ones" - these addresss are broadcast addresses
+   for c=32 to 1 step -1
+      temp=(cint(mid(binIP,c, 1)) or cint(mid(binSNM,c, 1))) & temp
+   next
+   bcCheck=temp : temp=""
+
+
+
+
+   'Calc 1st. host address in range (Network Address + 1)
+   ist=binAdd(netwAdd,string(31, "0")&"1")
+
+   'Calc Last host address in range (111111...1 - bcCheck + IP - 0...000001)
+   lst=binSub(string(32,"1"),bcCheck) 
+   lst=binadd(lst,binIP)
+   lst=binsub(lst,string(31, "0")&"1" )
+
+
+   ' "IP    "&binIP&" "&bin2str(binIP)&vbcrlf&_
+    '         "SNM   "&binSNM&" "&bin2str(binSNM)&vbcrlf&_
+     '        "SN    "&netwAdd&" "&bin2str(netwAdd)&vbcrlf&_
+      '       "1st   "&ist &" "& bin2str(ist) &vbcrlf&_
+       '      "Last  "&lst &" "& bin2str(lst) &vbcrlf&_
+        '     "Hosts "&binsub(lst,ist) &" "& Bin2Dec(binsub(lst,ist)) &vbcrlf
+   'CalcSubnet = bin2str(ist) & "|" & bin2str(lst)
+   CalcSubnet = ist & "|" & lst
+end function
+
+
+'-----------------------------------------------------------
+
+
+Function Bin2Dec(strBin)
+'Plain old binary to decimal function
+
+   result = 0
+   for intIndex = len(strBin) to 1 step -1
+      strDigit = mid(strBin, intIndex, 1)
+
+      if strDigit = "0" then
+         'do nothing
+      elseif strDigit = "1" then
+         result = result + (2 ^ (len(strBin)-intIndex))
+      else
+         Bin2Dec = 0
+         exit for
+      end if
+   next
+
+   Bin2Dec = result
+
+End Function
+
+
+
+'-----------------------------------------------------------
+
+
+Function bin2str(strBinary)
+'special binary to decimal function
+'input 32bit binary number
+'output 4 octet ip address 
+
+   For iPosOct = 1 To 4 
+      strOctBin = Right(Left(strBinary, iPosOct * 8), 8) 
+      intOctet = 0 
+      intValue = 1 
+      For iPosBin = 1 To Len(strOctBin) 
+         If Left(Right(strOctBin, iPosBin), 1) = "1" Then 
+            intOctet = intOctet + intValue 
+         end if
+         intValue = intValue * 2 
+      Next 
+      If bin2str = Empty Then 
+         bin2str = CStr(intOctet) 
+      Else 
+         bin2str = bin2str & "." & CStr(intOctet)
+      end if 
+   Next 
+
+End Function 
+
+
+'-----------------------------------------------------------
+
+
+Function str2bin(strAddress) 
+'special decimal to binary function
+'input 4 octet ip address 
+'output 32bit binary number
+
+
+   objAddress = Split(strAddress, ".") 
+   For Each strOctet In objAddress 
+
+      intOctet = CInt(strOctet)
+      strOctBin = "" 
+      For x = 1 To 8 
+         If intOctet Mod 2 > 0 Then 
+            strOctBin = "1" & strOctBin 
+         Else 
+            strOctBin = "0" & strOctBin 
+         End If 
+         intOctet = Int(intOctet / 2) 
+      Next 
+      str2bin = str2bin & strOctBin 
+   Next 
+
+End Function 
+
+
+'-----------------------------------------------------------
+
+
+function binSub(binA,binB)
+'subtract one 32bit binary number from another
+'binA must be biggest
+
+   c=0
+   for i=32 to 1 step-1
+      a=cint(mid(binA,i,1))
+      b=cint(mid(binB,i,1))
+
+      if a=0 and b=0 and c=0 then 
+         subt=0  : c=0 
+      elseif a=1 and b=0 and c=0 then 
+         subt=1  : c=0 
+      elseif a=0 and b=1 and c=0 then 
+         subt=1  : c=1 
+      elseif a=1 and b=1 and c=0 then 
+         subt=0  : c=0 
+      elseif a=1 and b=1 and c=1 then 
+        subt=1  : c=1
+      elseif a=1 and b=0 and c=1 then 
+         subt=0  : c=0
+      elseif a=0 and b=1 and c=1 then 
+         subt=0  : c=0 
+      elseif a=0 and b=0 and c=1 then 
+         subt=1  : c=1
+      else
+         msgbox "This function is only for subtracting 2 32bit binary numbers"
+         binSub=0 : exit function
+      end if            
+    
+      total=subt&total
+      'wscript.echo "a-"&BinA&" "&a&vbcrlf&"b-"&BinB&" "&b&vbcrlf&"subtraction "&subt&vbcrlf&"carry "& c&vbcrlf&"x-"&total&vbcrlf&cvcrlf
+
+   next
+
+   if c=1 then 
+      msgbox "Error you are subtracting a larger number from a smaller number"&vbcrlf&binA&vbcrlf&binB
+   end if
+   
+   binsub=total
+
+end function
+
+
+'-----------------------------------------------------------
+
+
+function binAdd(binA,binB)
+'add two 32bit binary numbers together
+
+   c=0
+   for i=32 to 1 step-1
+      a=cint(mid(binA,i,1))
+      b=cint(mid(binB,i,1))
+      if a=0 and b=0 and c=0 then 
+         add=0  : c=0 
+      elseif a=1 and b=0 and c=0 then 
+         add=1  : c=0 
+      elseif a=0 and b=1 and c=0 then 
+         add=1  : c=0 
+      elseif a=1 and b=1 and c=0 then 
+         add=0  : c=1 
+      elseif a=1 and b=1 and c=1 then 
+        add=1  : c=1
+      elseif a=1 and b=0 and c=1 then 
+         add=0  : c=1
+      elseif a=0 and b=1 and c=1 then 
+         add=0  : c=1 
+      elseif a=0 and b=0 and c=1 then 
+         add=1  : c=0
+      else
+         msgbox "Error this function is only for adding 2 32bit binary numbers together"
+         binAdd=0 : exit function
+      end if
+    
+      total=add&total
+      'wscript.echo "a-"&BinA&" "&a&vbcrlf&"b-"&BinB&" "&b&vbcrlf&"addition "&add&vbcrlf&"carry "& c&vbcrlf&"x-"&total
+
+   next
+
+   binAdd=total
+
+end function
+
+
+'-----------------------------------------------------------
+'----- begin VTTL IP range watchlist code ------------------
+function convertCIDR(strCIDR)
+  if dictCIDR.exists(strCIDR) then
+    convertCIDR = dictCIDR.item(strCIDR)
+  end if
+end function
+
+
+Sub loadCIDR_Subnets()
+dictCIDR.add "1","128.0.0.0"
+dictCIDR.add "2","192.0.0.0"
+dictCIDR.add "3","224.0.0.0"
+dictCIDR.add "4","240.0.0.0"
+dictCIDR.add "5","248.0.0.0"
+dictCIDR.add "6","252.0.0.0"
+dictCIDR.add "7","254.0.0.0"
+dictCIDR.add "8","255.0.0.0"
+dictCIDR.add "9","255.128.0.0"
+dictCIDR.add "10","255.192.0.0"
+dictCIDR.add "11","255.224.0.0"
+dictCIDR.add "12","255.240.0.0"
+dictCIDR.add "13","255.248.0.0"
+dictCIDR.add "14","255.252.0.0"
+dictCIDR.add "15","255.254.0.0"
+dictCIDR.add "16","255.255.0.0"
+dictCIDR.add "17","255.255.128.0"
+dictCIDR.add "18","255.255.192.0"
+dictCIDR.add "19","255.255.224.0"
+dictCIDR.add "20","255.255.240.0"
+dictCIDR.add "21","255.255.248.0"
+dictCIDR.add "22","255.255.252.0"
+dictCIDR.add "23","255.255.254.0"
+dictCIDR.add "24","255.255.255.0"
+dictCIDR.add "25","255.255.255.128"
+dictCIDR.add "26","255.255.255.192"
+dictCIDR.add "27","255.255.255.224"
+dictCIDR.add "28","255.255.255.240"
+dictCIDR.add "29","255.255.255.248"
+dictCIDR.add "30","255.255.255.252"
+dictCIDR.add "31","255.255.255.254"
+dictCIDR.add "32","255.255.255.255"
+end sub
+
+
+sub loadIPrange(strIPrangePath)
+if objFSO.fileexists(strIPrangePath) then
+  Set objFile = objFSO.OpenTextFile(strIPrangePath)
+  Do While Not objFile.AtEndOfStream
+    if not objFile.AtEndOfStream then 'read file
+        'On Error Resume Next
+        strTmp = objFile.ReadLine
+         if instr(strTmp, "|")   > 0 Then
+           tmpSplit = split(strTmp, "|")
+           strIPCDIR = tmpSplit(0)
+           strWatchVal = tmpSplit(1)
+          if instr(strIPCDIR, "/")   > 0 Then
+             tmpSplit = split(strIPCDIR, "/")
+             strSN= convertCIDR(tmpSplit(1))
+            strIP = tmpSplit(0)
+             subnetRange = CalcSubnet(strIP, strSN)
+          end if
+          if dictIPrange.exists(subnetRange) = False then 
+              dictIPrange.add subnetRange, strWatchVal
+          end if
+         end if
+          'on error goto 0
+    end if
+  loop
+end if
+end sub
+
+Function checkIPrange(strIPaddrToCheck)
+binIP = str2bin(strIPaddrToCheck)
+for each entry in dictIPrange:
+  if instr(entry, "|") then
+    ipRange = split(entry, "|")
+    if binIP > ipRange(0) and binIP < ipRange(1) then
+      checkIPrange = dictIPrange.item(entry)
+      exit for
+    end if
+  end if  
+  'msgbox entry & "|" & dictIPrange.item(entry)
+next
+end function
+'----- end VTTL IP range watchlist code ------------------
