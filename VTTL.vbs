@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.6 - Support for IP range watchlists (IPv4 only)
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.7 - Change logic to include the first and last IP in the IP range watchlist match
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -13702,7 +13702,7 @@ binIP = str2bin(strIPaddrToCheck)
 for each entry in dictIPrange:
   if instr(entry, "|") then
     ipRange = split(entry, "|")
-    if binIP > ipRange(0) and binIP < ipRange(1) then
+    if binIP >= ipRange(0) and binIP <= ipRange(1) then
       checkIPrange = dictIPrange.item(entry)
       exit for
     end if
