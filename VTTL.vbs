@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.7 - Change logic to include the first and last IP in the IP range watchlist match
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.8 - Fix column alignment when VirusTotal is disabled when doing IP/Domain lookups. Fix IP range check error when doing IPv6 lookup.
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -216,7 +216,7 @@ Dim DictOrgWhois: Set DictOrgWhois = CreateObject("Scripting.Dictionary")
 Dim DictWhois: Set DictWhois = CreateObject("Scripting.Dictionary")
 Dim DictAlpabet: Set DictAlpabet = CreateObject("Scripting.Dictionary")
 Dim IntTmpHkTlScore
-Dim StrDetectionTypeLineE
+Dim StrDetectionTypeLineE ' VirusTotal and Cuckoo
 Dim strTmpSinkHole 'domain has been sinkholed
 Dim BoolWhoisDebug: BoolWhoisDebug = False 'value is loaded from ini
 Dim BoolForceWhoisLocationLookup 'VirusTotal doesn't always list location data such as the country code in their whois data.
@@ -2356,7 +2356,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       end if
       
      
-      if StrDetectionTypeLineE = "" then StrDetectionTypeLineE = "|"
+      if StrDetectionTypeLineE = "" and (intVTListDataType = 2 and boolEnableCuckoo = True or BoolDisableVTlookup = False) then StrDetectionTypeLineE = "|"
+
+
       
       strTmpSigAssesslineE = ""
       'record digital signatures
@@ -2729,7 +2731,11 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  strDiplayVendDname = ""
       strDateTimeLineE = ""
       strDetectNameLineE = "|"
-      StrDetectionTypeLineE = "|"
+      if StrDetectionTypeLineE = "" and (intVTListDataType = 2 and boolEnableCuckoo = True or BoolDisableVTlookup = False) then 
+        StrDetectionTypeLineE = "|"
+      else
+        StrDetectionTypeLineE = ""
+      end if
       strTmpSinkHole = "|"
       strTmpCacheLineE = "|"
        strCBfilePath = "" 'CB File Path
@@ -10945,7 +10951,7 @@ end if
 MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, strIpDreturn, "^")
 
 if isIPaddress(strIpDitem) then
-  if instr(TestString, ":") = 0 then 'checkIPrange only works for IPv4
+  if instr(strIpDitem, ":") = 0 then 'checkIPrange only works for IPv4
     MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, checkIPrange(strIpDitem), "^")
   end if
 elseIf base32check = True Then 'base32 checks only apply to domains
