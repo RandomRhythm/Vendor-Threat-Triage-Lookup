@@ -1,4 +1,10 @@
 ' Imports Tranco list into VTTL database. 
+Dim boolCreateIndex
+
+'config section
+boolCreateIndex = True 'VTTL will create the index on first run. Setting to false allows the DB to be distributed via GitHub
+'end config section
+
 Dim objFSO: Set objFSO = CreateObject("Scripting.FileSystemObject")
 CurrentDirectory = GetFilePath(wscript.ScriptFullName)
 Dim strDatabasePath: strDatabasePath = CurrentDirectory & "\vttl.db"
@@ -38,7 +44,7 @@ if objFSO.fileexists(OpenFilePath1) then
 		end if
 	end if
  loop
- createIndices
+ if boolCreateIndex = True then createIndices
 end if
 
 msgbox "Tranco list import complete."
