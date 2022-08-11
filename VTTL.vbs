@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.0.8 - Fix column alignment when VirusTotal is disabled when doing IP/Domain lookups. Fix IP range check error when doing IPv6 lookup.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.0 - Error handling for IP string to bin conversion
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -13523,10 +13523,14 @@ Function str2bin(strAddress)
 'input 4 octet ip address 
 'output 32bit binary number
 
-
+   if instr(strAddress, ":") > 0 Then exit function 'ipv6 is not supported
    objAddress = Split(strAddress, ".") 
    For Each strOctet In objAddress 
-
+      if isnumeric(strOctet) = False then 
+        msgbox("str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34))
+        if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34),BoolEchoLog 
+        exit function
+      end if
       intOctet = CInt(strOctet)
       strOctBin = "" 
       For x = 1 To 8 
