@@ -1,6 +1,7 @@
 maltrail-static-trails|0|1
 blackbook(malware)|0|1
-ThreatView_CobaltStrike|0|3
-ThreatView_CobaltStrike2|2|3
+threatview_cobaltstrike|0|3
+threatview_cobaltstrike2|2|3
 viriback(malware)|1|0
 turris(bad reputation)|0|2
+sslbl|1|2
