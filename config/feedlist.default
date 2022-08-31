@@ -14,7 +14,7 @@ https://myip.ms/files/blacklist/htaccess/latest_blacklist.txt|cache\intel\myip(c
 https://report.cs.rutgers.edu/DROP/attackers|cache\intel\rutgers(known attacker).txt|1|TRUE|24|False||attacker
 https://sblam.com/blacklist.txt|cache\intel\sblam(html spam).txt|sblam.com|TRUE|24|False||attacker
 http://tracker.viriback.com/dump.php|cache\intel\viriback(malware).csv|1|TRUE|24|False||malware
-https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt|cache\intel\maltrail-static-trails.txt|(static)|TRUE|24|False||malware
+https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt|cache\intel\maltrail-static-trails.txt|(static)|FALSE|24|False||malware
 https://www.talosintelligence.com/documents/ip-blacklist|cache\intel\talosintelligence.txt|1|TRUE|24|False||malware
 http://vxvault.net/URL_List.php|cache\intel\vxvault(malware).txt|VX Vault|TRUE|24|False||malware
 https://cybercrime-tracker.net/ccpmgate.php|cache\intel\pony.txt|/gate.php|TRUE|24|False||malware
