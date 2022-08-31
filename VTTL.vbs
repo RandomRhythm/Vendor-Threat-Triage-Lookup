@@ -1,4 +1,6 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.0 - Error handling for IP string to bin conversion
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.1 - Support disabling feeds. Support unicode feeds. Support importing SentinelOne Deep Visibility CSV (source proccess file path). Fix CSV feed loading. Finish implementation of base32 check. Further delay with VirusTotal when quota hit.
+
+'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
 'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
 
@@ -465,6 +467,8 @@ Dim ShodanTags
 Dim ShodanVulns
 Dim dictCIDR: Set dictCIDR = CreateObject("Scripting.Dictionary") 'used to convert CIDR subnet to dotted quad
 Dim dictIPrange: Set dictIPrange = CreateObject("Scripting.Dictionary") 'stores the IP ranges for watchlist (should not be used if we get this into a SQLite table)
+Dim dictFeedEnabled: set dictFeedEnabled = CreateObject("Scripting.Dictionary")
+Dim base32check: base32check = True
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -506,7 +510,7 @@ boolLogIOCs = True 'Log associated IOCs
 boolLogHashes = True 'Output URLs and hashes associated with the lookup items. (outputs from VirusTotal and Seclytics)
 boolLogIPs = True 'Output IP addresses associated with the lookup items.
 AddIpResolutionsToQueue = True 'Passive DNS can provide IP addresses for the domain that can also be looked up. Set to False to only lookup what was provided in vtlist.txt
-boolOutputUnicode = False 'Default output encoding is utf-8. You may need utf-16 depending on what data gets imported into the script
+boolOutputUnicode = False 'Default output encoding is ANSI. You may need utf-16 depending on what data gets imported into the script
 boolDeepIOCmatch = True 'Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 boolTruncateVTsigner = True ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 cellTruncateLength = 8000 'Truncate cell value length. Default 8000. Max 32767
@@ -2997,7 +3001,7 @@ if BoolDisableVTlookup = False then
 		objShellComplete.popup "403 HTTP status code was returned. This indicates a problem that needs manually corrected with the query string we are passing VirusTotal.", 16, "VTTL - " & CurrentDirectory
       logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 403 status code. Possible problem with the query string.",False 
 
-	ElseIf objHTTP.status = 203 then
+  	ElseIf objHTTP.status = 203 then
       if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup - VirusTotal returned 203 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
       objShellComplete.popup "203 HTTP status code was returned. Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity", 16, "VTTL - " & CurrentDirectory
       logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 203 status code. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
@@ -3006,16 +3010,24 @@ if BoolDisableVTlookup = False then
       VT_Submit
  
       exit sub
-	ElseIf objHTTP.status = 204 then
-      if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup - VirusTotal returned 204 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
-      objShellComplete.popup "204 HTTP status code was returned. You have exceed the API request rate limit." & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again after delaying for " & intDelayBetweenLookups & " seconds.  If problems persist check connectivity",16, "VTTL - " & CurrentDirectory
-      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 204 status code for exceeded rate limit. Sleeping for " & intDelayBetweenLookups & " seconds.",False 
+	  ElseIf objHTTP.status = 204 then
+      if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup - VirusTotal returned 204 status code for exceeded rate limit",False 
+      objShellComplete.popup "204 HTTP status code was returned. You have exceed the API request rate limit." & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again after delaying for 15 seconds.  If problems persist check connectivity",16, "VTTL - " & CurrentDirectory
+      logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " VirusTotal returned 204 status code for exceeded rate limit. Sleeping for 15 seconds.",False 
 	  wscript.sleep 15001
 	  inLoopCounter = inLoopCounter + 1
 	  If BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " Error resubmit inLoopCounter=" & inLoopCounter,False 
 	  VT_Submit
 
       exit sub
+	  ElseIf objHTTP.status = 429 then
+      if BoolDebugTrace = True then logdata strDebugPath & "\VT_time.txt", Date & " " & Time & " VTHashLookup - VirusTotal returned 429 status code for exceeded rate limit. Sleeping for one hour.",False 
+      objShellComplete.popup "429 HTTP status code was returned. You have exceed the API request rate limit." & vbcrlf & vbcrlf & "Will attempt to submit to VirusTotal again after delaying",60, "VTTL - " & CurrentDirectory
+      if Minute(now) < 59 and Minute(now) > 10 then
+        wscript.sleep (60 - Minute(now)) * 60000
+      else
+        wscript.sleep 30001
+      end if
     End if
   end if
   if strresponseText = "" And BoolReportOnly = false Then
@@ -8789,6 +8801,8 @@ if objFSO.fileexists(OpenFilePath1) then
 			instr(strSCData, "Top values of file.path") > 0 or _
 			instr(strSCData, "Count of records") > 0 or _
 			instr(strSCData, "Target File Path") > 0 or _
+			instr(strSCData, "Source Process Name") > 0 or _
+			instr(strSCData, "Source Process Image path") > 0 or _
 			instr(strSCData, "IMPHash") > 0 or _
 			instr(strSCData, "name") > 0) And _
 			 (instr(strSCData, "MD5") > 0 or _
@@ -8798,6 +8812,7 @@ if objFSO.fileexists(OpenFilePath1) then
 			InStr(strSCData,	"hash") > 0 or _
 			InStr(strSCData,	"Top values of cb.threatHunterInfo.sha256.keyword") > 0 or _
 			InStr(strSCData,	"Target File SHA1") > 0 or _
+			InStr(strSCData,	"Source Process Image SHA1") > 0 or _
 			InStr(strSCData,	"dstip") > 0 or _
 			InStr(strSCData,	"IP") > 0 or _
 			InStr(strSCData,	"IP Address") > 0 or _
@@ -8961,6 +8976,8 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
         intSHA1Loc = inthArrayLoc
       Case "Target File SHA1"
         intSHA1Loc = inthArrayLoc
+      Case "Source Process Image SHA1" 'S1
+        intSHA1Loc = inthArrayLoc
       Case "IMP"
         intIMPLoc = inthArrayLoc
       Case "ImpHash"
@@ -9003,7 +9020,11 @@ if instr(StrHeaderText, ",") or instr(StrHeaderText, vbtab) then
       Case "FolderPath" 'Defender
         If inthfPathLoc = "" Then inthfPathLoc = inthArrayLoc	'prefer other headers for file path/file name
       Case "CommonName" 'Cylance Protect
-        inthfPathLoc = inthArrayLoc	
+        inthfPathLoc = inthArrayLoc
+      Case "Source Process Name" 'S1 
+        inthfPathLoc = inthArrayLoc
+      Case "Source Process Image path" 'S1 - comes after "Source Process Name" in Deep Visibility export and should overide
+        inthfPathLoc = inthArrayLoc
       Case "Product"
         inthfProductLoc = inthArrayLoc        
       Case "ProductName" ' ShimCacheParser
@@ -9106,6 +9127,12 @@ sub SigCheckSSoutput(strSCSSO_hash)
 Dim IntSCArrayLoc
 strSCSSO_hash = lcase(strSCSSO_hash)
 IntSCArrayLoc = dicHashLoc.item(strSCSSO_hash)
+if Len(IntSCArrayLoc) = 0 Then 'set location in CSV if not already set
+    if IsNumeric(intRealMD5Loc) Then IntSCArrayLoc = intRealMD5Loc
+    if IsNumeric(intSHA256Loc) then IntSCArrayLoc = intSHA256Loc
+    if IsNumeric (intSHA1Loc) then IntSCArrayLoc = intSHA1Loc
+End If
+    
 if boolSigCheckDebug = true then msgbox "sigcheck hash:" & strSCSSO_hash
 if boolSigCheckDebug = true then msgbox "sigcheck hash data:" & ArraySigCheckData(IntSCArrayLoc)
 if boolSigCheckDebug = true then msgbox "BoolSigCheckLookup=" & BoolSigCheckLookup
@@ -10948,16 +10975,17 @@ if dictIPdomainWatchList.count > 0 then
 	end if
 end if
 
-MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, strIpDreturn, "^")
+strIpDwatchLineE = concatenateItem(strIpDwatchLineE, strIpDreturn, "^")
 
 if isIPaddress(strIpDitem) then
   if instr(strIpDitem, ":") = 0 then 'checkIPrange only works for IPv4
-    MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, checkIPrange(strIpDitem), "^")
+    strIpDwatchLineE = concatenateItem(strIpDwatchLineE, checkIPrange(strIpDitem), "^")
   end if
 elseIf base32check = True Then 'base32 checks only apply to domains
   base32check = RegularExpressionMatch(strIpDitem, "[A-Z2-7]{63}\.")
-  MatchIpDwatchLIst = concatenateItem(strIpDwatchLineE, "base32", "^")
-end if
+  If base32check = True Then strIpDwatchLineE = concatenateItem(strIpDwatchLineE, "base32", "^")
+end If
+MatchIpDwatchLIst = strIpDwatchLineE
 End function
 
 
@@ -12678,7 +12706,9 @@ for Each reportKey in dictCSVFeed
     if instr(reporValues, "|") >0 then 
       arrayRval = split(reporValues, "|")
       intIntelLocation = arrayRval(0)
+      If IsNumeric(intIntelLocation) Then intIntelLocation = CInt(intIntelLocation)
       intIntelDescription =arrayRval(1)
+      If IsNumeric(intIntelDescription) Then intIntelDescription = CInt(intIntelDescription)
 		exit for
 		end if
   end if
@@ -12696,10 +12726,11 @@ Else
 End If
 tmpIntelDesc = ""
 tmpIntelIOC = ""
-If UBound(arrayIntelCSV) >= intIntelLocation And intIntelLocation > -1 Then
+tmpUpperBound = UBound(arrayIntelCSV)
+If tmpUpperBound >= intIntelLocation And intIntelLocation > -1 Then
 	tmpIntelIOC = arrayIntelCSV(intIntelLocation)
 End If
-If UBound(arrayIntelCSV) >= intIntelDescription And intIntelDescription > -1 Then
+If tmpUpperBound >= intIntelDescription And intIntelDescription > -1 Then
 	tmpIntelDesc = arrayIntelCSV(intIntelDescription)  & " (" & tmpReportName & ")"
 	tmpIntelDesc = Replace(tmpIntelDesc, ",", ":")
 Else
@@ -12713,7 +12744,13 @@ boolProcessCSV = False
 reportName = GetFilePath(strListPath) & "\"
 reportName = Replace(strListPath, reportName, "")
 
-
+inputEncoding = TristateFalse
+feedKey = rGetData(strListPath, "\", ".")
+if InStr(strListPath, "_unicode") > 0 Then 
+	inputEncoding = TristateTrue 'support unicode feeds
+	feedKey = Replace(feedKey,"_unicode","")
+End if	
+if dictFeedEnabled.Item(feedKey) = False then exit sub 'used to skip loading already downloaded feeds
 
 If Len(strListPath) > 4 Then
 'If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" And Right(strListPath, 4) <> ".intel" Then Exit Sub
@@ -12724,8 +12761,11 @@ reportName = Replace(reportName, ".txt", "")
 reportName = Replace(reportName, ".csv", "")
 End If
 
+  
+  
+
 if objFSO.fileexists(strListPath) then
-  Set objFile = objFSO.OpenTextFile(strListPath)
+  Set objFile = objFSO.OpenTextFile(strListPath,ForReading, false, inputEncoding)
   Do While Not objFile.AtEndOfStream
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
@@ -12793,10 +12833,10 @@ End Sub
 '-----------------end load static intelligence------------
 
 
-'------------------begin feed loading
+'------------------begin feed assessment and downloading (actual loading happens with TraverseIntelFolders) 
 Sub loadFeed()
 Dim dictFeedAge: set dictFeedAge = CreateObject("Scripting.Dictionary")
-
+Dim boolFeedEnabled
 if objFSO.fileexists(strConfigPath & "\feedlist.dat") then
   Set objFile = objFSO.OpenTextFile(strConfigPath &"\feedlist.dat")
   Do While Not objFile.AtEndOfStream
@@ -12808,13 +12848,18 @@ if objFSO.fileexists(strConfigPath & "\feedlist.dat") then
 
       if instr(feedEntry, "|") > 0 Then 
         feedEntryArray = split(feedEntry, "|")
-        if feedEntryArray(6) <> "" and isnumeric(feedEntryArray(6)) then
-          dictFeedAge.add feedEntry, cint(feedEntryArray(6)) 'sort through all aged intel after reading in entire file
-          
-          else
-
-                feedDownload feedEntryArray(0), feedEntryArray(1), feedEntryArray(2), feedEntryArray(3), feedEntryArray(4), feedEntryArray(5), feedEntryArray(6), feedEntryArray(7)
-         end if
+        feedKey = rGetData(feedEntryArray(1), "\", ".")
+        boolFeedEnabled = stringToBool(feedEntryArray(3))
+        dictFeedEnabled.Item(feedKey) = boolFeedEnabled 'used to skip loading already downloaded feeds
+        If boolFeedEnabled = True Then 'only download enabled feeds
+	        if feedEntryArray(6) <> "" and isnumeric(feedEntryArray(6)) then
+	          dictFeedAge.add feedEntry, cint(feedEntryArray(6)) 'sort through all aged intel after reading in entire file
+	          
+	          else
+	
+	                feedDownload feedEntryArray(0), feedEntryArray(1), feedEntryArray(2), feedEntryArray(3), feedEntryArray(4), feedEntryArray(5), feedEntryArray(6), feedEntryArray(7)
+	         end If
+	    End if     
       end if
     end if
   loop
@@ -12866,14 +12911,13 @@ dload_list URL,cach_location,Feed_check_String,boolUseFeed,IgnoreSSLerror,refres
 end sub
 
 
-'-----------------------------------------end feed loading
+'-----------------------------------------end feed assessment and downloading
 
 
 Sub download_load()
 'Check and save dynamic DNS dat
 if objFSO.fileexists(compatibleConfigPath(strConfigPath, "DDNS.dat")) = False Then dload_list "http://mirror2.malwaredomains.com/files/dynamic_dns.txt", "DDNS.dat", "this is a listdynamic dns providers", True, false, 24
 'download intelligence
-'dload_list "https://sslbl.abuse.ch/blacklist/sslipblacklist.rules", "cache\intel\sslipblacklist.rules", "SSLBL" 'rules files not currently supported
 'dload_list "https://rules.emergingthreats.net/open/suricata/rules/emerging-dns.rules", "cache\intel\emerging-dns.rules", "Emerging Threats" 'rules files not currently supported
 'dload_list "https://rules.emergingthreats.net/open/suricata/rules/botcc.rules", "cache\intel\botcc.rules", "CnC Server" 'rules files not currently supported
 'dload_list "http://cinsscore.com/list/ci-badguys.txt", "cache\intel\ciarmy.txt", "1" 'noisy
@@ -13518,33 +13562,32 @@ End Function
 '-----------------------------------------------------------
 
 
-Function str2bin(strAddress) 
+Function str2bin(strAddress)
 'special decimal to binary function
-'input 4 octet ip address 
+'input 4 octet ip address
 'output 32bit binary number
 
    if instr(strAddress, ":") > 0 Then exit function 'ipv6 is not supported
-   objAddress = Split(strAddress, ".") 
-   For Each strOctet In objAddress 
-      if isnumeric(strOctet) = False then 
+   objAddress = Split(strAddress, ".")
+   For Each strOctet In objAddress
+      if isnumeric(strOctet) = False then 'error handling
         msgbox("str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34))
-        if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34),BoolEchoLog 
+        if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34),BoolEchoLog
         exit function
       end if
       intOctet = CInt(strOctet)
-      strOctBin = "" 
-      For x = 1 To 8 
-         If intOctet Mod 2 > 0 Then 
-            strOctBin = "1" & strOctBin 
-         Else 
-            strOctBin = "0" & strOctBin 
-         End If 
-         intOctet = Int(intOctet / 2) 
-      Next 
-      str2bin = str2bin & strOctBin 
-   Next 
-
-End Function 
+      strOctBin = ""
+      For x = 1 To 8
+         If intOctet Mod 2 > 0 Then
+            strOctBin = "1" & strOctBin
+         Else
+            strOctBin = "0" & strOctBin
+         End If
+         intOctet = Int(intOctet / 2)
+      Next
+      str2bin = str2bin & strOctBin
+   Next
+End Function
 
 
 '-----------------------------------------------------------
