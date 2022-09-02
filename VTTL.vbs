@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.1 - Support disabling feeds. Support unicode feeds. Support importing SentinelOne Deep Visibility CSV (source proccess file path). Fix CSV feed loading. Finish implementation of base32 check. Further delay with VirusTotal when quota hit.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.2 - Add sinkhole check.
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
@@ -1723,6 +1723,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         end if
       end if
 				Check_name_server PulsediveBody
+				AnubisCookie PulsediveBody
 				If strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
 					strTmpIPContactLineE = WhoisPopulator (PulsediveBody) 'sets geolocation and whois contact
 					if sslOrg = "" or sslSubject= "" then
@@ -6215,7 +6216,7 @@ elseif instr(strNameServerNew, "SINKHOLE") or instr(strNameServerNew,"SNKHOLE") 
   end if
   
   
-elseif instr(strNameServerNew, ".CSOF.NET") then 'https://www.virusbulletin.com/uploads/pdf/magazine/2016/VB2016-Karve-etal.pdf
+elseif instr(strNameServerNew, ".CSOF.NET") then 'https://www.virusbulletin.com/uploads/pdf/magazine/2016/VB2016-Karve-etal.pdf - AnubisNetworks
 	strTmpSinkHole = "|.CSOF.NET"
 elseif instr(strNameServerNew, ".REG.RU") then 'Not all domains are sinkhole 'https://www.virusbulletin.com/uploads/pdf/magazine/2016/VB2016-Karve-etal.pdf
 	'strTmpSinkHole = "|.REG.RU"
@@ -12618,8 +12619,16 @@ else
       SinkholeNSCheck serverName
     end if
 end if
+End Sub
 
-end sub
+Sub AnubisCookie(strCookie)
+If InStr(strCookie, "btst") > 0 And InStr(strCookie, "snkz") > 0 Then
+    RegexResult = RegularExpressionMatch(strCookie, "[a-f0-9]{32}\|([0-9]{1,3}\.){3}[0-9]{1,3}(\|\d*){5}") 'https://www.randomsecurityblog.com/2020/01/dns-sinkholes.html
+    If RegexResult = True Then
+    	strTmpSinkHole = "AnubisNetworks"
+    End If
+End If
+End Sub
 
 Function truncateCell(cellContents)
 
