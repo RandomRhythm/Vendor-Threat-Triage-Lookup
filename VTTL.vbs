@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.2 - Add sinkhole check.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.3 - Prevent prompt for AlienVault and PulseDive api keys when told to stop prompting (can work without API keys).
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
@@ -1160,8 +1160,11 @@ strTmpData = ""
   end if
 
   if not objFSO.fileexists(strFile) and strTmpData = "" and objFSO.fileexists(strDisableFile) = False Then
-    
-      strTempAPIKey = inputbox("Enter your " & strAPIproduct & " api key")
+      if useAlienVapiKey = False and intCountVendors = 13 or PulsediveAPIprompt = False and intCountVendors = 12 Then
+        'do not prompt
+      else
+        strTempAPIKey = inputbox("Enter your " & strAPIproduct & " api key")
+      end if
       if strTempAPIKey <> "" Then
       	If  intCountVendors = 14 And InStr(strTempAPIKey, "/") = 0 Then
       		strTempAPIKey = inputbox("Enter your " & strAPIproduct & " api key in the  format of  API Secret Key/API ID. Example:" & vbCrLf & "ZZHLMUAWL3MD8M1M5N7NR1G7/NBRP8Z2PG8")
