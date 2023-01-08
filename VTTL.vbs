@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.4 - Fix support for Pulsedive API key. Change default server for reverse DNS from hard coded 8.8.8.8 to the Windows currently configured DNS server.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.5 - Fix column alignment when number of samples to report on is set to zero
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
@@ -2366,7 +2366,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
       end if
       
      
-      if StrDetectionTypeLineE = "" and (intVTListDataType = 2 and boolEnableCuckoo = True or BoolDisableVTlookup = False) then StrDetectionTypeLineE = "|"
+      if StrDetectionTypeLineE = "" And intDetectionNameCount > 0 And (intVTListDataType = 2 and boolEnableCuckoo = True or BoolDisableVTlookup = False) then StrDetectionTypeLineE = "|"
 
 
       
@@ -2559,7 +2559,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			loop
 		  end If
 	  end If
-	  if dictDnameWatchList.count > 0  then strDnameWatchLineE = addPipe(strDnameWatchLineE)
+	  if dictDnameWatchList.count > 0 And intDetectionNameCount > 0 then strDnameWatchLineE = addPipe(strDnameWatchLineE)
 	  If  IsHash(strData) = True And BoolUseSQLite = True  Then 'IMPHash Prevalence
 		intIMPHashPrev = AddPipe(intIMPHashPrev)
 	  End if
@@ -2741,7 +2741,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 	  strDiplayVendDname = ""
       strDateTimeLineE = ""
       strDetectNameLineE = "|"
-      if StrDetectionTypeLineE = "" and (intVTListDataType = 2 and boolEnableCuckoo = True or BoolDisableVTlookup = False) then 
+      if StrDetectionTypeLineE = "" And intDetectionNameCount > 0 and (intVTListDataType = 2 and boolEnableCuckoo = True or BoolDisableVTlookup = False) then 
         StrDetectionTypeLineE = "|"
       else
         StrDetectionTypeLineE = ""
