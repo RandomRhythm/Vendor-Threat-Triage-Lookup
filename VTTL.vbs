@@ -1,8 +1,8 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.3 - Prevent prompt for AlienVault and PulseDive api keys when told to stop prompting (can work without API keys).
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.4 - Fix support for Pulsedive API key. Change default server for reverse DNS from hard coded 8.8.8.8 to the Windows currently configured DNS server.
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
-'Copyright (c) 2022 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2023 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -456,6 +456,7 @@ Dim TrustedBinary: TrustedBinary = false 'boolean for Microsoft Software Catalog
 Dim boolOutputUnicode
 Dim intIntelAge 'how far the intel should go back. Different than refresh time period
 Dim boolReverseDNS'Perform reverse DNS lookups
+Dim strReverseDNS ' Reverse DNS server IP address to use for the lookup
 Dim boolDeepIOCmatch ' Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 Dim boolTruncateVTsigner ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 Dim cellTruncateLength
@@ -523,6 +524,7 @@ sysinternalsWhois = False 'Use command line sysinternals whois tool for whois lo
 BooWhoIsIPLookup = True 'Use NirSoft whosip external lookup tool
 boolWhoisCache = False 'Cache whois results
 boolReverseDNS = True 'Perform reverse DNS lookups
+strReverseDNS = "" ' Reverse DNS server IP address to use for the lookup. Set to empty string to use default DNS server
 staticIntelPath = "\static" 'path to static intelligence https://github.com/stamparm/maltrail
 '--- VirusTotal custom checks
 intDetectionNameCount = 1 'Set greater than zero to enable reporting on detection names associated with domain/IP. set to zero to disable.
@@ -1709,7 +1711,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		end if
 	  end If
 		If boolPulsedive = True Then
-		    PulsediveBody = httpget("https://pulsedive.com/api/info.php?indicator=", strScanDataInfo,"","key", PulsediveApikey, false) 'get API results
+		    PulsediveBody = httpget("https://pulsedive.com/api/info.php?indicator=", strScanDataInfo,"&","key", PulsediveApikey, false) 'get API results
 		    If instr(PulsediveBody, "Indicator not found.") = 0 Then
 		     KeywordSearch PulsediveBody
 				 strTmpPulsediveLineE = getdata(PulsediveBody, chr(34), "risk" & chr(34) & ":" & chr(34))
@@ -1752,7 +1754,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           strDataType = "ip="
         
         'set strTmpIPlineE and strRevDNS
-        if boolReverseDNS = True then subReverseDNSwithSinkhole strData, "8.8.8.8"
+        if boolReverseDNS = True then subReverseDNSwithSinkhole strData, strReverseDNS
 
         if boolsubmitVT = True then
           VT_Submit 
@@ -12520,7 +12522,7 @@ End Sub
 Sub domainPassiveDNS(strPdnsIPaddress) 'set strRevDNS and pending items
         if strPdnsIPaddress = "" Or strPdnsIPaddress = "|" Then exit sub 'reverselookup IP address for the domain we are checking
         If (strRevDNS = "|" Or strRevDNS = "") and boolReverseDNS = True Then 'Reverse lookup
-          subReverseDNSwithSinkhole strPdnsIPaddress, "8.8.8.8"
+          subReverseDNSwithSinkhole strPdnsIPaddress, strReverseDNS
         end if
         if not DicScannedItems.Exists(strPdnsIPaddress) then
           if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "Have not scanned IP address" ,BoolEchoLog 
