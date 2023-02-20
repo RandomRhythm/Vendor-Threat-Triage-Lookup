@@ -12714,6 +12714,7 @@ Sub processIntelCSV(strIntelCSVrow, tmpReportName)
 intIntelLocation = -1
 intIntelDescription = -1
 
+'loads csv column pointers for feed
 for Each reportKey in dictCSVFeed
   if tmpReportName = reportKey then
     reporValues = dictCSVFeed.item(tmpReportName)
@@ -12728,7 +12729,7 @@ for Each reportKey in dictCSVFeed
   end if
 Next
 
-
+'CSV loading
 If InStr(strIntelCSVrow, Chr(34) & "," & Chr(34)) > 0 Then
 	arrayIntelCSV = Split(strIntelCSVrow, Chr(34) & "," & Chr(34))
 ElseIf InStr(strIntelCSVrow, ",") > 0 Then
@@ -12759,7 +12760,7 @@ reportName = GetFilePath(strListPath) & "\"
 reportName = Replace(strListPath, reportName, "")
 
 inputEncoding = TristateFalse
-feedKey = rGetData(strListPath, "\", ".")
+feedKey = rGetData(strListPath, "\", ".") 'file name is the key
 if InStr(strListPath, "_unicode") > 0 Then 
 	inputEncoding = TristateTrue 'support unicode feeds
 	feedKey = Replace(feedKey,"_unicode","")
@@ -12769,14 +12770,12 @@ if dictFeedEnabled.Item(feedKey) = False then exit sub 'used to skip loading alr
 If Len(strListPath) > 4 Then
 'If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" And Right(strListPath, 4) <> ".intel" Then Exit Sub
 If Right(strListPath, 4) = ".csv" Then boolProcessCSV = True
-If dictCSVFeed.exists(reportName) Then boolProcessCSV = True
+If dictCSVFeed.exists(reportName) Then boolProcessCSV = True 'pointers exist to column values
 
 reportName = Replace(reportName, ".txt", "")
 reportName = Replace(reportName, ".csv", "")
 End If
 
-  
-  
 
 if objFSO.fileexists(strListPath) then
   Set objFile = objFSO.OpenTextFile(strListPath,ForReading, false, inputEncoding)
@@ -12786,7 +12785,7 @@ if objFSO.fileexists(strListPath) then
         strTmpData = objFile.ReadLine
                 on error goto 0
         If boolProcessCSV = True Then
-        	processIntelCSV strTmpData,  reportName
+        	processIntelCSV strTmpData,  reportName 'process csv row for intel report
         Else	
         	addThreatIntel strTmpData,  reportName
         End If
