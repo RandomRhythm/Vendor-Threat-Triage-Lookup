@@ -1,61 +1,62 @@
-https://www.dan.me.uk/torlist/|cache\intel\tor.txt|1|TRUE|24|False||proxy
-https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt|cache\intel\ejrv_vpn.txt|update|TRUE|43800|False||proxy
-https://reputation.alienvault.com/reputation.generic|cache\intel\alienvault_ip.txt|1|TRUE|24|False||multi
-https://openphish.com/feed.txt|cache\intel\openphish.txt|http://|TRUE|24|False||multi
-https://www.turris.cz/greylist-data/greylist-latest.csv|cache\intel\turris(bad reputation).csv|1|TRUE|24|False||multi
-http://ipnoise.now.im/blacklist.txt|cache\intel\ipnoise(known attacker).txt|ipnoise|TRUE|24|false||attacker
-https://blocklist.greensnow.co/greensnow.txt|cache\intel\greensnow(known attacker).txt|1|TRUE|24|False||attacker
-https://iplists.firehol.org/files/dshield_top_1000.ipset|cache\intel\dshield_top_1000(known attacker).txt|known attacker|TRUE|24|False||attacker
-https://lists.blocklist.de/lists/all.txt|cache\intel\blocklist.de(known attacker).txt|1|TRUE|24|False||attacker
-http://danger.rulez.sk/projects/bruteforceblocker/blist.php|cache\intel\bruteforceblocker.txt|1|TRUE|24|False||attacker
-https://www.cruzit.com/xxwbl2txt.php|cache\intel\cruzit(known attacker).txt|ipaddress|TRUE|24|False||attacker
-https://iplists.firehol.org/files/gpf_comics.ipset|cache\intel\gpf_comics(known attacker).txt|gpf_comics|TRUE|24|False||attacker
-https://myip.ms/files/blacklist/htaccess/latest_blacklist.txt|cache\intel\myip(crawler).txt|ADDRESSES DATABASE|TRUE|24|False||attacker
-https://report.cs.rutgers.edu/DROP/attackers|cache\intel\rutgers(known attacker).txt|1|TRUE|24|False||attacker
-https://sblam.com/blacklist.txt|cache\intel\sblam(html spam).txt|sblam.com|TRUE|24|False||attacker
-http://tracker.viriback.com/dump.php|cache\intel\viriback(malware).csv|1|TRUE|24|False||malware
-https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt|cache\intel\maltrail-static-trails.txt|(static)|FALSE|24|False||malware
-https://www.talosintelligence.com/documents/ip-blacklist|cache\intel\talosintelligence.txt|1|TRUE|24|False||malware
-http://vxvault.net/URL_List.php|cache\intel\vxvault(malware).txt|VX Vault|TRUE|24|False||malware
-https://cybercrime-tracker.net/ccpmgate.php|cache\intel\pony.txt|/gate.php|TRUE|24|False||malware
-https://raw.githubusercontent.com/Hestat/minerchk/master/hostslist.txt|cache\intel\cryptomining.txt|.com|TRUE|24|False||malware
-https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt|cache\intel\feodotracker.txt|Botnet C2|TRUE|24|False||malware
-https://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt|cache\intel\emergingthreats-ip.txt|1|TRUE|24|False||malware
-https://cybercrime-tracker.net/all.php|cache\intel\cybercrime-tracker(malware).txt|cp.php?m=login|TRUE|24|False||malware
-https://kriskintel.com/feeds/ktip_malicious_Ips.txt|cache\intel\kriskintel_ip.txt|Feed last refreshed|TRUE|24|False||malware
-https://kriskintel.com/feeds/ktip_malicious_domains.txt|cache\intel\ktip_malicious_domains.txt|Feed last refreshed|TRUE|24|False||malware
-https://data.netlab.360.com/feeds/dga/virut.txt|cache\intel\virut_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/tofsee.txt|cache\intel\tofsee_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/suppobox.txt|cache\intel\suppobox_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/necurs.txt|cache\intel\necurs_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/locky.txt|cache\intel\locky_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/gameover.txt|cache\intel\gameover_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/cryptolocker.txt|cache\intel\cryptolocker_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/conficker.txt|cache\intel\conficker_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/chinad.txt|cache\intel\chinad_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://data.netlab.360.com/feeds/dga/bigviktor.txt|cache\intel\bigviktor_dga_(malware).txt|netlab 360|TRUE|24|True||malware
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset|cache\intel\bitcoin_nodes_1d.txt|1|TRUE|24|false||malware
-https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv|cache\intel\blackbook(malware).csv|Malware|TRUE|24|false||malware
-https://feeds.alphasoc.net/ryuk.txt|cache\intel\AlphaSOC_RyukC2.txt|AlphaSOC, Inc.|TRUE|24|false||malware
-https://threatview.io/Downloads/High-Confidence-CobaltStrike-C2%20-Feeds.txt|cache\intel\ThreatView_CobaltStrike.csv|Threatview[.]io|TRUE|24|false||malware
-https://bazaar.abuse.ch/export/txt/md5/recent/|cache\intel\bazaar_md5.txt|bazaar.abuse.ch|TRUE|24|True||malware
-https://bazaar.abuse.ch/export/txt/sha1/recent/|cache\intel\bazaar_sha1.txt|bazaar.abuse.ch|TRUE|24|True||malware
-https://bazaar.abuse.ch/export/txt/sha256/recent/|cache\intel\bazaar_sha256.txt|bazaar.abuse.ch|TRUE|24|True||malware
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset|cache\intel\socks_proxy.txt|socks-proxy.net|TRUE|24|FALSE|1|proxy
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset|cache\intel\sslproxies.txt|sslproxies|TRUE|24|FALSE|1|proxy
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset|cache\intel\botscout.txt|botscout|TRUE|24|FALSE|1|malware
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset|cache\intel\socks_proxy.txt|socks-proxy.net|TRUE|24|FALSE|7|proxy
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset|cache\intel\sslproxies.txt|sslproxies|TRUE|24|FALSE|7|proxy
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset|cache\intel\botscout.txt|botscout|TRUE|24|FALSE|7|malware
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset|cache\intel\socks_proxy.txt|socks-proxy.net|TRUE|24|FALSE|30|proxy
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset|cache\intel\sslproxies.txt|sslproxies|TRUE|24|FALSE|30|proxy
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset|cache\intel\botscout.txt|botscout|TRUE|24|FALSE|30|malware
+https://www.dan.me.uk/torlist/|\cache\intel\tor.txt|1|TRUE|24|False||proxy
+https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt|\cache\intel\ejrv_vpn.txt|update|TRUE|43800|False||proxy
+https://reputation.alienvault.com/reputation.generic|\cache\intel\alienvault_ip.txt|1|TRUE|24|False||multi
+https://openphish.com/feed.txt|\cache\intel\openphish.txt|http://|TRUE|24|False||multi
+https://www.turris.cz/greylist-data/greylist-latest.csv|\cache\intel\turris(bad reputation).csv|1|TRUE|24|False||multi
+http://ipnoise.now.im/blacklist.txt|\cache\intel\ipnoise(known attacker).txt|ipnoise|TRUE|24|false||attacker
+https://blocklist.greensnow.co/greensnow.txt|\cache\intel\greensnow(known attacker).txt|1|TRUE|24|False||attacker
+https://iplists.firehol.org/files/dshield_top_1000.ipset|\cache\intel\dshield_top_1000(known attacker).txt|known attacker|TRUE|24|False||attacker
+https://lists.blocklist.de/lists/all.txt|\cache\intel\blocklist.de(known attacker).txt|1|TRUE|24|False||attacker
+http://danger.rulez.sk/projects/bruteforceblocker/blist.php|\cache\intel\bruteforceblocker.txt|1|TRUE|24|False||attacker
+https://www.cruzit.com/xxwbl2txt.php|\cache\intel\cruzit(known attacker).txt|ipaddress|TRUE|24|False||attacker
+https://iplists.firehol.org/files/gpf_comics.ipset|\cache\intel\gpf_comics(known attacker).txt|gpf_comics|TRUE|24|False||attacker
+https://myip.ms/files/blacklist/htaccess/latest_blacklist.txt|\cache\intel\myip(crawler).txt|ADDRESSES DATABASE|TRUE|24|False||attacker
+https://report.cs.rutgers.edu/DROP/attackers|\cache\intel\rutgers(known attacker).txt|1|TRUE|24|False||attacker
+https://sblam.com/blacklist.txt|\cache\intel\sblam(html spam).txt|sblam.com|TRUE|24|False||attacker
+http://tracker.viriback.com/dump.php|\cache\intel\viriback(malware).csv|1|TRUE|24|False||malware
+https://raw.githubusercontent.com/stamparm/aux/master/maltrail-static-trails.txt|\cache\intel\maltrail-static-trails.txt|(static)|FALSE|24|False||malware
+https://www.talosintelligence.com/documents/ip-blacklist|\cache\intel\talosintelligence.txt|1|TRUE|24|False||malware
+http://vxvault.net/URL_List.php|\cache\intel\vxvault(malware).txt|VX Vault|TRUE|24|False||malware
+https://cybercrime-tracker.net/ccpmgate.php|\cache\intel\pony.txt|/gate.php|TRUE|24|False||malware
+https://raw.githubusercontent.com/Hestat/minerchk/master/hostslist.txt|\cache\intel\cryptomining.txt|.com|TRUE|24|False||malware
+https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt|\cache\intel\feodotracker.txt|Botnet C2|TRUE|24|False||malware
+https://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt|\cache\intel\emergingthreats-ip.txt|1|TRUE|24|False||malware
+https://cybercrime-tracker.net/all.php|\cache\intel\cybercrime-tracker(malware).txt|cp.php?m=login|TRUE|24|False||malware
+https://kriskintel.com/feeds/ktip_malicious_Ips.txt|\cache\intel\kriskintel_ip.txt|Feed last refreshed|TRUE|24|False||malware
+https://kriskintel.com/feeds/ktip_malicious_domains.txt|\cache\intel\ktip_malicious_domains.txt|Feed last refreshed|TRUE|24|False||malware
+https://data.netlab.360.com/feeds/dga/virut.txt|\cache\intel\virut_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/tofsee.txt|\cache\intel\tofsee_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/suppobox.txt|\cache\intel\suppobox_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/necurs.txt|\cache\intel\necurs_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/locky.txt|\cache\intel\locky_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/gameover.txt|\cache\intel\gameover_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/cryptolocker.txt|\cache\intel\cryptolocker_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/conficker.txt|\cache\intel\conficker_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/chinad.txt|\cache\intel\chinad_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://data.netlab.360.com/feeds/dga/bigviktor.txt|\cache\intel\bigviktor_dga_(malware).txt|netlab 360|TRUE|24|True||malware
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/bitcoin_nodes_1d.ipset|\cache\intel\bitcoin_nodes_1d.txt|1|TRUE|24|false||malware
+https://raw.githubusercontent.com/stamparm/blackbook/master/blackbook.csv|\cache\intel\blackbook(malware).csv|Malware|TRUE|24|false||malware
+https://feeds.alphasoc.net/ryuk.txt|\cache\intel\AlphaSOC_RyukC2.txt|AlphaSOC, Inc.|TRUE|24|false||malware
+https://threatview.io/Downloads/High-Confidence-CobaltStrike-C2%20-Feeds.txt|\cache\intel\ThreatView_CobaltStrike.csv|Threatview[.]io|TRUE|24|false||malware
+https://bazaar.abuse.ch/export/txt/md5/recent/|\cache\intel\bazaar_md5.txt|bazaar.abuse.ch|TRUE|24|True||malware
+https://bazaar.abuse.ch/export/txt/sha1/recent/|\cache\intel\bazaar_sha1.txt|bazaar.abuse.ch|TRUE|24|True||malware
+https://bazaar.abuse.ch/export/txt/sha256/recent/|\cache\intel\bazaar_sha256.txt|bazaar.abuse.ch|TRUE|24|True||malware
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset|\cache\intel\socks_proxy.txt|socks-proxy.net|TRUE|24|FALSE|1|proxy
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset|\cache\intel\sslproxies.txt|sslproxies|TRUE|24|FALSE|1|proxy
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset|\cache\intel\botscout.txt|botscout|TRUE|24|FALSE|1|malware
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset|\cache\intel\socks_proxy.txt|socks-proxy.net|TRUE|24|FALSE|7|proxy
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset|\cache\intel\sslproxies.txt|sslproxies|TRUE|24|FALSE|7|proxy
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset|\cache\intel\botscout.txt|botscout|TRUE|24|FALSE|7|malware
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/socks_proxy.ipset|\cache\intel\socks_proxy.txt|socks-proxy.net|TRUE|24|FALSE|30|proxy
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/sslproxies.ipset|\cache\intel\sslproxies.txt|sslproxies|TRUE|24|FALSE|30|proxy
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/botscout.ipset|\cache\intel\botscout.txt|botscout|TRUE|24|FALSE|30|malware
 https://urlhaus.abuse.ch/downloads/text_recent/|\cache\intel\urlhaus.txt|contact urlhaus|TRUE|24|FALSE|1|malware
-https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/maxmind_proxy_fraud.ipset|cache\intel\MaxMindproxies.txt|MaxMind|TRUE|43800|FALSE|31|proxy
-https://github.com/firehol/blocklist-ipsets/blob/master/proxylists_30d.ipset|cache\intel\proxylists.txt|www.proxylists.net|TRUE|43800|FALSE|31|proxy
+https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/maxmind_proxy_fraud.ipset|\cache\intel\MaxMindproxies.txt|MaxMind|TRUE|43800|FALSE|31|proxy
+https://github.com/firehol/blocklist-ipsets/blob/master/proxylists_30d.ipset|\cache\intel\proxylists.txt|www.proxylists.net|TRUE|43800|FALSE|31|proxy
 https://urlhaus.abuse.ch/downloads/text/|\cache\intel\urlhaus.txt|contact urlhaus|True|24|False|31|malware
 https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/illuminate.intel|\cache\intel\illuminate.intel|indicator_type|True|24|False||malware
 https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/dom-bl.intel|\cache\intel\dom-bl.intel|indicator_type|True|24|False||malware
 https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/filetransferportals.intel|\cache\intel\filetransferportals.intel|indicator_type|True|24|False||multi
 https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/cps-collected-iocs.intel|\cache\intel\cps-collected-iocs.intel|indicator_type|True|24|False||malware
 https://sslbl.abuse.ch/blacklist/sslipblacklist.csv|\cache\intel\sslbl.csv|sslbl|True|24|False||malware
+https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/Amnesty_NSO_Domains.intel|\cache\intel\amnesty_nso_domains.intel|#fields|True|48|False||malware
