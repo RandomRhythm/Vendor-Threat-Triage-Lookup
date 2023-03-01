@@ -251,7 +251,7 @@ Dim intCompanyLoc: intCompanyLoc = -1
 Dim intMD5Loc
 Dim intDomainLoc
 Dim intHostLocation
-Dim inthfPathLoc 
+Dim inthfPathLoc: inthfPathLoc = -1
 Dim dateTimeLoc: dateTimeLoc  = -1
 Dim inthfProductLoc: inthfProductLoc = -1
 Dim inthfSizeLoc: inthfSizeLoc = -1
@@ -13233,6 +13233,8 @@ Sub WriteHeaderRow()
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Prevalence|File Size|Digial Signature Tracking"
           elseif boolEnableCuckoo = True or (BoolDisableVTlookup = False and boolVTuseV3 = True) then
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|File Size|Digial Signature Tracking"
+          elseif inthfPathLoc = -1 then
+            strTmpCBHead = "|Digital Sig|Company Name|Product Name|Digial Signature Tracking"
           else
             strTmpCBHead = "|File Path|Digital Sig|Company Name|Product Name|Digial Signature Tracking"
           end if
