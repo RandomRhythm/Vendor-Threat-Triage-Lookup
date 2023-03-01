@@ -8873,6 +8873,7 @@ dim StrReturnCellL
 			boolQuoted = False
 		elseif boolQuoted = True and right(strTmpHArray(cellCount), 1) = chr(34) then 
 			boolQuoted = False
+			If cellCount = ubound(strTmpHArray) Then tmpArrayPointer(intArrayCount) = ubound(strTmpHArray) +1 'last cell in row and it was quoted
 		elseif boolQuoted = False and left(strTmpHArray(cellCount), 1) = chr(34) then
 			boolQuoted = True
 		else
@@ -8903,7 +8904,11 @@ if instr(StrRSCILine, chr(34) & ",") > 0 or instr(StrRSCILine, "," & Chr(34)) > 
 			if BoolDebugTrace = True then logdata strDebugPath & "\sigcheck.txt",  tmpArrayPointer(intRSCILocation) +1 & "<>" &  tmpArrayPointer(intRSCILocation +1) ,BoolEchoLog
 			strSigCheckItem = ""
 			for itemCount = 0 to tmpArrayPointer(intRSCILocation +1) - (tmpArrayPointer(intRSCILocation) +1)
-				strSigCheckItem = strSigCheckItem & replace(strTmpHArray(intArrayPointer + itemCount), Chr(34), "")
+				If itemCount = 0 Then
+					strSigCheckItem = strSigCheckItem & replace(strTmpHArray(intArrayPointer + itemCount), Chr(34), "")
+				Else
+					strSigCheckItem = strSigCheckItem & "," & replace(strTmpHArray(intArrayPointer + itemCount), Chr(34), "") 'add the comma back in 
+				End If		
 				'msgbox "strSigCheckItem" & strSigCheckItem
 				if BoolDebugTrace = True then logdata strDebugPath & "\sigcheck.txt",  "arraylocation:" & intArrayPointer & itemCount & " strSigCheckItem:" & strSigCheckItem ,BoolEchoLog
 			next
