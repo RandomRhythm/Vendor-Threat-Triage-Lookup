@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.5 - Fix column alignment when number of samples to report on is set to zero
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.6 - Move digital signer/publisher import from CSV out of VirusTotal sub so it runs when VT is disabled. Simplify requirements for CSV import.
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
@@ -1619,7 +1619,12 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 
     strScanDataInfo = strData 
 	if BoolWhoisDebug = True then msgbox "Read list item:" & strData
-    
+	  if IsHash(strData) = True And (BoolSigCheckLookup = True or BoolEnCaseLookup = True or (boolSHA256csvLookup = True and len(strScanDataInfo) = 64)) then 'NetAMP only supports SHA256 so must pass that as the hash value
+		  'get digital signer/publisher
+		  SigCheckSSoutput strScanDataInfo 'load sigcheck data
+		  if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "SigCheckSSoutput" ,BoolEchoLog
+	  end if
+	   
       if boolsubmitVT = True and (IsHash(strData) or BoolCreateSpreadsheet = False) = True then 
         VT_Submit 'submit to virustotal as a URL or File
         inLoopCounter = inLoopCounter + 1
@@ -3165,13 +3170,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
       end if
 
     Else 'the data submitted was a hash
-		  if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "the data submitted was a hash " & strData,BoolEchoLog            
-		  if BoolSigCheckLookup = True or BoolEnCaseLookup = True or (boolSHA256csvLookup = True and len(strScanDataInfo) = 64) then 'NetAMP only supports SHA256 so must pass that as the hash value
-			  
-			  SigCheckSSoutput strScanDataInfo 'load sigcheck data
-			  if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "SigCheckSSoutput" ,BoolEchoLog
-		  end if
-
+	  if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "the data submitted was a hash " & strData,BoolEchoLog            
 
       If InStr(strresponseText, chr(34) & "https://www.virustotal.com") Then    
 		strTmpURLs = "https://www.virustotal.com" & GetData(strresponseText, chr(34), chr(34) & "https://www.virustotal.com")
@@ -8794,7 +8793,8 @@ if objFSO.fileexists(OpenFilePath1) then
       end if
       'must have a hash value or domain/IP and at least one value to import
 	    if (instr(strSCData, "Publisher") > 0 or _
-			instr(strSCData,	"Company")  > 0 or _
+			instr(strSCData, "Signer")  > 0 or _
+			instr(strSCData, "Company")  > 0 or _
 			instr(strSCData, "size") > 0 or _
 			instr(strSCData, "# of Hosts") > 0 or _
 			instr(strSCData, "count") > 0 or _
@@ -9240,8 +9240,7 @@ if objFSO.fileexists(OpenFilePath1) then
         end if
         ArraySigCheckData(intCSVRowLocation) = strSCData 'load CSV line into cache
         redim preserve ArraySigCheckData(intCSVRowLocation +1)
-        if BoolHeaderLocSet = False and instr(strSCData, "Item Path") > 0 and instr(strSCData,	"Logical Size") > 0 and instr(strSCData, "MD5") > 0  or _
-         BoolHeaderLocSet = False and instr(strSCData, "File Name") > 0 and instr(strSCData,	"SHA256") > 0 and instr(strSCData, "Size (KB)") > 0  then
+        if BoolHeaderLocSet = False and (instr(strSCData, "MD5") > 0  or instr(strSCData, "SHA256") > 0 or instr(strSCData, "SHA1") > 0) then 'we have a key (hash) we can match against for correlation with other column values
           'header row
           SetHeaderLocations strSCData
           BoolHeaderLocSet = True
@@ -9639,7 +9638,7 @@ if intPTlookupCount < intPTDailyLimit then
     end if
   on error goto 0  
 
-  if BoolDebugTrace = True then logdata strDebugPath & "\VT_PP" & "" & ".txt", objHTTP.responseText & vbcrlf & vbcrlf,BoolEchoLog 
+  if BoolDebugTrace = True then logdata strDebugPath & "\_PT" & "" & ".txt", objHTTP.responseText & vbcrlf & vbcrlf,BoolEchoLog 
 
   if len(objHTTP.responseText) > 0 then
     if instr(objHTTP.responseText, "results" & chr(34) & ":") then
