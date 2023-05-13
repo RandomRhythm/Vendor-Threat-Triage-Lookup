@@ -1519,6 +1519,11 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 			logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " line in vtlist.txt contained a space that will be removed: " & strData,False 
 			strData = replace(strData, " ", "") 'space is not a supported character
 		end if
+		if instr(strData, "://") then
+			logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " line in vtlist.txt contained a URL: " & strData,False 
+			strData = getdata(strData, "/", "://") 'URL is not supported
+			logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " URL parsed to domain: " & strData,False
+		end if
         if isIPaddress(strData) then 
           if IsPrivateIP(strData) then strData = ""
           If IsIPv6(strData) Then
