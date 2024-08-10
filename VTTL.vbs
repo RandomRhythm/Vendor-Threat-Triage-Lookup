@@ -1,8 +1,8 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.6 - Move digital signer/publisher import from CSV out of VirusTotal sub so it runs when VT is disabled. Simplify requirements for CSV import.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.7 - Antivirus hates VBScript. Guess that is why Microsoft is deprecating it.
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
-'Copyright (c) 2023 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2024 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -5890,7 +5890,12 @@ If objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True Then
 		If boolUseFeed = False Then objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
 		Exit Function
 	Else 'file is old and needs updated
+        on error resume next
 		objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
+        if err.number <> 0 then
+            MsgBox "Something (likely antivirus) will not let us delete " & CurrentDirectory & "\" & strDownloadName
+        end if
+        on error goto 0
 	End If
 End If	
 If boolUseFeed = False Then Exit Function
