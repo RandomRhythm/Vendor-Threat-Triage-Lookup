@@ -5893,7 +5893,7 @@ If objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True Then
         on error resume next
 		objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
         if err.number <> 0 then
-            MsgBox "Something (likely antivirus) will not let us delete " & CurrentDirectory & "\" & strDownloadName
+            objShellComplete.popup "Something (likely antivirus) will not let us delete " & CurrentDirectory & "\" & strDownloadName, 16, "VTTL - " & CurrentDirectory
         end if
         on error goto 0
 	End If
@@ -11390,12 +11390,12 @@ function SumNumbers(number1, number2)
 intReturnNumber = 0
 	If number1 <> "" Then
 		If IsNumeric(number1) Then
-			intReturnNumber = CInt(number1)
+			intReturnNumber = CLng(number1)
 		End If
 	End if	
 	If number2 <> "" Then
 		If IsNumeric(number2) Then
-			intReturnNumber = intReturnNumber + CInt(number2)
+			intReturnNumber = intReturnNumber + CLng(number2)
 		End If
 	End if		
 SumNumbers = intReturnNumber
