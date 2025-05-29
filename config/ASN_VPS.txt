@@ -1,0 +1,140 @@
+AS40021 Contabo Inc
+AS51167 Contabo GmbH
+AS141995 Contabo Asia Private Limited 
+AS16276 OVH SAS
+AS35540 OVH SAS
+AS14061 DigitalOcean, LLC
+AS39690 DigitalOcean, LLC
+AS62567 DigitalOcean, LLC
+AS133165 DigitalOcean, LLC
+AS135340 DigitalOcean, LLC
+AS200130 DigitalOcean, LLC
+AS201229 DigitalOcean, LLC
+AS202018 DigitalOcean, LLC
+AS202109 DigitalOcean, LLC
+AS205301 DigitalOcean, LLC
+AS393406 DigitalOcean, LLC
+AS394362 DigitalOcean, LLC
+AS20473 The Constant Company, LLC (VULTR)
+AS11508 The Constant Company, LLC (VULTR)
+AS46407 The Constant Company, LLC (VULTR)
+AS133795 The Constant Company, LLC (VULTR)
+AS24940 Hetzner Online GmbH
+AS213230 Hetzner Online GmbH
+AS212317 Hetzner Online GmbH 
+AS15169 Google LLC
+AS396982 Google LLC
+AS14618 Amazon.com, Inc
+AS699 Amazon.com, Inc
+AS801 Amazon.com, Inc
+AS7224 Amazon.com, Inc
+AS16509 Amazon.com, Inc.
+AS16509 Amazon.com, Inc.
+AS38895 Amazon.com, Inc.
+AS62785 Amazon.com, Inc.
+AS47583 Hostinger International Limited
+AS204915 Hostinger International Limited
+AS26496 GoDaddy.com, LLC
+AS30083 GoDaddy.com, LLC
+AS16892 GoDaddy.com, LLC
+AS397513 GoDaddy.com, LLC
+AS397514 GoDaddy.com, LLC
+AS397515 GoDaddy.com, LLC
+AS397516 GoDaddy.com, LLC
+AS397517 GoDaddy.com, LLC
+AS397518 GoDaddy.com, LLC
+AS397519 GoDaddy.com, LLC
+AS397520 GoDaddy.com, LLC
+AS397521 GoDaddy.com, LLC
+AS397522 GoDaddy.com, LLC
+AS398101 GoDaddy.com, LLC
+AS398102 GoDaddy.com, LLC
+AS398103 GoDaddy.com, LLC
+AS398104 GoDaddy.com, LLC
+AS398105 GoDaddy.com, LLC
+AS398106 GoDaddy.com, LLC
+AS398107 GoDaddy.com, LLC
+AS398108 GoDaddy.com, LLC
+AS398109 GoDaddy.com, LLC
+AS398110 GoDaddy.com, LLC
+AS398785 GoDaddy.com, LLC
+AS398786 GoDaddy.com, LLC
+AS398787 GoDaddy.com, LLC
+AS398788 GoDaddy.com, LLC
+AS398789 GoDaddy.com, LLC
+AS398790 GoDaddy.com, LLC
+AS398791 GoDaddy.com, LLC
+AS398792 GoDaddy.com, LLC
+AS398793 GoDaddy.com, LLC
+AS398794 GoDaddy.com, LLC
+AS400746 GoDaddy.com, LLC
+AS400747 GoDaddy.com, LLC
+AS400748 GoDaddy.com, LLC
+AS400749 GoDaddy.com, LLC
+AS400750 GoDaddy.com, LLC
+AS400751 GoDaddy.com, LLC
+AS400752 GoDaddy.com, LLC
+AS400753 GoDaddy.com, LLC
+AS400754 GoDaddy.com, LLC
+AS400755 GoDaddy.com, LLC
+AS40476 Scala Hosting LLC
+AS32244 Liquid Web, L.L.C
+AS6188 Liquid Web, L.L.C
+AS22558 Liquid Web, L.L.C
+AS40819 Liquid Web, L.L.C
+AS53824 Liquid Web, L.L.C
+AS201682 Liquid Web, L.L.C
+AS263093 Hostgator Brasil Ltda
+AS54290 Hostwinds LLC
+AS21773 Hostwinds LLC
+AS135085 Hostwinds LLC
+AS46606 Unified Layer (BLUEHOST)
+AS203020 HostRoyale Technologies Pvt Ltd
+AS35672 HostRoyale Technologies Pvt Ltd
+AS39486 HostRoyale Technologies Pvt Ltd
+AS46516 HostRoyale Technologies Pvt Ltd
+AS133499 HostRoyale Technologies Pvt Ltd
+AS134450 HostRoyale Technologies Pvt Ltd
+AS204287 HostRoyale Technologies Pvt Ltd
+AS396931 HostRoyale Technologies Pvt Ltd
+AS49581 Ferdinand Zink trading as Tube-Hosting (100UP)
+AS212513 Bernhard Josef Stelzl (100UP)
+AS54641 InMotion Hosting, Inc
+AS38421 InMotion Hosting, Inc
+AS226111 InMotion Hosting, Inc
+AS26347 New Dream Network, LLC (DREAMHOST)
+AS8560 IONOS SE
+AS51862 IONOS SE
+AS23352 Server Central Network (MOCHAHOST)
+AS6982 A2 Hosting, Inc
+AS55293 A2 Hosting, Inc
+AS36007 Kamatera, Inc
+AS41436 Kamatera, Inc
+AS54913 Kamatera, Inc
+AS204548 Kamatera, Inc
+AS210329 Kamatera, Inc
+AS396948 Kamatera, Inc
+AS396949 Kamatera, Inc 
+AS64022 Kamatera, Inc
+AS210632 Floofy Hosting LLC 
+AS63949 Akamai Technologies, LLC (LINODE)
+AS48337 Linode, LLC (LINODE)
+AS22612 Namecheap, Inc
+AS12876 ONLINE S.A.S. (SCALEWAY)
+AS29447 ONLINE S.A.S. (SCALEWAY)
+AS54265 SCALEWAY US CORPORATION (SCALEWAY)
+AS53667 FranTech Solutions (BUYVM)
+AS212477 RoyaleHosting BV
+AS55990 Huawei Cloud Service data center
+AS18779 EGIHosting
+AS263702 GRUPO ZGH SPA
+AS45090 Shenzhen Tencent Computer Systems Company Limited
+AS36666 GloboTech Communications
+AS213250 Dominic Scholz trading as ITP-Solutions GmbH & Co. KG (DeinServerHost)
+AS14586 Nuclearfallout Enterprises, Inc.
+AS32374 Nuclearfallout Enterprises, Inc.
+AS32751 Nuclearfallout Enterprises, Inc.
+AS214505 Nuclearfallout Enterprises, Inc.
+AS393458 Nuclearfallout Enterprises, Inc.
+AS400475 Nuclearfallout Enterprises, Inc.
+AS401263 Nuclearfallout Enterprises, Inc.

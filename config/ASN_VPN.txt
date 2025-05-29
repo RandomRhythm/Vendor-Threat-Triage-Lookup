@@ -1,0 +1,92 @@
+AS212238 Datacamp Limited
+AS209103 Proton AG
+AS39798 MivoCloud SRL
+AS136557 Host Universal Pty Ltd
+AS56704 Farice ehf
+AS49981 WorldStream B.V.
+AS8473 Bahnhof AB
+AS206804 EstNOC OY
+AS60068 Datacamp Limited
+AS9009 M247 Europe SRL
+AS23959 Owl Limited
+AS4785 xTom
+AS43350 NForce Entertainment B.V.
+AS46562 Performive LLC
+AS13213 UK-2 Limited
+AS53850 GorillaServers, Inc.
+AS51765 Oy Crea Nova Hosting Solution Ltd
+AS41564 Orion Network Limited
+AS137409 GSL Networks Pty LTD
+AS58065 Packet Exchange Limited
+AS203020 HostRoyale Technologies Pvt Ltd
+AS206446 CLOUD LEASE Ltd
+AS199524 G-Core Labs S.A.
+AS19318 Interserver, Inc
+AS28110 NAVEGALO S.A.
+AS51430 AltusHost B.V.
+AS61272 Informacines sistemos ir technologijos, UAB
+AS16247 M247 Ltd
+AS396356 Latitude.sh
+AS133480 Intergrid Group Pty Ltd
+AS30058 FDCservers.net
+AS9678 HostingInside LTD.
+AS35432 Cablenet Communication Systems plc
+AS37518 Fiber Grid INC
+AS12417 Plus Hosting Grupa d.o.o.
+AS42831 UK Dedicated Servers Limited
+AS263702 GRUPO ZGH SPA
+AS49453 Global Layer B.V.
+AS262287 Latitude.sh LTDA
+AS55720 Gigabit Hosting Sdn Bhd
+AS141039 Packethub s.a.
+AS20278 Nexeon Technologies, Inc.
+AS35913 DediPath
+AS62240 Clouvider
+AS9335 CAT Telecom Public Company Limited
+AS25369 Hydra Communications Ltd
+AS12876 ONLINE S.A.S.
+AS197706 Keminet SHPK
+AS136787 TEFINCOM S.A.
+AS30083 GoDaddy.com, LLC
+AS26496 GoDaddy.com, LLC
+AS51747 Internet Vikings International AB
+AS39845 2 Cloud Ltd.
+AS43289 Trabia SRL
+AS147049 PacketHub S.A.
+AS45382 EHOSTICT
+AS207990 HostRoyale Technologies Pvt Ltd
+AS200698 Globalhost d.o.o.
+AS207137 PacketHub S.A.
+AS40676 Psychz Networks
+AS57172 Global Layer B.V.
+AS48950 GLOBAL COLOCATION LIMITED
+AS131199 Nexeon Technologies, Inc.
+AS64200 VIVID-HOSTING LLC
+AS205119 TELEKS DOOEL Skopje
+AS4766 Korea Telecom
+AS38731 Vietel - CHT Compamy Ltd
+AS45899 VNPT Corp
+AS46805 Inter Connects Inc
+AS20473 The Constant Company, LLC
+AS36352 ColoCrossing
+AS47810 Proservice LLC
+AS52423 Data Miners S.A. ( Racknation.cr )
+AS53013 W I X NET DO BRASIL LTDA - ME
+AS11878 tzulo, inc.
+AS39351 31173 Services AB
+AS11831 eSecureData
+AS51852 Private Layer INC
+AS50304 Blix Solutions AS
+AS133752 Leaseweb Asia Pacific pte. ltd.
+AS205053 Asimia Damaskou
+AS9312 xTom
+AS43513 Sia Nano IT
+AS46844 Sharktech
+AS268581 QNAX LTDA
+AS3214 xTom GmbH
+AS30736 ASERGO Scandinavia ApS
+AS43357 Owl Limited
+AS213277 ALMOUROLTEC SERVICOS DE INFORMATICA E INTERNET LDA
+AS8100 QuadraNet Enterprises LLC
+AS7185 QuadraNet Internet Services
+AS6233 xTom
