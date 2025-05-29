@@ -1,8 +1,8 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.7 - Antivirus hates VBScript. Guess that is why Microsoft is deprecating it.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.8 - VPN/VPS identification based on ASN
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
-'Copyright (c) 2024 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2025 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -470,6 +470,7 @@ Dim dictCIDR: Set dictCIDR = CreateObject("Scripting.Dictionary") 'used to conve
 Dim dictIPrange: Set dictIPrange = CreateObject("Scripting.Dictionary") 'stores the IP ranges for watchlist (should not be used if we get this into a SQLite table)
 Dim dictFeedEnabled: set dictFeedEnabled = CreateObject("Scripting.Dictionary")
 Dim base32check: base32check = True
+Dim dictASN: set dictASN = CreateObject("Scripting.Dictionary") 'ASN category detection
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -2532,6 +2533,24 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         strTmpPPointLine = AddPipe(strTmpPPointLine)
         if boolCheckProofpointIDS = True then strPPidsLineE = AddPipe(strPPidsLineE)
       end if
+      
+      'ASN category detection
+        if instr(strTmpIPContactLineE, " ") then
+          strTmpContactl = lcase(replace(strTmpIPContactLineE, "|", ""))
+          strTmpArrayWhois = split(strTmpContactl, " ")
+          strTmpASN = lcase(strTmpArrayWhois(0))
+          if dictASN.exists(strTmpASN) = True Then
+            strCategoryLineE = AppendValuesList(strCategoryLineE,dictASN.item(strTmpASN),";")
+          end if
+          strCompany = Trim(lcase(replace(strTmpIPContactLineE,strTmpASN, "")))
+          if dictASN.exists(strCompany) = True Then
+            strCategoryLineE = AppendValuesList(strCategoryLineE,dictASN.item(strCompany),";")
+          end if
+          if dictASN.exists(strTmpContactl) = True Then
+            strCategoryLineE = AppendValuesList(strCategoryLineE,dictASN.item(strTmpContactl),";")
+          end if          
+        end if
+          
       strCategoryLineE = AddPipe(strCategoryLineE)   
         
       if boolEnableCuckoo = True then strCuckooScore  = AddPipe(strCuckooScore)
@@ -13019,6 +13038,9 @@ if staticIntelPath <> "" And boolStaticIntel = True then TraverseIntelFolders ob
 if boolProxyFeed =True or boolMultiFeed = True or boolAttackerFeed = True or boolMalwareFeed = True then TraverseIntelFolders objFso.GetFolder(strIntelPath) 'load intelligence feeds
 
 LoadEncyclopedia_Cache 'populates encyclopedia dictionaries DictMicrosoftEncyclopedia
+
+LoadASN compatibleConfigPath(strConfigPath,"ASN_VPS.txt"), dictASN, "VPS" 'ASN category detection
+LoadASN compatibleConfigPath(strConfigPath,"ASN_VPN.txt"), dictASN, "VPN" 'ASN category detection
 end Sub
 
 Sub WriteHeaderRow()
@@ -13793,3 +13815,29 @@ for each entry in dictIPrange:
 next
 end function
 '----- end VTTL IP range watchlist code ------------------
+
+
+
+Sub LoadASN(strListPath, dictToLoad, strCategory) 'ASN category detection
+if objFSO.fileexists(strListPath) then
+  Set objFile = objFSO.OpenTextFile(strListPath)
+  Do While Not objFile.AtEndOfStream
+    if not objFile.AtEndOfStream then 'read file
+        On Error Resume Next
+        strTmpData = objFile.ReadLine
+        if instr(strTmpData, " ") then
+          strTmpArrayDDNS = split(strTmpData, " ")
+          if dictToLoad.exists(lcase(strTmpArrayDDNS(0))) = False then _
+          dictToLoad.add lcase(strTmpArrayDDNS(0)), strCategory
+	  strCompany = Trim(LCase(Replace(strTmpData,strTmpArrayDDNS(0), "")))
+	'wscript.echo(strCompany)
+	  if dictToLoad.exists(strCompany) = False then _
+          dictToLoad.add strCompany, strCategory
+        else
+          wscript.echo "invalid format for " + strListPath
+        end if
+        on error goto 0
+    end if
+  loop
+end if
+end sub
