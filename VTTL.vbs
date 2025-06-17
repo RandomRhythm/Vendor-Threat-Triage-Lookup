@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.1.8 - VPN/VPS identification based on ASN
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.2.0 - Add FBI sinkhole
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
@@ -6237,6 +6237,8 @@ if instr(strNameServerNew, ".MICROSOFTINTERNETSAFETY.NET") then
 elseif instr(strNameServerNew, "NS1.SINKHOLE.SHADOWSERVER.ORG") then
 'SINKHOLE-00.SHADOWSERVER.ORG https://www.virustotal.com/en/domain/init.icloud-analysis.com/information/
   strTmpSinkHole = "|NS1.SINKHOLE.SHADOWSERVER.ORG"
+elseif instr(strNameServerNew, "FBI.SEIZED.GOV") then
+	strTmpSinkHole = "|FBI.SEIZED.GOV" 'https://www.virustotal.com/gui/domain/tylarion867mino.com/details
 elseif instr(strNameServerNew, "SINKHOLE") or instr(strNameServerNew,"SNKHOLE") then
 
   if instr(strNameServerNew, "\N") then 
