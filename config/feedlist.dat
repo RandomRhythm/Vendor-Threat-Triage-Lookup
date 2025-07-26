@@ -48,3 +48,4 @@ https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/m
 https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/cps-collected-iocs.intel|\cache\intel\cps-collected-iocs.intel|indicator_type|True|24|False||malware
 https://sslbl.abuse.ch/blacklist/sslipblacklist.csv|\cache\intel\sslbl.csv|sslbl|True|24|False||malware
 https://raw.githubusercontent.com/CriticalPathSecurity/Zeek-Intelligence-Feeds/master/Amnesty_NSO_Domains.intel|\cache\intel\amnesty_nso_domains.intel|#fields|True|48|False||malware
+https://raw.githubusercontent.com/ThreatIntelligenceAggregator/ip-addresses/refs/heads/main/brute-force.txt|\cache\intel\tia-brute-force.txt|1.0.170.30|True|336|False||attacker
