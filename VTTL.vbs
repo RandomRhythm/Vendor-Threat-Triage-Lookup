@@ -462,6 +462,7 @@ Dim boolTruncateVTsigner ' Truncate the digital signature provided by VirusTotal
 Dim cellTruncateLength
 Dim strSignTimeStamp
 Dim boolShodan
+Dim bool_enable_tia_domain
 Dim cpesLineE
 Dim openPortsLineE
 Dim ShodanTags
@@ -471,6 +472,7 @@ Dim dictIPrange: Set dictIPrange = CreateObject("Scripting.Dictionary") 'stores 
 Dim dictFeedEnabled: set dictFeedEnabled = CreateObject("Scripting.Dictionary")
 Dim base32check: base32check = True
 Dim dictASN: set dictASN = CreateObject("Scripting.Dictionary") 'ASN category detection
+Dim bool_disable_loading_external_feeds
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -516,6 +518,7 @@ boolOutputUnicode = False 'Default output encoding is ANSI. You may need utf-16 
 boolDeepIOCmatch = True 'Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 boolTruncateVTsigner = True ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 cellTruncateLength = 8000 'Truncate cell value length. Default 8000. Max 32767
+bool_disable_loading_external_feeds = False
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -624,6 +627,7 @@ intClippingLevel = 2 'Domain/IP reporting for detection name will report on name
 BoolCacheRelatedHashLookups = True
 boolSiblings = True
 boolShodan = True
+bool_enable_tia_domain = True
 '--- End config items
 
 '----------------reconfigure
@@ -1444,7 +1448,9 @@ if BoolCreateSpreadsheet = True then
 end if
 LogOverwriteData strDebugPath & "\status.txt", "Starting - Loading threat intelligence and watchlists",BoolEchoLog 
 If BoolRunSilent = False then objShellComplete.popup "Loading threat intelligence and watchlists", 5, "VTTL - " & CurrentDirectory
-download_load 'download/load threat intelligence
+if bool_disable_loading_external_feeds = False Then
+  download_load 'download/load threat intelligence
+end if
 if dictURLWatchList.count > 100000 then
   intAnswer = msgbox ("URL watchlist had more than 1,000,000 entries (" & dictURLWatchList.count & " in total) added to it by threat intelligence. This will cause poor performance. Do you want to continue?",vbYesNo, "VTTL")
       if intAnswer = vbNo Then 
@@ -1679,6 +1685,14 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
     end If
   elseif BoolDisableVTlookup = True and IsHash(strData) = False Then    
       whoIsPopulate strScanDataInfo
+      If bool_enable_tia_domain = True And CheckBadValues(strTmpWCO_CClineE) Then
+	      tia_domain_result = httpget("https://api.threatintelligenceaggregator.org/domain/", strScanDataInfo,"","", "", false) 'get API results
+	      if instr(tia_domain_result,"""" + strScanDataInfo) then
+	        strTmpWCO_CClineE = GetData(tia_domain_result, chr(34), "date_first_observed"":""")
+	      ElseIf instr(tia_domain_result,"<title>502 Bad Gateway</title>") Then
+	      	bool_enable_tia_domain = False
+	      End If
+	  End If
       strIpDwatchLineE = MatchIpDwatchLIst(strData) 'watchlist
   End If
 	
