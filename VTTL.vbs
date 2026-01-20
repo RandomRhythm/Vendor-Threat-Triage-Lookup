@@ -1,8 +1,8 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.2.0 - Add FBI sinkhole
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.2.1 - Disabling external threat intel downloads by default due to Microsoft Defender (AV exclude before enabling). Support date parsing scenarios where we were erroring before when caching.
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
-'Copyright (c) 2025 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2026 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -472,7 +472,7 @@ Dim dictIPrange: Set dictIPrange = CreateObject("Scripting.Dictionary") 'stores 
 Dim dictFeedEnabled: set dictFeedEnabled = CreateObject("Scripting.Dictionary")
 Dim base32check: base32check = True
 Dim dictASN: set dictASN = CreateObject("Scripting.Dictionary") 'ASN category detection
-Dim bool_disable_loading_external_feeds
+Dim bool_enable_loading_external_feeds
 'LevelUp
 Dim dictAllTLD: set dictAllTLD = CreateObject("Scripting.Dictionary")
 Dim dictSLD: set dictSLD = CreateObject("Scripting.Dictionary")
@@ -518,7 +518,7 @@ boolOutputUnicode = False 'Default output encoding is ANSI. You may need utf-16 
 boolDeepIOCmatch = True 'Perform IOC matching against indirect but related IOCs (Domain hosted at same IP had intel hits)
 boolTruncateVTsigner = True ' Truncate the digital signature provided by VirusTotal to match signers with VTTL known reputation. Truncate the following at the semicolon to be "McAfee, Inc." instead of "McAfee, Inc.; VeriSign Class 3 Code Signing 2010 CA; VeriSign"
 cellTruncateLength = 8000 'Truncate cell value length. Default 8000. Max 32767
-bool_disable_loading_external_feeds = False
+bool_enable_loading_external_feeds = False
 '--- Intenal checks
 BoolURLWatchLlistRegex = True 'set to true to enable regex for URL watch list. False will match the string
 BoolDDNS_Checks = True 'Dynamic DNS check
@@ -654,6 +654,7 @@ boolOutputUnicode = ValueFromINI("vttl.ini", "main", "output_unicode", boolOutpu
 boolReverseDNS = ValueFromINI("vttl.ini", "main", "reverseDNS", boolReverseDNS) 'Perform reverse DNS lookups
 boolDeepIOCmatch = ValueFromINI("vttl.ini", "main", "deepIOCmatch", boolDeepIOCmatch)
 staticIntelPath  = ValueFromINI("vttl.ini", "main", "StaticIntelPath", staticIntelPath)
+bool_enable_loading_external_feeds = ValueFromINI("vttl.ini", "main", "external_intel_downloads", bool_enable_loading_external_feeds)
 BoolDisableVTlookup = ValueFromINI("vttl.ini", "vendor", "disable_VirusTotal", BoolDisableVTlookup) 'load value from INI
 boolShodan = ValueFromINI("vttl.ini", "vendor", "enable_Shodan", boolShodan) 'load value from INI
 boolUseAlienVault = ValueFromINI("vttl.ini", "vendor", "enable_AlienVault", boolUseAlienVault)
@@ -1447,8 +1448,8 @@ if BoolCreateSpreadsheet = True then
   End if
 end if
 LogOverwriteData strDebugPath & "\status.txt", "Starting - Loading threat intelligence and watchlists",BoolEchoLog 
-If BoolRunSilent = False then objShellComplete.popup "Loading threat intelligence and watchlists", 5, "VTTL - " & CurrentDirectory
-if bool_disable_loading_external_feeds = False Then
+If BoolRunSilent = False and bool_enable_loading_external_feeds = True then objShellComplete.popup "Loading threat intelligence and watchlists", 5, "VTTL - " & CurrentDirectory
+if bool_enable_loading_external_feeds = True Then
   download_load 'download/load threat intelligence
 end if
 if dictURLWatchList.count > 100000 then
@@ -10071,6 +10072,18 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
   if mid(strDateCreated, 5,1) = "." and mid(strDateCreated, 8,1) = "." then
     strDateCreated = replace(strDateCreated, ".", "/")
   end If
+
+  if mid(strDateCreated, 14,1) = ":" and mid(strDateCreated, 20,1) = "." then
+    strDateCreated = Left(strDateCreated, 19)
+  end If
+
+  If strDateCreated = "before Aug-1996" Then
+    strDateCreated = "1996-08-31"
+  End If
+
+  If strDateCreated = "Before 2001" Then
+    strDateCreated = "2001-12-31"
+  End If 
 
   if mid(strDateCreated, 20,1) = "." And mid(strDateCreated, 24,1) = "-"  And mid(strDateCreated, 27,1) = ":"  Then '2015-09-03 10:53:18.000-04:00
   	strDateCreated = Left(strDateCreated, 19) 'truncate time stamp/timezone
