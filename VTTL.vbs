@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.2.1 - Disabling external threat intel downloads by default due to Microsoft Defender (AV exclude before enabling). Support date parsing scenarios where we were erroring before when caching.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.2.2 - Support additional date time formats.
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
@@ -10113,7 +10113,22 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
 	if mid(strDateCreated, len(strDateCreated) -2,1)  = "+" then '"2016-06-22 12:34:05+03"
 		strDateCreated = left(strDateCreated, len(strDateCreated) - 3)
 	end if
+
+
+  If Len(strDateCreated) = 30 Then
+    tmpDate = Replace(Left(strDateCreated, 19), "-","/")
+    If isdate(tmpDate) then	
+      strDateCreated = tmpDate
+    End If
+  End If
 	
+  'format spreadsheet output date consistently 
+  if isdate(strDateCreated) then
+    strTmpCreationD = GetFormattedDate(strDateCreated) & " " & FormatDateTime(strDateCreated,4)
+    strTmpWCO_CClineE = "|" & strTmpCreationD	
+  end if
+
+
   'format spreadsheet output date consistently 
   if isdate(strDateCreated) then
 	strTmpCreationD = GetFormattedDate(strDateCreated) & " " & FormatDateTime(strDateCreated,4)
