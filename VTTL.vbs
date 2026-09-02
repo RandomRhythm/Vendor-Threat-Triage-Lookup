@@ -1,4 +1,4 @@
-'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.2.2 - Support additional date time formats.
+'Vendor Threat Triage Lookup (VTTL) script 'VTTL v 8.3.2.3 - only update if a sinkhole isn't already known
 
 'origin - https://github.com/RandomRhythm/Vendor-Threat-Triage-Lookup
 
@@ -7523,7 +7523,7 @@ IPSinkholeCheck strIPRevLookup, "87.106.18.141", "|1and1 Internet AG Sinkhole"
 IPSinkholeCheck strIPRevLookup, "72.5.65.111", "|Palo Alto Networks Sinkhole - sinkhole.paloaltonetworks.com" 'https://knowledgebase.paloaltonetworks.com/KCSArticleDetail?id=kA10g000000Clk2
  
  strRevDNS = "|" & nslookup_Return(strIPRevLookup, DNSserverIP)
- if strTmpSinkHole = "|" and instr(lcase(strRevDNS), "sinkhole") or instr(lcase(strRevDNS), "snkhole") then 'only update if a sinkhole isn't already known. DNS sinkhole will provide more information that IP sinkhole.
+ if strTmpSinkHole = "|" and (instr(lcase(strRevDNS), "sinkhole") or instr(lcase(strRevDNS), "snkhole")) then 'only update if a sinkhole isn't already known. DNS sinkhole will provide more information that IP sinkhole.
   strTmpSinkHole = "|X"
  end if
 end sub
