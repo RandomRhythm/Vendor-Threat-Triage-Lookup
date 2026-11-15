@@ -471,6 +471,10 @@ Dim dictCIDR: Set dictCIDR = CreateObject("Scripting.Dictionary") 'used to conve
 Dim dictIPrange: Set dictIPrange = CreateObject("Scripting.Dictionary") 'stores the IP ranges for watchlist (should not be used if we get this into a SQLite table)
 Dim dictFeedEnabled: set dictFeedEnabled = CreateObject("Scripting.Dictionary")
 Dim base32check: base32check = True
+Dim intTIAretries: intTIAretries = 0 'recursion depth guard for CheckTIA
+Dim boolBase32Check: boolBase32Check = True 'the gate. base32check below is the
+                                            'RESULT of the last check, and using
+                                            'it as its own gate switched it off
 Dim dictASN: set dictASN = CreateObject("Scripting.Dictionary") 'ASN category detection
 Dim bool_enable_loading_external_feeds
 'LevelUp
@@ -796,6 +800,7 @@ if BoolDNS_BLchecks = False then
 	boolEnableZDBL = False 
 	EnableBarracuda = False
 	enableSORBS = False
+	enableSURBL = False
 end if
 if boolDisableDomain_BLchecks = True then
 	enableURIBL = False
@@ -1757,13 +1762,14 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 				AnubisCookie PulsediveBody
 				If strTmpIPContactLineE = "" or strTmpIPContactLineE = "|" then
 					strTmpIPContactLineE = WhoisPopulator (PulsediveBody) 'sets geolocation and whois contact
-					if sslOrg = "" or sslSubject= "" then
-            PulsediveSslPopulate PulsediveBody
-					end if
-        
 				Else
 					WhoisPopulator PulsediveBody
 				End if	
+				'the SSL columns have nothing to do with the WHOIS contact, so they
+				'are filled either way
+				if sslOrg = "" or sslSubject= "" then
+					PulsediveSslPopulate PulsediveBody
+				end if
 			Else
 				strTmpPulsediveLineE = ""
 
@@ -1810,7 +1816,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
         if BoolDNS_BLchecks = True then
           for RBL_loop = 0 to 5
 			StrTmpRBLOutput = ""
-            if RBL_loop = 0 and EnableCBL = True then StrTmpRBLOutput = RBL_Lookup(strData, ".cbl.abuseat.org" & cblDNS)
+            if RBL_loop = 0 and EnableCBL = True then StrTmpRBLOutput = RBL_Lookup(strData, ".cbl.abuseat.org " & abuseatDNS)
             if RBL_loop = 1 and EnableBarracuda = True then StrTmpRBLOutput = RBL_Lookup(strData, ".b.barracudacentral.org " & cudaDNS)
             'if RBL_loop = 2 then StrTmpRBLOutput = RBL_Lookup(strData, ".xbl.spamhaus.org")
             if RBL_loop = 2 and enableZEN = True then StrTmpRBLOutput = RBL_Lookup(strData, ".zen.spamhaus.org " & zenDNS)
@@ -1834,7 +1840,12 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
                 if instr(StrTmpRBLOutput, " as ") then
                   
                   strTmpZENlineE = right(StrTmpRBLOutput, (len(StrTmpRBLOutput) - instr(StrTmpRBLOutput, " as ")) -3 )
-                  strTmpZENlineE = "|" & left(strTmpZENlineE, len(strTmpZENlineE) -2)
+                  'stop at the end of the first line: a multi-code listing returns
+                  'several lines and the rest of them would be embedded in the cell
+                  if instr(strTmpZENlineE, vbcrlf) > 0 then
+                    strTmpZENlineE = left(strTmpZENlineE, instr(strTmpZENlineE, vbcrlf) -1)
+                  end if
+                  strTmpZENlineE = "|" & strTmpZENlineE
                 else
                      strTmpZENlineE = "|X"
                 End if
@@ -1992,17 +2003,18 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             strVT_APIurl = "http://www.virustotal.com/vtapi/v2/domain/report?"  
             BoolPost = false
             strDataType = "domain="
+			boolSkipDomain = False 'reset per item: it was only cleared on the no-hit branch below
 			if boolUseTrancoList = True then
 			
 				if boolTrancoSQL = True then 
 					sSQL = "select T_Score from Tranco where T_Domain = ? " 
-					strTrancoLineE = "|" & ReturnSQLiteItem(sSQL, strScanDataInfo, "T_Score")
-					if strTrancoLineE <> "|" and boolSkipOnTrancoHit = True and BoolDisableVTlookup = True then
+					strTrancoLineE = "|" & ReturnSQLiteItem(sSQL, lcase(strScanDataInfo), "T_Score")
+					if strTrancoLineE <> "|" and boolSkipOnTrancoHit = True and BoolDisableVTlookup = False then
 						boolSkipDomain = True
 						strTmpVTTIlineE = strScanDataInfo & "|||||" 'set VTTL entries to be blank since we are skipping the lookups
 					end if
-				elseif dictTrancoList.exists(strScanDataInfo) Then
-					strTrancoLineE = "|" & dictTrancoList.item(strScanDataInfo)
+				elseif dictTrancoList.exists(lcase(strScanDataInfo)) Then
+					strTrancoLineE = "|" & dictTrancoList.item(lcase(strScanDataInfo))
 					if boolSkipOnTrancoHit = True and BoolDisableVTlookup = False then
 						boolSkipDomain = True
 						if BoolDisableVTlookup = False then strTmpVTTIlineE = strScanDataInfo & "|||||" 'set VTTL entries to be blank since we skipping the lookups
@@ -2041,7 +2053,7 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
 		          exit for
 		        end if
 		
-		        if DictDDNS.exists(strTmpDDNS) = True then
+		        if DictDDNS.exists(lcase(strTmpDDNS)) = True then
 		
 		          strDDNSLineE = "|X"
 		          if strDDNS_Output = "" then
@@ -2106,7 +2118,9 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             strCSVrowDomain = trackedDomain
           end if
           if isIpAddress(strData) = true then
-            strCSVrowIP = strData
+            'guarded like the domain side below: when the tracked indicator is
+            'also an address, overwriting it collapsed the row to "<ip>,,"
+            if strCSVrowIP = "" then strCSVrowIP = strData
           elseif ishash(strData) then
             strCSVhash = strData
             if dictmalhash.exists(strData) Then
@@ -2135,7 +2149,12 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
             strCSVrowDomain = strData
             strCSVrowIP = ""
           end if
-        If boolLogIOCs = True Then logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & trackedHash, False
+        If boolLogIOCs = True Then
+      		If objFSO.FileExists(strReportsPath & "\IOCs_" & UniqueString & ".csv") = False Then 'write header row
+      			logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", "ip,domain,hash", False
+      		End If
+      		logdata strReportsPath & "\IOCs_" & UniqueString & ".csv", strCSVrowIP & "," & strCSVrowDomain & "," & trackedHash, False
+        End If
       next
 	  end if
     DictHashAssociation.removeall
@@ -2554,16 +2573,23 @@ Do While Not objFile.AtEndOfStream or boolPendingItems = True or boolPendingTIAI
           strTmpContactl = lcase(replace(strTmpIPContactLineE, "|", ""))
           strTmpArrayWhois = split(strTmpContactl, " ")
           strTmpASN = lcase(strTmpArrayWhois(0))
+          'strip the ASN off the ALREADY lower-cased, pipe-free contact string,
+          'and only the first occurrence - LoadASN builds its operator key the
+          'same way
+          strCompany = Trim(replace(strTmpContactl, strTmpASN, "", 1, 1))
+          strTmpASNcategory = ""
           if dictASN.exists(strTmpASN) = True Then
-            strCategoryLineE = AppendValuesList(strCategoryLineE,dictASN.item(strTmpASN),";")
+            strTmpASNcategory = dictASN.item(strTmpASN)
+          elseif dictASN.exists(strCompany) = True Then
+            strTmpASNcategory = dictASN.item(strCompany)
+          elseif dictASN.exists(strTmpContactl) = True Then
+            strTmpASNcategory = dictASN.item(strTmpContactl)
           end if
-          strCompany = Trim(lcase(replace(strTmpIPContactLineE,strTmpASN, "")))
-          if dictASN.exists(strCompany) = True Then
-            strCategoryLineE = AppendValuesList(strCategoryLineE,dictASN.item(strCompany),";")
+          'one category per row: AppendValuesList does not de-duplicate, and
+          'the ASN and the operator name are two keys pointing at the same entry
+          if strTmpASNcategory <> "" Then
+            strCategoryLineE = AppendValuesList(strCategoryLineE,strTmpASNcategory,";")
           end if
-          if dictASN.exists(strTmpContactl) = True Then
-            strCategoryLineE = AppendValuesList(strCategoryLineE,dictASN.item(strTmpContactl),";")
-          end if          
         end if
           
       strCategoryLineE = AddPipe(strCategoryLineE)   
@@ -3425,7 +3451,7 @@ elseif instr(strFullAPIURL,"resource=") > 0 or ishash(strFullAPIURL) = True then
           MalShareHashLookup  strScanDataInfo       
         end if
         if BoolNSRLLookup  = True then
-          strtmpReslts = NSRL_Lookup(strScanDataInfo)
+          strtmpResults = NSRL_Lookup(strScanDataInfo)
           if strtmpResults = True then
             strThisScanResults = strThisScanResults & strScanDataInfo & vbtab & "Hash is in the NSRL" & vbcrlf
           end if
@@ -3445,6 +3471,7 @@ if instr(strFullAPIURL,"domain=") then
   if BoolDNS_BLchecks = True and boolDisableDomain_BLchecks = False then
     tmpParentDomain = LevelUp(strData) 'GetParentDomain
 	for RBL_loop = 0 to 2
+      StrTmpRBLOutput = ""
       if RBL_loop = 0 and boolEnableZDBL = True then StrTmpRBLOutput = RBL_Lookup(strData, ".dbl.spamhaus.org " & zenDNS) ' it is optional and not necessary to strip the hostname down to query the actual domain only. 
       if RBL_loop = 1 and enableURIBL = True then StrTmpRBLOutput = RBL_Lookup(tmpParentDomain, ".multi.uribl.com " & uriblDNS )
       if RBL_loop = 2 and enableSURBL = True then StrTmpRBLOutput = RBL_Lookup(strData, ".multi.surbl.org " & surblDNS)
@@ -4442,23 +4469,28 @@ end if
 
 
 strRBLL_return = ""
-if instr(dataresults, "127.0.0.2") <> 0 Then
+'Generic listing line. Only for the lists that have no return-code branch
+'of their own below (CBL, Barracuda, SORBS) - it is the only reporting path
+'they have. ZEN, DBL, URIBL and SURBL all report from their own branch, and
+'running this for them as well reported the same listing twice.
+if RBLCodeMatch(dataresults, "127.0.0.2") = True and _
+   (instr(strRBL, ".cbl.abuseat.org") > 0 or instr(strRBL, ".b.barracudacentral.org") > 0 or instr(strRBL, ".dnsbl.sorbs.net") > 0) Then
   strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 end if
 
 if instr(strRBL, ".zen.spamhaus.org") > 0 then
   '127.0.0.2 		Direct UBE sources, spam operations & spam services
-  if instr(dataresults, "127.0.0.2") <> 0 then _
+  if RBLCodeMatch(dataresults, "127.0.0.2") = True then _
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as Direct UBE sources, spam operations & spam services" & vbcrlf
 
   '127.0.0.3 		Direct snowshoe spam sources detected via automation
-  if instr(dataresults, "127.0.0.3") <> 0 then _
+  if RBLCodeMatch(dataresults, "127.0.0.3") = True then _
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as Direct snowshoe spam sources detected via automation" & vbcrlf
   '127.0.0.4-7 		CBL (3rd party exploits such as proxies, trojans, etc.)
-  if instr(dataresults, "127.0.0.4") <> 0 or instr(dataresults, "127.0.0.5") <> 0 or instr(dataresults, "127.0.0.6") <> 0 or instr(dataresults, "127.0.0.7") <> 0 or instr(dataresults, "127.0.0.8") <> 0 then _ 
+  if RBLCodeMatch(dataresults, "127.0.0.4") = True or RBLCodeMatch(dataresults, "127.0.0.5") = True or RBLCodeMatch(dataresults, "127.0.0.6") = True or RBLCodeMatch(dataresults, "127.0.0.7") = True or RBLCodeMatch(dataresults, "127.0.0.8") = True then _ 
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as 3rd party exploits such as proxies, trojans, etc." & vbcrlf
   '127.0.0.10-11 		End-user Non-MTA IP addresses set by ISP outbound mail policy
-  if instr(dataresults, "127.0.0.10") <> 0 or instr(dataresults, "127.0.0.11") <> 0 then _
+  if RBLCodeMatch(dataresults, "127.0.0.10") = True or RBLCodeMatch(dataresults, "127.0.0.11") = True then _
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as End-user Non-MTA IP addresses set by ISP outbound mail policy" & vbcrlf
 elseif strRBL = ".dbl.spamhaus.org" then
 'Return Codes 	Data Source
@@ -4472,141 +4504,164 @@ elseif strRBL = ".dbl.spamhaus.org" then
 '127.0.1.105 	abused legit malware
 '127.0.1.106 	abused legit botnet C&C
 '127.0.1.255 	IP queries prohibited!
-  if instr(dataresults, "127.0.1.2") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.2") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as a spam domain" & vbcrlf
   end if
-  if instr(dataresults, "127.0.1.4") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.4") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as a phish domain" & vbcrlf
   end if
-  if instr(dataresults, "127.0.1.5") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.5") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as a malware domain" & vbcrlf
   end if
-  if instr(dataresults, "127.0.1.6") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.6") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as a botnet C&C domain" & vbcrlf
   end if
-  if instr(dataresults, "127.0.1.102") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.102") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as abused legit spam" & vbcrlf
   end if
-  if instr(dataresults, "127.0.1.103") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.103") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as abused spammed redirector domain" & vbcrlf
   end if
-  if instr(dataresults, "127.0.1.104") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.104") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as abused legit phish" & vbcrlf
   end if
-  if instr(dataresults, "127.0.1.105") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.105") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as abused legit malware" & vbcrlf
   end if  
-  if instr(dataresults, "127.0.1.106") <> 0 then
+  if RBLCodeMatch(dataresults, "127.0.1.106") = True then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & " as abused legit botnet C&C" & vbcrlf
   end if   
 
 
 elseif instr(strRBL,".multi.uribl.com") > 0 then
-	if instr(dataresults, "127.0.0.14") <> 0 or instr(dataresults, "127.0.0.2") <> 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.14") = True or RBLCodeMatch(dataresults, "127.0.0.2") = True Then
 		strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
-	elseif instr(dataresults, "127.0.0.4") <> 0  Then
+	elseif RBLCodeMatch(dataresults, "127.0.0.4") = True  Then
 		strRBLL_return = strRBLL_return & "Grelisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
-	elseif instr(dataresults, "127.0.0.8") <> 0  Then
+	elseif RBLCodeMatch(dataresults, "127.0.0.8") = True  Then
 		strRBLL_return = strRBLL_return & "Redlisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
-	elseif instr(dataresults, "127.0.0.1") <> 0 Then
+	elseif RBLCodeMatch(dataresults, "127.0.0.1") = True Then
 		'queries are not working
 		logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " uribl lookup failed with 127.0.0.1 response http://uribl.com/about.shtml#abuse",False 
 	end if
 
 elseif instr(strRBL,".multi.surbl.org") > 0 then 'http://www.surbl.org/guidelines
 
-  if instr(dataresults, "127.0.0.8") <> 0 Then
+  if RBLCodeMatch(dataresults, "127.0.0.8") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Phishing"
-  elseif instr(dataresults, "127.0.0.16") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.16") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware"
-  elseif instr(dataresults, "127.0.0.24") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.24") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware^Phishing"
-	elseif instr(dataresults, "127.0.0.64") <> 0 Then
+	elseif RBLCodeMatch(dataresults, "127.0.0.64") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Abuse"
-  elseif instr(dataresults, "127.0.0.72") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.72") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Phishing^Abuse"	
-  elseif instr(dataresults, "127.0.0.80") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.80") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware^Abuse"	
-  elseif instr(dataresults, "127.0.0.88") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.88") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware^Phishing^Abuse"		
-  elseif instr(dataresults, "127.0.0.126") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.126") = True Then
   	strTmpSURbLineE = "test"
-  elseif instr(dataresults, "127.0.0.128") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.128") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "CrackedSite"
-  elseif instr(dataresults, "127.0.0.136") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.136") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Phishing^CrackedSite"	
-  elseif instr(dataresults, "127.0.0.142") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.142") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware^CrackedSite"	
-	elseif instr(dataresults, "127.0.0.150") <> 0 Then
+	elseif RBLCodeMatch(dataresults, "127.0.0.150") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware^Phishing^CrackedSite"	
-  elseif instr(dataresults, "127.0.0.192") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.192") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Abuse^CrackedSite"		
-  elseif instr(dataresults, "127.0.0.200") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.200") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Phishing^Abuse^CrackedSite"		
-  elseif instr(dataresults, "127.0.0.208") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.208") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware^Abuse^CrackedSite"	
-  elseif instr(dataresults, "127.0.0.216") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.216") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "Malware^Phishing^Abuse^CrackedSite"
-  elseif instr(dataresults, "127.0.0.254") <> 0 Then
+  elseif RBLCodeMatch(dataresults, "127.0.0.254") = True Then
     strRBLL_return = strRBLL_return & "Blacklisted " & strIPorDomain & " " & strIP & " at " & right(strRBL, len(strRBL) -1) & vbcrlf
 	strTmpSURbLineE = "testpoint"	
   end if
 
 elseif instr(strRBL, ".dnsbl.sorbs.net") > 0 then
-	if instr(dataresults, "127.0.0.2") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.2") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "HTTP Proxy", "^")
 	end if
-	if instr(dataresults, "127.0.0.3") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.3") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "SOCKS Proxy", "^")
 	end if
-	if instr(dataresults, "127.0.0.4") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.4") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "MISC Proxy", "^")
 	end if
-	if instr(dataresults, "127.0.0.5") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.5") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "Open SMTP Relay", "^")
 	end if
-	if instr(dataresults, "127.0.0.6") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.6") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "Spam", "^")
 	end if
-	if instr(dataresults, "127.0.0.7") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.7") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "Web", "^")
 	end if
-	if instr(dataresults, "127.0.0.8") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.8") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "Block", "^")
 	end if
-	if instr(dataresults, "127.0.0.9") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.9") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "Zombie", "^")
 	end if
-	if instr(dataresults, "127.0.0.10") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.10") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "Dynamic", "^")
 	end if
-	if instr(dataresults, "127.0.0.11") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.11") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "BadConf", "^")
 	end if
-	if instr(dataresults, "127.0.0.12") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.12") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "NoMail", "^")
 	end if	
-	if instr(dataresults, "127.0.0.14") > 0 Then
+	if RBLCodeMatch(dataresults, "127.0.0.14") = True Then
 		strSORBSlineE = AppendValuesList(strSORBSlineE, "NoServer", "^")
 	end if	
 end if 
   
   RBL_Lookup = strRBLL_return
+End Function
+
+
+'True when strRBLcode appears in the DNS answer as a complete address and not
+'as the leading part of a longer return code. instr() alone matched 127.0.0.8
+'inside 127.0.0.80 and 127.0.1.2 inside 127.0.1.255.
+Function RBLCodeMatch(strRBLdata, strRBLcode)
+Dim intRBLpos, strRBLnext, strRBLprev
+RBLCodeMatch = False
+if isnull(strRBLdata) then exit function
+if isempty(strRBLdata) then exit function
+intRBLpos = instr(strRBLdata, strRBLcode)
+do while intRBLpos > 0
+  strRBLnext = ""
+  if intRBLpos + len(strRBLcode) <= len(strRBLdata) then strRBLnext = mid(strRBLdata, intRBLpos + len(strRBLcode), 1)
+  strRBLprev = ""
+  if intRBLpos > 1 then strRBLprev = mid(strRBLdata, intRBLpos - 1, 1)
+  if isnumeric(strRBLnext) = False and strRBLnext <> "." and isnumeric(strRBLprev) = False and strRBLprev <> "." then
+    RBLCodeMatch = True
+    exit function
+  end if
+  intRBLpos = instr(intRBLpos + 1, strRBLdata, strRBLcode)
+loop
 End Function
 
 
@@ -5555,6 +5610,13 @@ select case strCLsubpath
     case "\tg\"
       strTmpVendcName = "ThreatGRID"
       strLastUpdate = "TGLastUpdate"        
+  case else
+    'no VendorCache column for this subpath. Both are globals, so leaving them
+    'alone meant the previous caller's vendor name was still in them and the
+    'SQL branch below would have written this response into that vendor's
+    'column - "\CB\" reaching here after a VirusTotal lookup, for instance.
+    strTmpVendcName = ""
+    strLastUpdate = ""
 end select
 
 strHashSubPath = HashLenCheck(StrlcCacheName)'Returns string MD5, SHA1, or SHA256
@@ -5567,7 +5629,7 @@ end if
 
 Set Recordset = CreateObject("ADODB.Recordset")
 
-if boolMySQLcache  = True then'Check MySQL for the cache data
+if boolMySQLcache  = True and strTmpVendcName <> "" then'Check MySQL for the cache data
   recordset = MySQLcache(strTmpVendcName, strLastUpdate, strCLsubpath, StrCacheName)
   If Recordset.EOF Then 
     BoolUpdateMySQL = True
@@ -5612,6 +5674,10 @@ If boolSQLcache = False or lcase(strCLsubpath) = "\cb\" or strCLsubpath = "\es\"
      strTmpCacheLineE = "|X"
   end if
 else
+  if strTmpVendcName = "" then
+	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " CacheLookup has no VendorCache column for " & strCLsubpath & " - not caching",False 
+	exit function
+  end if
   if strHashSubPath = "unknown" then
 	logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Unsupported hash value - " & StrCacheName,False 
 	exit function
@@ -5924,12 +5990,8 @@ If objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) = True Then
 		If boolUseFeed = False Then objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
 		Exit Function
 	Else 'file is old and needs updated
-        on error resume next
-		objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
-        if err.number <> 0 then
-            objShellComplete.popup "Something (likely antivirus) will not let us delete " & CurrentDirectory & "\" & strDownloadName, 16, "VTTL - " & CurrentDirectory
-        end if
-        on error goto 0
+		'the existing copy is deliberately kept here - it is only replaced once a
+		'good download has actually arrived, below
 	End If
 End If	
 If boolUseFeed = False Then Exit Function
@@ -5953,8 +6015,16 @@ strReturnInfo = False
 if instr(objHTTP.responseText,checkString) then
   fileDownloaded = objHTTP.responseText
   if instr(fileDownloaded, vbLf) > 0 and instr(fileDownloaded, vbCr) = 0 then fileDownloaded = replace(fileDownloaded, vblf, vbCrLf)
+  on error resume next
+  if objFSO.fileexists(CurrentDirectory & "\" & strDownloadName) then objFSO.DeleteFile(CurrentDirectory & "\" & strDownloadName)
+  if err.number <> 0 then
+      objShellComplete.popup "Something (likely antivirus) will not let us delete " & CurrentDirectory & "\" & strDownloadName, 16, "VTTL - " & CurrentDirectory
+  end if
+  on error goto 0
   LogData CurrentDirectory & "\" & strDownloadName,fileDownloaded, false
   strReturnInfo = True
+else
+  logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " " & strURLDownload & " did not contain " & chr(34) & checkString & chr(34) & " - keeping the cached copy",False 
 end if
 
 dload_list = strReturnInfo
@@ -6329,7 +6399,7 @@ else
     intAnswer = msgbox ("vtlist.txt is missing carriage return. Would you like to add carriage returns for the script to continue? Script will exit if you choose no.",vbYesNo, "VTTL Question")
       if intAnswer = vbYes Then 
         LogoverwriteData strPVTL_path, strVTlist, false 
-        ParseVTlist = ParseVTTLlist(strPVTL_path)
+        ParseVTlist = ParseVTlist(strPVTL_path)
         exit function
       else
         wscript.quit(463)
@@ -7532,9 +7602,10 @@ end sub
 sub subReverseDNSCachewithSinkhole(strDomainRevLookup)
  if strRevDNS = "|" then
   sSQL = "SELECT RevDomain from DomainVend WHERE DomainName = ?"
-  strRevDNS = "|" & ReturnSQLiteItem(sSQL, strDomainRevLookup, "DomainVend")
+  'third argument is the FIELD to read, not the table
+  strRevDNS = "|" & ReturnSQLiteItem(sSQL, strDomainRevLookup, "RevDomain")
  end if
- if strTmpSinkHole = "|" and instr(lcase(strRevDNS), "sinkhole") or instr(lcase(strRevDNS), "snkhole") then 'only update if a sinkhole isn't already known. DNS sinkhole will provide more information that IP sinkhole.
+ if strTmpSinkHole = "|" and (instr(lcase(strRevDNS), "sinkhole") or instr(lcase(strRevDNS), "snkhole")) then 'only update if a sinkhole isn't already known. DNS sinkhole will provide more information that IP sinkhole.
   strTmpSinkHole = "|X"
  end if
 end Sub
@@ -7543,7 +7614,7 @@ end Sub
 Sub MalShareHashLookup(strHashVal)
   strtmpResults = checkMalShare(strHashVal)
   if strtmpResults <> "" then
-    strThisScanResults = strThisScanResults & strtmpReslts & vbcrlf
+    strThisScanResults = strThisScanResults & strtmpResults & vbcrlf
   end if  
 end sub
 
@@ -7552,6 +7623,11 @@ Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
 Dim strAVEurl
 Dim strReturnURL
 dim strAssocWith
+'both of these are globals. Without clearing them here, any path that does
+'not assign - an HTTP failure, or a response this function does not
+'recognise - left the PREVIOUS item's values in place.
+strMSresponseText = ""
+strTmpMalShareLineE = "|"
 strAVEurl = "http://malshare.com/api.php?api_key=" & strMalShareAPIKey & "&action=details&hash="
  if ishash(strMalShare_ScanItem) and BoolDisableCacheLookup = False then
   strMSresponseText = CacheLookup("", "\malshare\", strMalShare_ScanItem, intHashCacheThreashold)
@@ -9468,6 +9544,7 @@ end sub
 
 
 Function CheckProofPoint(StrPP_dataType, strPP_ScanItem)
+strppAllCategories = "" 'global, and shared with CheckProofpIDS below
 Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
 Dim strAVEurl
 Dim strReturnURL
@@ -9538,6 +9615,7 @@ end Function
 
 
 Function CheckProofpIDS(StrPP_dataType, strPP_ScanItem)
+strppAllCategories = "" 'global, and shared with CheckProofPoint above
 Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
 Dim strAVEurl
 Dim strReturnURL
@@ -9545,12 +9623,9 @@ dim strAssocWith
 select case(StrPP_dataType)
   case "domain"
     strAVEurl = "https://api.emergingthreats.net/v1/domains/" & strPP_ScanItem & "/events"
-    sSQL = "select ETdomain from DomainVend where DomainName = ? " 
-    StrTmpETdata = ReturnSQLiteItem(sSQL, strPP_ScanItem, "ETdomain")
-    if StrTmpETdata <> "" and isnull(StrTmpETdata) = False then
-      CheckProofPoint = StrTmpETdata
-      exit function
-    end if
+    'no cache read here: DomainVend.ETdomain caches the REPUTATION response
+    'from the other endpoint, and returning it would put reputation data in
+    'the IDS column. The events endpoint is not cached.
   case "ip"
     strAVEurl = "https://api.emergingthreats.net/v1/ips/" & strPP_ScanItem & "/events"
   case "md5"
@@ -9912,6 +9987,8 @@ if datediff("s", strWAPIdateTrack,now) > intWhoAPILimit then
       MoveSSLocationEntries 'check if country code is listed as country name
 
 	  'loop through organization entries checking for value
+      strWhoIsIP_return = "" 'global here - without this a response with no
+                             'organization key keeps the previous domain's value
       if instr(objHTTP.responseText, "organization" & Chr(34) & ":") > 0 then
         arrayOrg = split(objHTTP.responseText, "organization" & Chr(34) & ":")
         for intOrg  = 1 to ubound(arrayOrg)
@@ -9945,7 +10022,9 @@ if datediff("s", strWAPIdateTrack,now) > intWhoAPILimit then
       CheckWhoAPI = WhoIsDomain_Parse(objHTTP.responseText)
     elseif instr(objHTTP.responseText, "created:     ") > 0 then
       strTmpWCO_CClineE = Getdata(objHTTP.responseText,"#", "created:     ")
-        strTmpWCO_CClineE = left(strTmpWCO_CClineE, len(instr(strTmpWCO_CClineE, "e") -1))
+        if instr(strTmpWCO_CClineE, "e") > 1 then
+          strTmpWCO_CClineE = left(strTmpWCO_CClineE, instr(strTmpWCO_CClineE, "e") -1)
+        end if
       strTmpWCO_CClineE = "|" & CleanupWhoisData(strTmpWCO_CClineE)
       strWhoIsIP_return = Getdata(objHTTP.responseText , "r", "owner:      ")
     else
@@ -10016,7 +10095,9 @@ end Function
 Function EpochConvert(intEpochTime)
 
       if isnumeric(intEpochTime) then 
-        intdcreated = clng(intEpochTime)
+        intdcreated = cdbl(intEpochTime) 'CLng is signed 32-bit and overflows
+        'several APIs return milliseconds; 1e11 seconds is the year 5138
+        if intdcreated > 100000000000 then intdcreated = int(intdcreated / 1000)
         EpochConvert = DateAdd("s", intdcreated, "01/01/1970 00:00:00")
       else
 		EpochConvert = intEpochTime
@@ -10050,7 +10131,7 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
   if mid(strDateCreated, 11,1) = "T" then
     strDateCreated = replace(strDateCreated,"T", " ")
   end if
-  if mid(strDateCreated, 20,1) = "-" then
+  if mid(strDateCreated, 20,1) = "-" or mid(strDateCreated, 20,1) = "+" then
     if instr(right(strDateCreated, 3), ":") > 0 then
       strTimeOffset = left(right(strDateCreated, 5), 2) * 60 '-360
       strTimeOffset = strTimeOffset + right(strDateCreated, 2) '-360 + 00
@@ -10061,7 +10142,8 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
     end if
   end if
   if isnumeric(strDateCreated) then 
-    intdcreated = clng(strDateCreated)
+    intdcreated = cdbl(strDateCreated) 'see EpochConvert - CLng overflows
+    if intdcreated > 100000000000 then intdcreated = int(intdcreated / 1000)
     strDateCreated = DateAdd("s", intdcreated, "01/01/1970 00:00:00")
     
   end if
@@ -10100,7 +10182,9 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
     End If
   end if 
   If Mid(strDateCreated, 3,1) = "." And Mid(strDateCreated, 5,1) = "." Then '20.4.1998 08:29:00
-	strDateCreated = left(strDateCreated,2) & "/" & Mid(strDateCreated, 4,1) & "/" & mid(strDateCreated, 6)
+	'DD.M.YYYY - write it month first, because CDate reads d/m/y as m/d/y
+	'on the en-US locale this script targets and rejected "20/4/1998"
+	strDateCreated = Mid(strDateCreated, 4,1) & "/" & left(strDateCreated,2) & "/" & mid(strDateCreated, 6)
   End If
   If instr(strDateCreated, "\t") > 0 then '\t\t27-Jul-2020 22:19:29
 	strDateCreated = Replace(strDateCreated, "\t", "")
@@ -10127,22 +10211,14 @@ if strTmpWCO_CClineE <> "|" and strTmpWCO_CClineE <> "" then
     strTmpCreationD = GetFormattedDate(strDateCreated) & " " & FormatDateTime(strDateCreated,4)
     strTmpWCO_CClineE = "|" & strTmpCreationD	
   end if
-
-
-  'format spreadsheet output date consistently 
-  if isdate(strDateCreated) then
-	strTmpCreationD = GetFormattedDate(strDateCreated) & " " & FormatDateTime(strDateCreated,4)
-	strTmpWCO_CClineE = "|" & strTmpCreationD	
-  end if
   
   on error resume next
   strDateCreated = DateDiff("s", "01/01/1970 00:00:00", strDateCreated)
   if err.number <> 0 then 
     objShellComplete.popup "date conversion issue: " &  strDateCreated & vbcrlf & strTmpWCO_CClineE, 10, "VTTL - " & CurrentDirectory 'will not be saved to database
     logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " Whois date conversion issue for " & strWhoisDomain & ": " &  strDateCreated & "|" & strTmpWCO_CClineE ,False 
-  on error goto 0
-
   end if
+  on error goto 0
 else
   strDateCreated = ""
 end if
@@ -11020,7 +11096,10 @@ end sub
 
 Function MatchURLwatchList (strWLstoredResults, strWLcheck) 
 Dim WLreturnValue
-WLreturnValue = ""
+'start from what the caller already had: every call site assigns the result
+'back over the cell, so returning "" on a miss erased it
+WLreturnValue = strWLstoredResults
+MatchURLwatchList = WLreturnValue
 'msgbox "strWLstoredResults=" & strWLstoredResults
 if dictURLWatchList.count = 0 then exit function
 for each WatchItem in dictURLWatchList
@@ -11029,12 +11108,13 @@ for each WatchItem in dictURLWatchList
     WLRegXresult = RegularExpressionMatch(strWLcheck, WatchItem)
 	'msgbox "regex match=" & WLRegXresult & " for " & WatchItem
     if WLRegXresult = True then
-      WLreturnValue = concatenateItem(strWLstoredResults, WatchItem, "   " )
-	  WLreturnValue = replace(WLreturnValue, "|", "^or^")
+      'accumulate into WLreturnValue, not back over the passed-in value, so a
+      'second matching pattern does not discard the first
+      WLreturnValue = concatenateItem(WLreturnValue, replace(WatchItem, "|", "^or^"), "   " )
     end if
   else
     if instr(strWLcheck, WatchItem) > 0 then
-      WLreturnValue = concatenateItem(strWLstoredResults, WatchItem, "   " )    
+      WLreturnValue = concatenateItem(WLreturnValue, replace(WatchItem, "|", "^or^"), "   " )    
     end if
   end if
 next
@@ -11047,10 +11127,10 @@ Function MatchIpDwatchLIst(strIpDitem) 'strIpDwatchLineE
 Dim strIpDreturn: strIpDreturn = ""
 'msgbox "dictIPdomainWatchList.count=" & dictIPdomainWatchList.count 
 if dictIPdomainWatchList.count > 0 then 
-	if dictIPdomainWatchList.exists(strIpDitem) = True then 
+	if dictIPdomainWatchList.exists(lcase(strIpDitem)) = True then 
 		'msgbox "strIpDitem=" & strIpDitem
-		if dictIPdomainWatchList.item(strIpDitem) <> "" then 
-			strIpDreturn = dictIPdomainWatchList.item(strIpDitem) & "/" & strIpDitem
+		if dictIPdomainWatchList.item(lcase(strIpDitem)) <> "" then 
+			strIpDreturn = dictIPdomainWatchList.item(lcase(strIpDitem)) & "/" & strIpDitem
 
 		else
 			strIpDreturn = strIpDitem
@@ -11064,7 +11144,7 @@ if isIPaddress(strIpDitem) then
   if instr(strIpDitem, ":") = 0 then 'checkIPrange only works for IPv4
     strIpDwatchLineE = concatenateItem(strIpDwatchLineE, checkIPrange(strIpDitem), "^")
   end if
-elseIf base32check = True Then 'base32 checks only apply to domains
+elseIf boolBase32Check = True Then 'base32 checks only apply to domains
   base32check = RegularExpressionMatch(strIpDitem, "[A-Z2-7]{63}\.")
   If base32check = True Then strIpDwatchLineE = concatenateItem(strIpDwatchLineE, "base32", "^")
 end If
@@ -11093,8 +11173,14 @@ objHTTP.open "GET", strAVEurl
 on error resume next
   objHTTP.send
   if objHTTP.status = 402 then
+	if intTIAretries >= 3 then
+	  logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " TIA rate limited (402); giving up on " & strVendorName & " " & strDetectionName,False 
+	  exit function
+	end if
+	intTIAretries = intTIAretries + 1
 	wscript.sleep 59000
 	CheckTIA = CheckTIA(strVendorName, strDetectionName)
+	intTIAretries = intTIAretries - 1
 	exit function
   end if
   if err.number <> 0 then
@@ -11107,8 +11193,14 @@ strTIAresponse= objHTTP.responseText
 if BoolDebugTrace = True then logdata strDebugPath & "\VT_TIAapi" & "" & ".txt", strVendorName & ":" & strDetectionName & "|" & strAVEurl & " - " & strTIAresponse,BoolEchoLog 
 
 if strTIAresponse = "Request limit exceeded" then
+	if intTIAretries >= 3 then
+	  logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " TIA request limit exceeded; giving up on " & strVendorName & " " & strDetectionName,False 
+	  exit function
+	end if
+	intTIAretries = intTIAretries + 1
 	wscript.sleep 10000
 	CheckTIA = CheckTIA(strVendorName, strDetectionName)
+	intTIAretries = intTIAretries - 1
 	exit function
 end if
 
@@ -11399,11 +11491,15 @@ End If
 pDnsCount = 0
 'msgbox "strDomainListOut=" & strDomainListOut
 if strDomainListOut = "" or strDomainListOut = "|" then
-	if instr(strPdns, "{" & chr(34) & "last" & chr(34) & ":") > 0 then
-		arraypDNS = split(strPdns, "{" & chr(34) & "last" & chr(34) & ":")
+	'split on the hostname key itself. Splitting on {"last": assumed "last" is
+	'the FIRST key of every passive DNS record; OTX returns address, first,
+	'last, hostname, ... so the split matched nothing and this list was always
+	'empty.
+	if instr(strPdns, chr(34) & "hostname" & chr(34) & ":") > 0 then
+		arraypDNS = split(strPdns, chr(34) & "hostname" & chr(34) & ":")
 		'msgbox "Passive DNS Count:" & ubound(arraypDNS)
-		for each pDNSline in arraypDNS
-			pdnsName = getdata(pDNSline, chr(34), chr(34) & "hostname" & chr(34) & ": " & chr(34))
+		for intPdnsIdx = 1 to ubound(arraypDNS) 'element 0 is before the first key
+			pdnsName = getdata(arraypDNS(intPdnsIdx), chr(34), chr(34))
 			if pdnsName <> "" then
 				if DictTrackDomain(pdnsName) = false then  'only count domains once. This also checks against watchlists
 					if pDnsCount < 6 then
@@ -11484,18 +11580,16 @@ if len(NIDScommaList) > 1 then
 	if instr(NIDScommaList, ",") > 0 then
 		arrayNIDS = split(NIDScommaList, ",")
 
+		nidsCount = 0 'its own counter: this used to share pDnsCount with the
+		              'passive DNS walk, which caps at a different number
 		for each NIDSitem in arrayNIDS
 			NIDSid = getdata(NIDSitem, chr(34), chr(34))
-			if pDnsCount = 0 then
+			if nidsCount < 10 then
 				AlienVaultNIDSSignature NIDSid 'Builds signature output
-
-			elseif pDnsCount < 10 then
-				AlienVaultNIDSSignature NIDSid 'Builds signature output
-				
 			else
 				exit for
 			end if
-			pDnsCount = pDnsCount + 1
+			nidsCount = nidsCount + 1
 		next
 	else
 		NIDSid = getdata(strNIDSlist, chr(34), chr(34) & "results" & Chr(34) & ": [" & CHr(34))
@@ -12149,7 +12243,11 @@ if instr(strDTtoProcess, chr(34)) > 1 then
   if right(strDTtoProcess,1) = "Z" then 'VirusTotal formated time
     strDTtoProcess = replace(strDTtoProcess,"-T", " ")
     strDTtoProcess = replace(strDTtoProcess,"T", " ")
-    strDTtoProcess = left(strDTtoProcess, len(strDTtoProcess) -4)
+    if len(strDTtoProcess) >= 20 and mid(strDTtoProcess, 17, 1) = ":" then
+      strDTtoProcess = left(strDTtoProcess, len(strDTtoProcess) -4) 'drop :SSZ
+    else
+      strDTtoProcess = left(strDTtoProcess, len(strDTtoProcess) -1) 'drop Z only
+    end if
     on error resume next
     if right(strDTtoProcess, 1) = "." then strDTtoProcess = left(strDTtoProcess, len(strDTtoProcess)-1)
     'if left(right(strDTtoProcess, 3), 1) = ":" then
@@ -12692,13 +12790,13 @@ if instr(nameServers, ",") > 0 then
   for each nameServer in arrayNames
     serverName = getdata(nameServer, chr(34), chr(34))
     if serverName <> "" then
-      SinkholeNSCheck serverName
+      SinkholeNSCheck ucase(serverName)
     end if
   next
 else
-  serverName = getdata(nameServer, chr(34), chr(34))
+  serverName = getdata(nameServers, chr(34), chr(34))
     if serverName <> "" then
-      SinkholeNSCheck serverName
+      SinkholeNSCheck ucase(serverName)
     end if
 end if
 End Sub
@@ -12793,8 +12891,9 @@ intIntelDescription = -1
 
 'loads csv column pointers for feed
 for Each reportKey in dictCSVFeed
-  if tmpReportName = reportKey then
-    reporValues = dictCSVFeed.item(tmpReportName)
+  'LoadCustomValDict lower-cases its keys and VBScript "=" is case-sensitive
+  if lcase(tmpReportName) = reportKey then
+    reporValues = dictCSVFeed.item(reportKey)
     if instr(reporValues, "|") >0 then 
       arrayRval = split(reporValues, "|")
       intIntelLocation = arrayRval(0)
@@ -12842,12 +12941,17 @@ if InStr(strListPath, "_unicode") > 0 Then
 	inputEncoding = TristateTrue 'support unicode feeds
 	feedKey = Replace(feedKey,"_unicode","")
 End if	
-if dictFeedEnabled.Item(feedKey) = False then exit sub 'used to skip loading already downloaded feeds
+'used to skip loading disabled feeds. Must test Exists first: .Item() on a
+'MISSING key ADDS it with Empty and returns Empty, and Empty = False is True
+'in VBScript - so every file not named in feedlist.dat exited here.
+if dictFeedEnabled.Exists(feedKey) then
+  if dictFeedEnabled.Item(feedKey) = False then exit sub
+end if
 
 If Len(strListPath) > 4 Then
 'If Right(strListPath, 4) <> ".txt" And Right(strListPath, 4) <> ".csv" And Right(strListPath, 4) <> ".intel" Then Exit Sub
 If Right(strListPath, 4) = ".csv" Then boolProcessCSV = True
-If dictCSVFeed.exists(reportName) Then boolProcessCSV = True 'pointers exist to column values
+If dictCSVFeed.exists(lcase(reportName)) Then boolProcessCSV = True 'pointers exist to column values (keys are lower-cased on load)
 
 reportName = Replace(reportName, ".txt", "")
 reportName = Replace(reportName, ".csv", "")
@@ -12882,7 +12986,9 @@ If Len(tmpIOC2Process) > 0 Then 'ignore blank lines
 			tmpIOC2Process = Replace(tmpIOC2Process, "http://", "") 'remote https
 		End If
 
-		If InStr(tmpIOC2Process, ":") > 0 Then tmpIOC2Process = Left(tmpIOC2Process, InStr(tmpIOC2Process, ":") -1) 'truncate at colon
+		'truncate at colon (host:port), but not on an IPv6 address - "2001:db8::1"
+		'became "2001", which is not an address and has no dot, so it was dropped
+		If InStr(tmpIOC2Process, ":") > 0 And isIpv6(tmpIOC2Process) = False Then tmpIOC2Process = Left(tmpIOC2Process, InStr(tmpIOC2Process, ":") -1)
 		If InStr(tmpIOC2Process, "/") > 0 Then tmpIOC2Process = Left(tmpIOC2Process, InStr(tmpIOC2Process, "/") -1) 'truncate at forward slash
 		tmpIOC2Process = truncateIOC(tmpIOC2Process)
 		        		
@@ -12915,7 +13021,9 @@ End Function
 Sub aggregateDict(dictObject, strKeyvalue, strKeypairValue)
 	If dictObject.Exists(strKeyvalue) = False Then 
 		dictObject.Add strKeyvalue, strKeypairValue
-	ElseIf dictObject(strKeyvalue) <> strKeypairValue Then
+	ElseIf InStr("^" & dictObject(strKeyvalue) & "^", "^" & strKeypairValue & "^") = 0 Then
+		'compare against the "^"-separated parts, not the whole accumulated
+		'string - otherwise A then B then A appended A a second time
 		whatamI = dictObject(strKeyvalue)
 		dictObject(strKeyvalue) =  AppendValuesList(dictObject(strKeyvalue),strKeypairValue,"^")
 	End If	
@@ -13024,13 +13132,13 @@ if objFSO.fileexists(CurrentDirectory &"\DDNS.dat") then
         strTmpData = objFile.ReadLine 
         if Left(strTmpData, 1) <> "#" and instr(strTmpData, vbtab) then
           strTmpArrayDDNS = split(strTmpData, vbtab)
-          if DictDDNS.exists(strTmpArrayDDNS(0)) = False then _
-          DictDDNS.add strTmpArrayDDNS(0), 1
+          if DictDDNS.exists(lcase(strTmpArrayDDNS(0))) = False then _
+          DictDDNS.add lcase(strTmpArrayDDNS(0)), 1
         ElseIf Left(strTmpData, 1) <> "#" And strTmpData <> "" Then
         	 If InStr(strTmpData,"#") > 0 Then strTmpData = Left(strTmpData, InStr(strTmpData,"#") -1)
         	 If InStr(strTmpData," ") > 0 Then strTmpData = Left(strTmpData, InStr(strTmpData," ") -1)
-        	 if DictDDNS.exists(strTmpData) = False then
-        	 	DictDDNS.add strTmpData, ""
+        	 if DictDDNS.exists(lcase(strTmpData)) = False then
+        	 	DictDDNS.add lcase(strTmpData), ""
         	End If
         End if
         on error goto 0
@@ -13534,6 +13642,7 @@ ParseCBCFileSummaryPathResults = strCBfilePath
 End Function
 
 Function parseShodanResults(strShodanResults, strShodanKey, strAppendCharacter)
+strShodanReturn = "" 'global, and the multi-value path below appends to it
 if instr(strShodanResults, strShodanKey & Chr(34) & ":[]") = 0 then 
   shodan_values = getdata(strShodanResults, Chr(34) & "]", strShodanKey & Chr(34) & ":["  & Chr(34))
   If shodan_values = "" then shodan_values =getdata(strShodanResults, "]", strShodanKey & Chr(34) & ":[") 'integer values
@@ -13596,7 +13705,11 @@ function CalcSubnet(strIP,strSNM)
        '      "Last  "&lst &" "& bin2str(lst) &vbcrlf&_
         '     "Hosts "&binsub(lst,ist) &" "& Bin2Dec(binsub(lst,ist)) &vbcrlf
    'CalcSubnet = bin2str(ist) & "|" & bin2str(lst)
-   CalcSubnet = ist & "|" & lst
+   'Return the whole network, not the first and last HOST: this is a watchlist
+   'range test, and the network and broadcast addresses are addresses an
+   'indicator can be. For a /32 the host range was [IP+1, IP-1] - start above
+   'end - which matched nothing at all.
+   CalcSubnet = netwAdd & "|" & bcCheck
 end function
 
 
@@ -13666,7 +13779,9 @@ Function str2bin(strAddress)
    objAddress = Split(strAddress, ".")
    For Each strOctet In objAddress
       if isnumeric(strOctet) = False then 'error handling
-        msgbox("str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34))
+        'timed popup, not msgbox: a modal here halts an unattended run until
+        'someone clicks it, and one bad config line was enough to trigger it
+        objShellComplete.popup "str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34), 10, "VTTL - " & CurrentDirectory
         if BoolDebugTrace = True then logdata strDebugPath & "\VT_Debug" & "" & ".txt", "str2bin can not convert " & chr(34) & cstr(strOctet) & chr(34),BoolEchoLog
         exit function
       end if
@@ -13783,6 +13898,7 @@ end function
 
 
 Sub loadCIDR_Subnets()
+dictCIDR.add "0","0.0.0.0"
 dictCIDR.add "1","128.0.0.0"
 dictCIDR.add "2","192.0.0.0"
 dictCIDR.add "3","224.0.0.0"
@@ -13829,13 +13945,19 @@ if objFSO.fileexists(strIPrangePath) then
            tmpSplit = split(strTmp, "|")
            strIPCDIR = tmpSplit(0)
            strWatchVal = tmpSplit(1)
+          subnetRange = "" 'undeclared global: a line with no "/" used to keep
+                           'the previous line's range and lose its own label
           if instr(strIPCDIR, "/")   > 0 Then
              tmpSplit = split(strIPCDIR, "/")
              strSN= convertCIDR(tmpSplit(1))
             strIP = tmpSplit(0)
-             subnetRange = CalcSubnet(strIP, strSN)
+             if strSN <> "" then subnetRange = CalcSubnet(strIP, strSN)
+          elseif isIPaddress(strIPCDIR) and isIpv6(strIPCDIR) = False Then 'a bare address is a range of one
+             subnetRange = str2bin(strIPCDIR) & "|" & str2bin(strIPCDIR)
           end if
-          if dictIPrange.exists(subnetRange) = False then 
+          if subnetRange = "" or subnetRange = "|" then
+             logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " IP range watchlist entry skipped, not a network or address: " & strTmp,False 
+          elseif dictIPrange.exists(subnetRange) = False then 
               dictIPrange.add subnetRange, strWatchVal
           end if
          end if
@@ -13869,16 +13991,20 @@ if objFSO.fileexists(strListPath) then
     if not objFile.AtEndOfStream then 'read file
         On Error Resume Next
         strTmpData = objFile.ReadLine
-        if instr(strTmpData, " ") then
+        if Trim(strTmpData) = "" or Left(Trim(strTmpData), 1) = "#" then
+          'blank line or comment - skip. A trailing newline is not an error.
+        elseif instr(strTmpData, " ") then
           strTmpArrayDDNS = split(strTmpData, " ")
           if dictToLoad.exists(lcase(strTmpArrayDDNS(0))) = False then _
           dictToLoad.add lcase(strTmpArrayDDNS(0)), strCategory
-	  strCompany = Trim(LCase(Replace(strTmpData,strTmpArrayDDNS(0), "")))
+	  'first occurrence only: without the count argument an operator name that
+	  'repeats the ASN string, "AS1 Operator AS1 Holdings", loses both copies
+	  strCompany = Trim(LCase(Replace(strTmpData,strTmpArrayDDNS(0), "", 1, 1)))
 	'wscript.echo(strCompany)
 	  if dictToLoad.exists(strCompany) = False then _
           dictToLoad.add strCompany, strCategory
         else
-          wscript.echo "invalid format for " + strListPath
+          logdata CurrentDirectory & "\VTTL_Error.log", Date & " " & Time & " invalid format for " & strListPath & ": " & strTmpData,False 
         end if
         on error goto 0
     end if
